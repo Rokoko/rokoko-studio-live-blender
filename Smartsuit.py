@@ -6,7 +6,7 @@ from threading import Thread
 from time import sleep
 from random import randint
 from mathutils import Vector
-import socket
+from socket import *
 from enum import Enum
 
 from bpy.types import(
@@ -22,6 +22,8 @@ from bpy.props import(
         )
 
 class SmartsuitReceiver():
+    
+    #chosenPort = 0
 
     def __init__(self):
         self.running = False
@@ -32,28 +34,31 @@ class SmartsuitReceiver():
         self.thread = Thread(target = self.run, args=[])
         self.thread.start()
     def run(self):
-        UDP_IP = "0.0.0.0"
+        UDP_IP = "" #"" or "localhost" ?
         UDP_PORT = 14041
+        #UDP_PORT = chosenPort
         
-        
-        sock = socket.socket(socket.AF_INET, # Internet
-                             socket.SOCK_DGRAM) # UDP
+        sock = socket(AF_INET, # Internet
+                         SOCK_DGRAM) # UDP
+        sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         sock.bind((UDP_IP, UDP_PORT))
+        
+        print ("Waiting on port: " + str(UDP_PORT))
         
         while self.running:
             try:
-                data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+                data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
 #                print ("received message:" + data.decode('utf-8'))
                 #print(bpy.context.scene.smartsuit_bone)
                 #print("thread running")
                 #print(bpy.types.Scene.smartsuit_bone.data)
                 ob = bpy.data.objects.get(bpy.context.scene.smartsuit_bone)#bpy.context.scene.objects.active
-
+                #print("OB " + str(ob))
                 # And you can rotate the object the same way
                 ob.rotation_euler = (ob.rotation_euler.x + 1,ob.rotation_euler.y + 1,0)  # Note that you n
             except:
                 pass
-        sock.shutdown(socket.SHUT_RDWR)
+        sock.shutdown(SHUT_RDWR)
         sock.close()
         
     def stop(self):
@@ -110,6 +115,9 @@ class HelloWorldPanel(bpy.types.Panel):   #change to modifier instead of panel
         
         col = layout.column(align = True)
         col.prop(obj, "my_string_prop")
+        #TODO MAKE THIS WORK
+        #SmartsuitReceiver.chosenPort = obj.my_string_prop
+        #print("!!!" + str(chosenPort))
         
 #        col = layout.column()
 #        col.prop(obj, "string")
