@@ -8,6 +8,7 @@ from random import randint
 from mathutils import Vector
 from socket import *
 from enum import Enum
+import numpy as np
 
 from bpy.types import(
         Panel,
@@ -20,6 +21,31 @@ from bpy.props import(
         PointerProperty,
         FloatProperty
         )
+
+class Suit():
+
+    def __init__(self):
+        self.name = ""
+        self.frames = []
+        
+class Frame():
+    
+    def __init__(self):
+        self.name = ""
+        self.sensorsArray = []
+        
+        #SENSORS STRUCT
+        addr = b'\xff'
+        isAnotherSensorConnected = b'\xff'
+        behaviour = b'\xff'
+        command = b'\xff'
+        
+        acceleration = np.zeros([0.0,0.0,0.0])
+        quaternion = np.zeros([0.0,0.0,0.0,0.0])
+        gyro = np.zeros([0.0,0.0,0.0])
+        magnetometer = np.zeros([0.0,0.0,0.0])
+        microseconds = 0
+        
 
 class SmartsuitReceiver():
     
@@ -48,11 +74,42 @@ class SmartsuitReceiver():
         while self.running:
             try:
                 data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
-#                print ("received message:" + data.decode('utf-8'))
+                offset = 4
+                suitname = (data[:offset-1]).decode('unicode_escape')
+                #print ("SUITNAME")
+                #print(suitname)
+                #print(data[3])
+                #print(data)
+                #print(data.decode('unicode_escape'))
+                #print(type(data))
+                #print("received message:" + str(stringdata))
+                
+                sensors = (len(data) - offset) / 60
+                
+                for i in range(sensors):
+                    firstbuffer = data[offset:]
+                    intFirstbuffer = int.from_bytes(firstbuffer, byteorder='big', signed = False)
+                    #print(intFirstbuffer)
+                    #print("BUFFER")
+                    #print(firstbuffer)
+                    offset+=4
+                
+#                try:
+ #                   for i in range(sensors):
+  #                      firstbuffer = int(data[offset:])
+   #                     print()
+    #                    print("BUFFER")
+     #                   print(firstbuffer)
+      #                  offster+=4
+       #         except:
+        #            print("Error")
+                #print(data[3])
                 #print(bpy.context.scene.smartsuit_bone)
                 #print("thread running")
                 #print(bpy.types.Scene.smartsuit_bone.data)
                 ob = bpy.data.objects.get(bpy.context.scene.smartsuit_bone)#bpy.context.scene.objects.active
+                ob =bpy.types.Object.my_string_prop #= bpy.props.StringProperty
+                #print(type(ob))
                 #print("OB " + str(ob))
                 # And you can rotate the object the same way
                 ob.rotation_euler = (ob.rotation_euler.x + 1,ob.rotation_euler.y + 1,0)  # Note that you n
@@ -89,103 +146,16 @@ class SmartsuitStopListener(bpy.types.Operator):
  
     def execute(self, context):
         receiver.stop()
-        return{'FINISHED'}   
-
-class HelloWorldPanel(bpy.types.Panel):   #change to modifier instead of panel
-    """Creates a Panel in the Object properties window"""
-    bl_label = "Smartsuit Pro Panel"
-    bl_idname = "OBJECT_PT_hello"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-
-    def threaded(self):
-        for i in range(0, 100):
-            sleep(10)
-            
-
-    def draw(self, context):
-        layout = self.layout
-
-        obj = context.object
-
-        #row = layout.row()
-        #row.label(text="Streaming port")
-        #row.prop(obj, "name")
-        
-        col = layout.column(align = True)
-        col.prop(obj, "my_string_prop")
-        #TODO MAKE THIS WORK
-        #SmartsuitReceiver.chosenPort = obj.my_string_prop
-        #print("!!!" + str(chosenPort))
-        
-#        col = layout.column()
-#        col.prop(obj, "string")
-#        col = layout.column()
-#        col.prop(obj, "size")
-#        col = layout.column()
-#        col.operator("some.thing")
-        
-        if receiver.running:
-            row = layout.row()
-            row.operator("Smartsuit.stop_listener")
-        else:
-            row = layout.row()
-            row.operator("smartsuit.start_listener")
-
-        col = layout.column(align=True)
-        col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
-
-        row = layout.row()
-        row.prop_search(context.scene, "smartsuit_bone", context.scene, "objects")
-        row = layout.row()
-        row.prop_search(context.scene, "smartsuit_hip", context.scene, "objects")
-        #row = layout.row()
-        #row.operator("mesh.primitive_cube_add")
-
-# class Add_some_thing(Operator):
-
-#     bl_idname = "some.thing"
-#     bl_label = "Streaming port"
-#     bl_description = "some description"
-
-#     def execute(self, context):
-
-#         # you need to get your stored properties
-#         scene = context.object 
-#         # you get some of your properties to use them
-#         string = scene.string
-#         size = scene.size
-
-#         # you do some thing to use your property with
-#         bpy.ops.mesh.primitive_cube_add()
-#         # you can change some of the added object props as the defined in the ui property 
-#         context.active_object.name = string 
-#         context.active_object.scale = [size, size, size]
-#         return {'FINISHED'}
-
-# # your properties here
-# class addon_Properties(PropertyGroup):
-
-#     string = StringProperty(
-#         name = "the name",
-#         description="name of the object to add",
-#         default = ""
-#         )
-#     size = FloatProperty(
-#         name = "size",
-#         description = "size of the object to add",
-#         default = 1.0,
-#         )  
+        return{'FINISHED'}
 
 class IgnitProperties(bpy.types.PropertyGroup):
     my_enum = bpy.props.EnumProperty(
         name = "My options",
         description = "My enum description",
         items = [
-            ("Silver" , "Silver" , "Description..."),
-            ("Gold", "Gold", "other description"),
-            ("Space Grey", "Space Grey", "Some other description")            
+            ("Receiver" , "Receiver" , "Description..."),
+            ("Controller", "Controller", "other description"),
+            #("Space Grey", "Space Grey", "Some other description")            
         ],
         #update=update_after_enum()
     )
@@ -198,23 +168,43 @@ class IgnitProperties(bpy.types.PropertyGroup):
 
 class IGLayoutDemoPanel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
-    bl_label = "IG Layout Demo"
+    bl_label = "Smartsuit Pro Panel"
     bl_idname = "SCENE_PT_layout"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "scene"
+    bl_context = "object"
 
     def draw(self, context):
         layout = self.layout
-        scene = context.scene
+        scene = context.object
         row = layout.row()
         row.prop(scene.ignit_panel, "my_enum", expand=True)
+        
+        if scene.ignit_panel.my_enum == 'Receiver':
+            obj = context.object
+            col = layout.column(align = True)
+            col.prop(obj, "my_string_prop")
+            if receiver.running:
+                row = layout.row()
+                row.operator("Smartsuit.stop_listener")
+            else:
+                row = layout.row()
+                row.operator("smartsuit.start_listener")
+
+        elif scene.ignit_panel.my_enum == 'Controller':
+            col = layout.column(align=True)
+            col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
+
+            row = layout.row()
+            row.prop_search(context.scene, "smartsuit_bone", context.scene, "objects")
+            row = layout.row()
+            row.prop_search(context.scene, "smartsuit_hip", context.scene, "objects")
 
 
 #register and unregister all the relevant classes in the file
 def register ():
     bpy.utils.register_module(__name__)
-    bpy.types.Scene.ignit_panel = bpy.props.PointerProperty(type=IgnitProperties)
+    bpy.types.Object.ignit_panel = bpy.props.PointerProperty(type=IgnitProperties)
     bpy.types.Object.my_string_prop = bpy.props.StringProperty \
       (
         name = "Streaming port",
@@ -224,7 +214,7 @@ def register ():
     
 def unregister ():
     bpy.utils.unregister_module(__name__)
-    del bpy.types.Scene.ignit_panel
+    del bpy.types.Object.ignit_panel
     del bpy.types.Object.my_string_prop
 
 if __name__ == "__main__":
