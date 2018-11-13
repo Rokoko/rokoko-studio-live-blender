@@ -1,9 +1,25 @@
+#defining plugin informations visible when user adds it in user preferences
+bl_info = {"name": "Smartsuit", "author": "Rokoko", "category": "Animation"}
+
 import bpy
 from threading import Thread
 from time import sleep
 from random import randint
 from mathutils import Vector
 import socket
+from enum import Enum
+
+from bpy.types import(
+        Panel,
+        Operator,
+        PropertyGroup
+        )
+
+from bpy.props import(
+        StringProperty,
+        PointerProperty,
+        FloatProperty
+        )
 
 class SmartsuitReceiver():
 
@@ -18,6 +34,7 @@ class SmartsuitReceiver():
     def run(self):
         UDP_IP = "0.0.0.0"
         UDP_PORT = 14041
+        
         
         sock = socket.socket(socket.AF_INET, # Internet
                              socket.SOCK_DGRAM) # UDP
@@ -69,7 +86,7 @@ class SmartsuitStopListener(bpy.types.Operator):
         receiver.stop()
         return{'FINISHED'}   
 
-class HelloWorldPanel(bpy.types.Panel):
+class HelloWorldPanel(bpy.types.Panel):   #change to modifier instead of panel
     """Creates a Panel in the Object properties window"""
     bl_label = "Smartsuit Pro Panel"
     bl_idname = "OBJECT_PT_hello"
@@ -87,13 +104,19 @@ class HelloWorldPanel(bpy.types.Panel):
 
         obj = context.object
 
-        row = layout.row()
-        row.label(text="Hello world!", icon='WORLD_DATA')
-
-        row = layout.row()
-        row.label(text="Active object is: " + obj.name)
-        row = layout.row()
-        row.prop(obj, "name")
+        #row = layout.row()
+        #row.label(text="Streaming port")
+        #row.prop(obj, "name")
+        
+        col = layout.column(align = True)
+        col.prop(obj, "my_string_prop")
+        
+#        col = layout.column()
+#        col.prop(obj, "string")
+#        col = layout.column()
+#        col.prop(obj, "size")
+#        col = layout.column()
+#        col.operator("some.thing")
         
         if receiver.running:
             row = layout.row()
@@ -101,14 +124,102 @@ class HelloWorldPanel(bpy.types.Panel):
         else:
             row = layout.row()
             row.operator("smartsuit.start_listener")
-                
+
+        col = layout.column(align=True)
+        col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
+
         row = layout.row()
         row.prop_search(context.scene, "smartsuit_bone", context.scene, "objects")
         row = layout.row()
         row.prop_search(context.scene, "smartsuit_hip", context.scene, "objects")
-
         #row = layout.row()
         #row.operator("mesh.primitive_cube_add")
 
+# class Add_some_thing(Operator):
 
-bpy.utils.register_module(__name__)
+#     bl_idname = "some.thing"
+#     bl_label = "Streaming port"
+#     bl_description = "some description"
+
+#     def execute(self, context):
+
+#         # you need to get your stored properties
+#         scene = context.object 
+#         # you get some of your properties to use them
+#         string = scene.string
+#         size = scene.size
+
+#         # you do some thing to use your property with
+#         bpy.ops.mesh.primitive_cube_add()
+#         # you can change some of the added object props as the defined in the ui property 
+#         context.active_object.name = string 
+#         context.active_object.scale = [size, size, size]
+#         return {'FINISHED'}
+
+# # your properties here
+# class addon_Properties(PropertyGroup):
+
+#     string = StringProperty(
+#         name = "the name",
+#         description="name of the object to add",
+#         default = ""
+#         )
+#     size = FloatProperty(
+#         name = "size",
+#         description = "size of the object to add",
+#         default = 1.0,
+#         )  
+
+class IgnitProperties(bpy.types.PropertyGroup):
+    my_enum = bpy.props.EnumProperty(
+        name = "My options",
+        description = "My enum description",
+        items = [
+            ("Silver" , "Silver" , "Description..."),
+            ("Gold", "Gold", "other description"),
+            ("Space Grey", "Space Grey", "Some other description")            
+        ],
+        #update=update_after_enum()
+    )
+    # my_string = bpy.props.StringProperty()
+    # my_integer = bpy.props.IntProperty()
+
+    def update_after_enum(self, context):
+        print('self.my_enum ---->', self.my_enum)
+
+
+class IGLayoutDemoPanel(bpy.types.Panel):
+    """Creates a Panel in the scene context of the properties editor"""
+    bl_label = "IG Layout Demo"
+    bl_idname = "SCENE_PT_layout"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        row = layout.row()
+        row.prop(scene.ignit_panel, "my_enum", expand=True)
+
+
+#register and unregister all the relevant classes in the file
+def register ():
+    bpy.utils.register_module(__name__)
+    bpy.types.Scene.ignit_panel = bpy.props.PointerProperty(type=IgnitProperties)
+    bpy.types.Object.my_string_prop = bpy.props.StringProperty \
+      (
+        name = "Streaming port",
+        description = "My description",
+        default = "default"
+      )
+    
+def unregister ():
+    bpy.utils.unregister_module(__name__)
+    del bpy.types.Scene.ignit_panel
+    del bpy.types.Object.my_string_prop
+
+if __name__ == "__main__":
+    register()
+
+print("DONEEE")
