@@ -35,22 +35,20 @@ class Suit():
 class Frame():
     
     def __init__(self):#SENSORS STRUCT
-        addr = b'\xff'
-        isAnotherSensorConnected = b'\xff'
-        behaviour = b'\xff'
-        command = b'\xff'
+        self.addr = b'\xff'
+        self.isAnotherSensorConnected = b'\xff'
+        self.behaviour = b'\xff'
+        self.command = b'\xff'
         
-        acceleration = np.zeros([0.0,0.0,0.0])
-        quaternion = np.zeros([0.0,0.0,0.0,0.0])
-        gyro = np.zeros([0.0,0.0,0.0])
-        magnetometer = np.zeros([0.0,0.0,0.0])
-        microseconds = 0
+        self.acceleration = []
+        self.quaternion = []
+        self.gyro = []
+        self.magnetometer = []
+        self.microseconds = 0
         
         
 #SRECEIVER IS HANDLED HERE
 class SmartsuitReceiver():
-    
-    #chosenPort = 0
 
     def __init__(self):
         self.running = False
@@ -81,94 +79,72 @@ class SmartsuitReceiver():
                 data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
                 offset = 4
                 suitname = (data[:offset-1]).decode('unicode_escape')
-                
+            
                 sensors = (len(data) - offset) / 60
 
                 current_index = offset
                 suit = Suit()
                 
                 #print (data)
+                print("HEREEE " + str(int(sensors)))
                 
-                for i in range(1):#(int(sensors)):
-                    #WORKING ?
-                    frame = Frame()
-                    firstbuffer = data[current_index:current_index+offset]
-                    print (firstbuffer)
-                    intFirstbuffer = int.from_bytes(firstbuffer, byteorder='big', signed = False)
-                    #intFirstBuffer = struct.unpack('i', data)[0]
-                    print(intFirstbuffer & 0xff)
-                    print((intFirstbuffer >> 8) & 0xff)
-                    print((intFirstbuffer >> 16) & 0xff)
-                    print((intFirstbuffer >> 24) & 0xff)
-                    
-                    frame.addr = (intFirstbuffer & 0xff)
-                    frame.isAnotherSensorConnected = ((intFirstbuffer >> 8) & 0xff)
-                    frame.behaviour = rint((intFirstbuffer >> 16) & 0xff)
-                    frame.command = ((intFirstbuffer >> 24) & 0xff)
+                for i in range(int(sensors)):
+                    try:
+                        frame = Frame()
+                        firstbuffer = data[current_index:current_index+offset]
+                        
+                        intFirstbuffer = struct.unpack('I', data[current_index:current_index+offset])[0]
+                        
+                        frame.addr = struct.pack("B", intFirstbuffer & 0xff)
+                        
+                        frame.isAnotherSensorConnected = bytes((intFirstbuffer >> 8) & 0xff)
+                        frame.behaviour = bytes((intFirstbuffer >> 16) & 0xff)
+                        frame.command = bytes((intFirstbuffer >> 24) & 0xff)
 
-                    current_index += offset
-                    #acceleration
-                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    print()
-                    print("value")
-                    print (x)
-                    current_index += offset
-                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    frame.acceleration = np.zeros([x, y, z])
-                    #quaternion
-                    w = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    frame.quaternion = np.zeros([w, x, y, z])
-                    #gyro
-                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    frame.gyro = np.zeros([x, y, z])
-                    #magnetometer
-                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                    current_index += offset
-                    frame.magnetometer = np.zeros([x, y, z])
-                    #timestamp
-                    frame.microseconds = struct.unpack('i', data[current_index:current_index+offset])
-                    
-                    suit.frames.append(frame)
-                    
-                
-#                try:
- #                   for i in range(sensors):
-  #                      firstbuffer = int(data[offset:])
-   #                     print()
-    #                    print("BUFFER")
-     #                   print(firstbuffer)
-      #                  offster+=4
-       #         except:
-        #            print("Error")
-                #print(data[3])
-                #print(bpy.context.scene.smartsuit_bone)
-                #print("thread running")
-                #print(bpy.types.Scene.smartsuit_bone.data)
-                ob = bpy.data.objects.get(bpy.context.scene.smartsuit_bone)#bpy.context.scene.objects.active
-                ob =bpy.types.Object.my_string_prop #= bpy.props.StringProperty
-                #print(type(ob))
-                #print("OB " + str(ob))
-                # And you can rotate the object the same way
-                #ob.rotation_euler = (ob.rotation_euler.x + 1,ob.rotation_euler.y + 1,0)  # Note that you n
+                        current_index += offset
+                        #acceleration
+                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        frame.acceleration.append([x, y, z])
+                        #quaternion
+                        w = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        frame.quaternion.append([w, x, y, z])
+                        #gyro
+                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        frame.gyro.append([x, y, z])
+                        #magnetometer
+                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        frame.magnetometer.append([x,y,z])
+                        #timestamp
+                        frame.microseconds = struct.unpack('I', data[current_index:current_index+offset])[0]
+                        current_index += offset
+                        
+                        suit.frames.clear()
+                        suit.frames.append(frame)
+                        
+                    except Exception as e:
+                        print(e)
             except:
                 pass
         sock.shutdown(SHUT_RDWR)
