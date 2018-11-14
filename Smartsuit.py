@@ -9,6 +9,7 @@ from mathutils import Vector
 from socket import *
 from enum import Enum
 import numpy as np
+import struct
 
 from bpy.types import(
         Panel,
@@ -22,6 +23,7 @@ from bpy.props import(
         FloatProperty
         )
 
+#SUIT AND FRAME CLASSES ARE HANDLED HERE
 class Suit():
 
     def __init__(self):
@@ -30,11 +32,7 @@ class Suit():
         
 class Frame():
     
-    def __init__(self):
-        self.name = ""
-        self.sensorsArray = []
-        
-        #SENSORS STRUCT
+    def __init__(self):#SENSORS STRUCT
         addr = b'\xff'
         isAnotherSensorConnected = b'\xff'
         behaviour = b'\xff'
@@ -46,23 +44,30 @@ class Frame():
         magnetometer = np.zeros([0.0,0.0,0.0])
         microseconds = 0
         
-
+        
+#SRECEIVER IS HANDLED HERE
 class SmartsuitReceiver():
     
     #chosenPort = 0
 
     def __init__(self):
         self.running = False
+        self.port = 14041
+        #self.chosenPort = bpy.types.Object.my_string_prop
     
     def start(self):
+        #print(self.chosenPort)
+
         print("starting listener")
         self.running = True
         self.thread = Thread(target = self.run, args=[])
         self.thread.start()
     def run(self):
         UDP_IP = "" #"" or "localhost" ?
-        UDP_PORT = 14041
+        UDP_PORT = self.port
         #UDP_PORT = chosenPort
+        print("!!!!!!")
+        print (bpy.types.Object.my_string_prop)
         
         sock = socket(AF_INET, # Internet
                          SOCK_DGRAM) # UDP
@@ -76,23 +81,78 @@ class SmartsuitReceiver():
                 data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
                 offset = 4
                 suitname = (data[:offset-1]).decode('unicode_escape')
-                #print ("SUITNAME")
-                #print(suitname)
-                #print(data[3])
-                #print(data)
-                #print(data.decode('unicode_escape'))
-                #print(type(data))
-                #print("received message:" + str(stringdata))
                 
                 sensors = (len(data) - offset) / 60
+
+                current_index = offset
+                suit = Suit()
+                suit.name = suitname
                 
-                for i in range(sensors):
-                    firstbuffer = data[offset:]
+                print (data)
+                
+                for i in range(int(sensors)):
+                    frame = Frame()
+                    
+                    firstbuffer = data[current_index:current_index+offset]
+                    print (firstbuffer)
                     intFirstbuffer = int.from_bytes(firstbuffer, byteorder='big', signed = False)
-                    #print(intFirstbuffer)
-                    #print("BUFFER")
-                    #print(firstbuffer)
-                    offset+=4
+                    #intFirstBuffer = struct.unpack('i', data)[0]
+                    print ("SENSOR: " + str(i))
+                    print(intFirstbuffer & 0xff)
+                    print((intFirstbuffer >> 8) & 0xff)
+                    print((intFirstbuffer >> 16) & 0xff)
+                    print((intFirstbuffer >> 24) & 0xff)
+                    
+                    frame.addr = (intFirstbuffer & 0xff)
+                    frame.isAnotherSensorConnected = ((intFirstbuffer >> 8) & 0xff)
+                    frame.behaviour = rint((intFirstbuffer >> 16) & 0xff)
+                    frame.command = ((intFirstbuffer >> 24) & 0xff)
+
+                    current_index += offset
+                    #acceleration
+                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    print()
+                    print("value")
+                    print (x)
+                    current_index += offset
+                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    frame.acceleration = np.zeros([x, y, z])
+                    #quaternion
+                    w = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    frame.quaternion = np.zeros([w, x, y, z])
+                    #gyro
+                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    frame.gyro = np.zeros([x, y, z])
+                    #magnetometer
+                    x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                    current_index += offset
+                    frame.magnetometer = np.zeros([x, y, z])
+                    #timestamp
+                    frame.microseconds = struct.unpack('i', data[current_index:current_index+offset])
+                    
+                    #just keep the last frame
+                    suit.frames.clear()
+                    suit.frames.append(frame)
+                    
                 
 #                try:
  #                   for i in range(sensors):
@@ -112,7 +172,7 @@ class SmartsuitReceiver():
                 #print(type(ob))
                 #print("OB " + str(ob))
                 # And you can rotate the object the same way
-                ob.rotation_euler = (ob.rotation_euler.x + 1,ob.rotation_euler.y + 1,0)  # Note that you n
+                #ob.rotation_euler = (ob.rotation_euler.x + 1,ob.rotation_euler.y + 1,0)  # Note that you n
             except:
                 pass
         sock.shutdown(SHUT_RDWR)
@@ -132,6 +192,8 @@ class SmartsuitProperty(bpy.types.PropertyGroup):
         type = bpy.types.PropertyGroup
     )
 
+
+#LISTENERS ARE HANDLED HERE
 class SmartsuitStartListener(bpy.types.Operator):
     bl_idname = "smartsuit.start_listener"
     bl_label = "Start Listener"
@@ -148,6 +210,8 @@ class SmartsuitStopListener(bpy.types.Operator):
         receiver.stop()
         return{'FINISHED'}
 
+
+#UI IS HANDLED HERE
 class IgnitProperties(bpy.types.PropertyGroup):
     my_enum = bpy.props.EnumProperty(
         name = "My options",
@@ -159,10 +223,9 @@ class IgnitProperties(bpy.types.PropertyGroup):
         ],
         #update=update_after_enum()
     )
-    # my_string = bpy.props.StringProperty()
+    #my_string = bpy.props.StringProperty()
     # my_integer = bpy.props.IntProperty()
-
-    def update_after_enum(self, context):
+    def update_after_enum(self):
         print('self.my_enum ---->', self.my_enum)
 
 
@@ -184,6 +247,7 @@ class IGLayoutDemoPanel(bpy.types.Panel):
             obj = context.object
             col = layout.column(align = True)
             col.prop(obj, "my_string_prop")
+            obj
             if receiver.running:
                 row = layout.row()
                 row.operator("Smartsuit.stop_listener")
