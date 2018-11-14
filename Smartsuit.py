@@ -24,6 +24,8 @@ from bpy.props import(
         )
 
 portNumber = 0
+suitID = "default"
+initial_suitname = "default"
 
 #SUIT AND FRAME CLASSES ARE HANDLED HERE
 class Suit():
@@ -34,7 +36,7 @@ class Suit():
         
 class Frame():
     
-    def __init__(self):#SENSORS STRUCT
+    def __init__(self):
         self.addr = b'\xff'
         self.isAnotherSensorConnected = b'\xff'
         self.behaviour = b'\xff'
@@ -47,7 +49,7 @@ class Frame():
         self.microseconds = 0
         
         
-#SRECEIVER IS HANDLED HERE
+#RECEIVER IS HANDLED HERE
 class SmartsuitReceiver():
 
     def __init__(self):
@@ -74,77 +76,97 @@ class SmartsuitReceiver():
         
         print ("Waiting on port: " + str(UDP_PORT))
         
+        count = 0
+        
         while self.running:
             try:
-                data, addr = sock.recvfrom(2048) # buffer size is 1024 bytes
+                data, addr = sock.recvfrom(2048) # buffer size is 2048 bytes
                 offset = 4
                 suitname = (data[:offset-1]).decode('unicode_escape')
+                
+                global suitID
+                print("                 SUIT ID: " + str(suitID))
+                global initial_suitname
+                if count == 0:
+                    initial_suitname = (data[:offset-1]).decode('unicode_escape')
+                    count+=1
+                    print("                     INITIAL SUIT " + str(initial_suitname))
+                
+                correct_data = False
+                
+                if suitID != "default":
+                    if suitID == suitname:
+                        correct_data = True
+                else:
+                    if suitname == initial_suitname:
+                        correct_data = True
             
-                sensors = (len(data) - offset) / 60
+                if correct_data:
+                    sensors = (len(data) - offset) / 60
+                    current_index = offset
+                    suit = Suit()
+                    
+                    print("Suit corresponds to selected one")
+                    
+                    for i in range(int(sensors)):
+                        try:
+                            frame = Frame()
+                            firstbuffer = data[current_index:current_index+offset]
+                            
+                            intFirstbuffer = struct.unpack('I', data[current_index:current_index+offset])[0]
+                            
+                            frame.addr = struct.pack("B", intFirstbuffer & 0xff)
+                            
+                            frame.isAnotherSensorConnected = bytes((intFirstbuffer >> 8) & 0xff)
+                            frame.behaviour = bytes((intFirstbuffer >> 16) & 0xff)
+                            frame.command = bytes((intFirstbuffer >> 24) & 0xff)
 
-                current_index = offset
-                suit = Suit()
-                
-                #print (data)
-                print("HEREEE " + str(int(sensors)))
-                
-                for i in range(int(sensors)):
-                    try:
-                        frame = Frame()
-                        firstbuffer = data[current_index:current_index+offset]
-                        
-                        intFirstbuffer = struct.unpack('I', data[current_index:current_index+offset])[0]
-                        
-                        frame.addr = struct.pack("B", intFirstbuffer & 0xff)
-                        
-                        frame.isAnotherSensorConnected = bytes((intFirstbuffer >> 8) & 0xff)
-                        frame.behaviour = bytes((intFirstbuffer >> 16) & 0xff)
-                        frame.command = bytes((intFirstbuffer >> 24) & 0xff)
-
-                        current_index += offset
-                        #acceleration
-                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        frame.acceleration.append([x, y, z])
-                        #quaternion
-                        w = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        frame.quaternion.append([w, x, y, z])
-                        #gyro
-                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        frame.gyro.append([x, y, z])
-                        #magnetometer
-                        x = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        y = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        z = struct.unpack('f', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        frame.magnetometer.append([x,y,z])
-                        #timestamp
-                        frame.microseconds = struct.unpack('I', data[current_index:current_index+offset])[0]
-                        current_index += offset
-                        
-                        suit.frames.clear()
-                        suit.frames.append(frame)
-                        
-                    except Exception as e:
-                        print(e)
+                            current_index += offset
+                            #acceleration
+                            x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            frame.acceleration.append([x, y, z])
+                            #quaternion
+                            w = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            frame.quaternion.append([w, x, y, z])
+                            #gyro
+                            x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            frame.gyro.append([x, y, z])
+                            #magnetometer
+                            x = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            y = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            z = struct.unpack('f', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            frame.magnetometer.append([x,y,z])
+                            #timestamp
+                            frame.microseconds = struct.unpack('I', data[current_index:current_index+offset])[0]
+                            current_index += offset
+                            
+                            suit.frames.clear()
+                            suit.frames.append(frame)
+                            
+                        except Exception as e:
+                            print(e)
+                else:
+                    print("Suit doesn't corresponds to selected one")
             except:
                 pass
         sock.shutdown(SHUT_RDWR)
@@ -216,9 +238,15 @@ class IGLayoutDemoPanel(bpy.types.Panel):
         row.prop(scene.ignit_panel, "my_enum", expand=True)
         
         global portNumber 
+        global suitID
         
         if scene.ignit_panel.my_enum == 'Receiver':
             obj = context.object
+            #ID bpy.types.Object.suit_id_prop
+            col = layout.column(align = True)
+            col.prop(obj, "suit_id_prop")
+            suitID = obj.suit_id_prop
+            #PORT
             col = layout.column(align = True)
             col.prop(obj, "my_string_prop")
             portNumber = obj.my_string_prop
@@ -249,13 +277,19 @@ def register ():
         description = "My description",
         default = "default"
       )
+      
+    bpy.types.Object.suit_id_prop = bpy.props.StringProperty \
+      (
+        name = "Suit ID",
+        description = "My description",
+        default = "default"
+      )
     
 def unregister ():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Object.ignit_panel
     del bpy.types.Object.my_string_prop
+    del bpy.types.Object.suit_id_prop
 
 if __name__ == "__main__":
     register()
-
-print("DONEEE")
