@@ -23,6 +23,8 @@ from bpy.props import(
         FloatProperty
         )
 
+portNumber = 0
+
 #SUIT AND FRAME CLASSES ARE HANDLED HERE
 class Suit():
 
@@ -52,11 +54,8 @@ class SmartsuitReceiver():
 
     def __init__(self):
         self.running = False
-        self.port = 14041
-        #self.chosenPort = bpy.types.Object.my_string_prop
     
     def start(self):
-        #print(self.chosenPort)
 
         print("starting listener")
         self.running = True
@@ -64,15 +63,16 @@ class SmartsuitReceiver():
         self.thread.start()
     def run(self):
         UDP_IP = "" #"" or "localhost" ?
-        UDP_PORT = self.port
-        #UDP_PORT = chosenPort
-        print("!!!!!!")
-        print (bpy.types.Object.my_string_prop)
+        
+        if portNumber == 0:
+            UDP_PORT = 14041
+        else:
+            UDP_PORT = portNumber
         
         sock = socket(AF_INET, # Internet
                          SOCK_DGRAM) # UDP
         sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.bind((UDP_IP, UDP_PORT))
+        sock.bind((UDP_IP, int(UDP_PORT)))
         
         print ("Waiting on port: " + str(UDP_PORT))
         
@@ -86,18 +86,16 @@ class SmartsuitReceiver():
 
                 current_index = offset
                 suit = Suit()
-                suit.name = suitname
                 
-                print (data)
+                #print (data)
                 
-                for i in range(int(sensors)):
+                for i in range(1):#(int(sensors)):
+                    #WORKING ?
                     frame = Frame()
-                    
                     firstbuffer = data[current_index:current_index+offset]
                     print (firstbuffer)
                     intFirstbuffer = int.from_bytes(firstbuffer, byteorder='big', signed = False)
                     #intFirstBuffer = struct.unpack('i', data)[0]
-                    print ("SENSOR: " + str(i))
                     print(intFirstbuffer & 0xff)
                     print((intFirstbuffer >> 8) & 0xff)
                     print((intFirstbuffer >> 16) & 0xff)
@@ -149,8 +147,6 @@ class SmartsuitReceiver():
                     #timestamp
                     frame.microseconds = struct.unpack('i', data[current_index:current_index+offset])
                     
-                    #just keep the last frame
-                    suit.frames.clear()
                     suit.frames.append(frame)
                     
                 
@@ -243,11 +239,13 @@ class IGLayoutDemoPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(scene.ignit_panel, "my_enum", expand=True)
         
+        global portNumber 
+        
         if scene.ignit_panel.my_enum == 'Receiver':
             obj = context.object
             col = layout.column(align = True)
             col.prop(obj, "my_string_prop")
-            obj
+            portNumber = obj.my_string_prop
             if receiver.running:
                 row = layout.row()
                 row.operator("Smartsuit.stop_listener")
