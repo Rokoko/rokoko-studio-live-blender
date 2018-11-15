@@ -301,26 +301,26 @@ def bone_items(self, context):
 
 class TPoseRotations():
     def __init__(self):
-        self.root = [90,-90,0] #correct??
-        self.hip = [0,0,0]
-        self.stomach = [0,0,0]
-        self.chest = [0,0,0]
-        self.neck = [0,0,0]
-        self.head = [0,0,0]
-        self.left_shoulder = [0,0,0]
-        self.left_arm = [0,0,0]
-        self.left_forearm = [0,0,0]
-        self.left_hand = [0,0,0]
-        self.right_shoulder = [0,0,0]
-        self.right_arm = [0,0,0]
-        self.right_forearm = [0,0,0]
-        self.right_hand = [0,0,0]
-        self.left_upleg = [0,0,0]
-        self.left_leg = [0,0,0]
-        self.left_foot = [0,0,0]
-        self.right_upleg = [0,0,0]
-        self.right_leg = [0,0,0]
-        self.right_foot = [0,0,0]
+        #self.root = [90,-90,0] #correct??
+        self.hip =              [-0.000000, 0.707, 0.707, 0.000000]
+        self.stomach =          [1.000, 0.000, 0.000, 0.000]
+        self.chest =            [1.000, 0.000, -0.000, 0.000]
+        self.neck =             [1.000, 0.000, -0.000, 0.000]
+        self.head =             [1.000, 0.000, 0.000, 0.000]
+        self.left_shoulder =    [1.000, 0.000, -0.000, -0.000]
+        self.left_arm =         [1.000, 0.000, -0.000000, -0.000000]
+        self.left_forearm =     [1.000, -0.000, -0.000, -0.00000]
+        self.left_hand =        [1.000, 0.000, 0.000000, 0.000001]
+        self.right_shoulder =   [1.000, -0.000, -0.000, 0.000]
+        self.right_arm =        [1.000, -0.000, 0.000001, 0.000001]
+        self.right_forearm =    [1.000, 0.000, -0.000, 0.0000000]
+        self.right_hand =       [1.000, 0.000, -0.000, 0.000]
+        self.left_upleg =       [1.000, -0.000, -0.000000, -0.000000]
+        self.left_leg =         [1.000, -0.000, 0.000000, 0.000000]
+        self.left_foot =        [1.000, 0.000001, -0.000001, -0.000]
+        self.right_upleg =      [1.000, -0.000, -0.000, 0.000000]
+        self.right_leg =        [1.000, 0.000, -0.000, -0.000000]
+        self.right_foot =       [1.000, 0.000000, 0.000000, -0.000]
 
 
 #register and unregister all the relevant classes in the file
