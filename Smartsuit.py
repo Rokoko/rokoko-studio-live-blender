@@ -253,9 +253,9 @@ class IGLayoutDemoPanel(bpy.types.Panel):
             
             sce = context.scene
             col = layout.column()
-            col.prop(sce, "arma")
+            col.prop(sce, "arma", text = "Armature")
 
-            #col.prop_search(sce, "arma_name", bpy.data, "armatures")
+            col.prop_search(sce, "arma_name", bpy.data, "armatures", text="Armature name")
             arma = bpy.data.armatures.get(sce.arma_name)
             if arma is not None:
                 #col.prop_search(sce, "bone_name", arma, "bones")
@@ -299,6 +299,30 @@ def bone_items(self, context):
         return
     return [(bone.name, bone.name, "") for bone in arma.data.bones]
 
+class TPoseRotations():
+    def __init__(self):
+        self.root = [90,-90,0] #correct??
+        self.hip = [0,0,0]
+        self.stomach = [0,0,0]
+        self.chest = [0,0,0]
+        self.neck = [0,0,0]
+        self.head = [0,0,0]
+        self.left_shoulder = [0,0,0]
+        self.left_arm = [0,0,0]
+        self.left_forearm = [0,0,0]
+        self.left_hand = [0,0,0]
+        self.right_shoulder = [0,0,0]
+        self.right_arm = [0,0,0]
+        self.right_forearm = [0,0,0]
+        self.right_hand = [0,0,0]
+        self.left_upleg = [0,0,0]
+        self.left_leg = [0,0,0]
+        self.left_foot = [0,0,0]
+        self.right_upleg = [0,0,0]
+        self.right_leg = [0,0,0]
+        self.right_foot = [0,0,0]
+
+
 #register and unregister all the relevant classes in the file
 def register ():
     bpy.utils.register_module(__name__)
@@ -318,6 +342,7 @@ def register ():
       )
       
     bpy.types.Scene.arma = bpy.props.EnumProperty(items=arma_items, update=arma_upd)
+    bpy.types.Scene.arma_name = bpy.props.StringProperty()
     bpy.types.Scene.smartsuit_hip = bpy.props.StringProperty("smartsuit_hip")
     bpy.types.Scene.smartsuit_stomach = bpy.props.StringProperty("smartsuit_stomach")
     bpy.types.Scene.smartsuit_chest = bpy.props.StringProperty("smartsuit_chest")
@@ -345,6 +370,7 @@ def unregister ():
     del bpy.types.Object.suit_id_prop
     
     del bpy.types.Scene.arma
+    del bpy.types.Scene.arma_name
     del bpy.types.Scene.smartsuit_hip
     del bpy.types.Scene.smartsuit_stomach
     del bpy.types.Scene.smartsuit_chest
@@ -367,3 +393,5 @@ def unregister ():
 
 if __name__ == "__main__":
     register()
+    
+print("DONE")
