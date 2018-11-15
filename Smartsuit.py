@@ -194,6 +194,14 @@ class SmartsuitStopListener(bpy.types.Operator):
     def execute(self, context):
         receiver.stop()
         return{'FINISHED'}
+    
+class ButtonInitializeSkeleton(bpy.types.Operator):
+    bl_idname = "button.initialize_skeleton"
+    bl_label = "Initialize skeleton"
+ 
+    def execute(self, context):
+        print("HERE")
+        return{'FINISHED'}  
 
 #UI IS HANDLED HERE
 class IgnitProperties(bpy.types.PropertyGroup):
@@ -212,7 +220,7 @@ class IgnitProperties(bpy.types.PropertyGroup):
         print('self.my_enum ---->', self.my_enum)
 
 
-class IGLayoutDemoPanel(bpy.types.Panel):
+class SmartsuitProPanel(bpy.types.Panel):
     """Creates a Panel in the scene context of the properties editor"""
     bl_label = "Smartsuit Pro Panel"
     bl_idname = "SCENE_PT_layout"
@@ -224,12 +232,12 @@ class IGLayoutDemoPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.object
         row = layout.row()
-        row.prop(scene.ignit_panel, "my_enum", expand=True)
+        row.prop(scene.smartsuit_panel, "my_enum", expand=True)
         
         global portNumber 
         global suitID
         
-        if scene.ignit_panel.my_enum == 'Receiver':
+        if scene.smartsuit_panel.my_enum == 'Receiver':
             obj = context.object
             #ID bpy.types.Object.suit_id_prop
             col = layout.column(align = True)
@@ -246,7 +254,7 @@ class IGLayoutDemoPanel(bpy.types.Panel):
                 row = layout.row()
                 row.operator("smartsuit.start_listener")
 
-        elif scene.ignit_panel.my_enum == 'Controller':
+        elif scene.smartsuit_panel.my_enum == 'Controller':
             #col = layout.column(align=True)
             #col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
             
@@ -278,6 +286,11 @@ class IGLayoutDemoPanel(bpy.types.Panel):
                 col.prop_search(sce, "smartsuit_rightUpleg", arma, "bones", icon = 'BONE_DATA', text = "Right Up Leg")
                 col.prop_search(sce, "smartsuit_rightLeg", arma, "bones", icon = 'BONE_DATA', text = "Right Leg")
                 col.prop_search(sce, "smartsuit_rightFoot", arma, "bones", icon = 'BONE_DATA', text = "Right Foot")
+                
+            col = layout.column(align=True)
+            col.operator("button.initialize_skeleton")
+            
+ 
             
 def arma_items(self, context):
     obs = []
@@ -326,7 +339,7 @@ class TPoseRotations():
 #register and unregister all the relevant classes in the file
 def register ():
     bpy.utils.register_module(__name__)
-    bpy.types.Object.ignit_panel = bpy.props.PointerProperty(type=IgnitProperties)
+    bpy.types.Object.smartsuit_panel = bpy.props.PointerProperty(type=IgnitProperties)
     bpy.types.Object.my_string_prop = bpy.props.StringProperty \
       (
         name = "Streaming port",
@@ -365,7 +378,7 @@ def register ():
     
 def unregister ():
     bpy.utils.unregister_module(__name__)
-    del bpy.types.Object.ignit_panel
+    del bpy.types.Object.smartsuit_panel
     del bpy.types.Object.my_string_prop
     del bpy.types.Object.suit_id_prop
     
