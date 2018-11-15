@@ -195,32 +195,6 @@ class SmartsuitStopListener(bpy.types.Operator):
         receiver.stop()
         return{'FINISHED'}
 
-class SmartsuitProperty(bpy.types.PropertyGroup):
-
-    bpy.types.Scene.Hip = bpy.props.StringProperty("smartsuit_hip")
-    bpy.types.Scene.Stomach = bpy.props.StringProperty("smartsuit_stomach")
-    bpy.types.Scene.Chest = bpy.props.StringProperty("smartsuit_chest")
-    bpy.types.Scene.Neck = bpy.props.StringProperty("smartsuit_neck")
-    bpy.types.Scene.Head = bpy.props.StringProperty("smartsuit_head")
-    bpy.types.Scene.Left_Shoulder = bpy.props.StringProperty("smartsuit_leftShoulder")
-    bpy.types.Scene.Left_Arm = bpy.props.StringProperty("smartsuit_leftArm")
-    bpy.types.Scene.Left_Forearm = bpy.props.StringProperty("smartsuit_leftForeArm")
-    bpy.types.Scene.Left_Hand = bpy.props.StringProperty("smartsuit_leftHand")
-    bpy.types.Scene.Right_Shoulder = bpy.props.StringProperty("smartsuit_rightShoulder")
-    bpy.types.Scene.Right_Arm = bpy.props.StringProperty("smartsuit_rightArm")
-    bpy.types.Scene.Right_Forearm = bpy.props.StringProperty("smartsuit_rightForearm")
-    bpy.types.Scene.Right_Hand = bpy.props.StringProperty("smartsuit_rightHand")
-    bpy.types.Scene.Left_Up_Leg = bpy.props.StringProperty("smartsuit_leftUpLeg")
-    bpy.types.Scene.Left_Leg = bpy.props.StringProperty("smartsuit_leftLeg")
-    bpy.types.Scene.Left_Foot = bpy.props.StringProperty("smartsuit_leftFoot")
-    bpy.types.Scene.Right_Up_Leg = bpy.props.StringProperty("smartsuit_rightUpleg")
-    bpy.types.Scene.Right_Leg = bpy.props.StringProperty("smartsuit_rightLeg")
-    bpy.types.Scene.Right_Foot = bpy.props.StringProperty("smartsuit_rightFoot")
-    
-    coll = bpy.props.CollectionProperty(
-        type = bpy.types.PropertyGroup
-    )
-
 #UI IS HANDLED HERE
 class IgnitProperties(bpy.types.PropertyGroup):
     my_enum = bpy.props.EnumProperty(
@@ -275,51 +249,55 @@ class IGLayoutDemoPanel(bpy.types.Panel):
         elif scene.ignit_panel.my_enum == 'Controller':
             #col = layout.column(align=True)
             #col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
-
-            row = layout.row()
-            row.prop_search(context.scene, "Hip", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Stomach", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Chest", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Neck", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Head", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Shoulder", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Arm", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Forearm", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Hand", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Shoulder", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Arm", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Forearm", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Hand", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Up_Leg", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Leg", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Left_Foot", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Up_Leg", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Leg", context.scene, "objects", icon = 'BONE_DATA')
-            row = layout.row()
-            row.prop_search(context.scene, "Right_Foot", context.scene, "objects", icon = 'BONE_DATA')
             
+            
+            sce = context.scene
+            col = layout.column()
+            col.prop(sce, "arma")
 
-#layout.prop(scene, "mychosenObject")
+            #col.prop_search(sce, "arma_name", bpy.data, "armatures")
+            arma = bpy.data.armatures.get(sce.arma_name)
+            if arma is not None:
+                #col.prop_search(sce, "bone_name", arma, "bones")
+                col.prop_search(sce, "smartsuit_hip", arma, "bones", icon = 'BONE_DATA', text = "Hip")
+                col.prop_search(sce, "smartsuit_stomach", arma, "bones", icon = 'BONE_DATA', text = "Stomach")
+                col.prop_search(sce, "smartsuit_chest", arma, "bones", icon = 'BONE_DATA', text = "Chest")
+                col.prop_search(sce, "smartsuit_neck", arma, "bones", icon = 'BONE_DATA', text = "Neck")
+                col.prop_search(sce, "smartsuit_head", arma, "bones", icon = 'BONE_DATA', text = "Head")
+                col.prop_search(sce, "smartsuit_leftShoulder", arma, "bones", icon = 'BONE_DATA', text = "Left Shoulder")
+                col.prop_search(sce, "smartsuit_leftArm", arma, "bones", icon = 'BONE_DATA', text = "Left Arm")
+                col.prop_search(sce, "smartsuit_leftForeArm", arma, "bones", icon = 'BONE_DATA', text = "Left Forearm")
+                col.prop_search(sce, "smartsuit_leftHand", arma, "bones", icon = 'BONE_DATA', text = "Left Hand")
+                col.prop_search(sce, "smartsuit_rightShoulder", arma, "bones", icon = 'BONE_DATA', text = "Right Shoulder")
+                col.prop_search(sce, "smartsuit_rightArm", arma, "bones", icon = 'BONE_DATA', text = "Right Arm")
+                col.prop_search(sce, "smartsuit_rightForearm", arma, "bones", icon = 'BONE_DATA', text = "Right Forearm")
+                col.prop_search(sce, "smartsuit_rightHand", arma, "bones", icon = 'BONE_DATA', text = "Right Hand")
+                col.prop_search(sce, "smartsuit_leftUpLeg", arma, "bones", icon = 'BONE_DATA', text = "Left Up Leg")
+                col.prop_search(sce, "smartsuit_leftLeg", arma, "bones", icon = 'BONE_DATA', text = "Left Leg")
+                col.prop_search(sce, "smartsuit_leftFoot", arma, "bones", icon = 'BONE_DATA', text = "Left Foot")
+                col.prop_search(sce, "smartsuit_rightUpleg", arma, "bones", icon = 'BONE_DATA', text = "Right Up Leg")
+                col.prop_search(sce, "smartsuit_rightLeg", arma, "bones", icon = 'BONE_DATA', text = "Right Leg")
+                col.prop_search(sce, "smartsuit_rightFoot", arma, "bones", icon = 'BONE_DATA', text = "Right Foot")
+            
+def arma_items(self, context):
+    obs = []
+    for ob in context.scene.objects:
+        if ob.type == 'ARMATURE':
+            obs.append((ob.name, ob.name, ""))
+    return obs
 
-def scene_mychosenobject_poll(self, object):
-    return object.type == 'CURVE'
+def arma_upd(self, context):
+    self.arma_coll.clear()
+    for ob in context.scene.objects:
+        if ob.type == 'ARMATURE':
+            item = self.arma_coll.add()
+            item.name = ob.name
+
+def bone_items(self, context):
+    arma = context.scene.objects.get(self.arma)
+    if arma is None:
+        return
+    return [(bone.name, bone.name, "") for bone in arma.data.bones]
 
 #register and unregister all the relevant classes in the file
 def register ():
@@ -338,12 +316,54 @@ def register ():
         description = "My description",
         default = "default"
       )
+      
+    bpy.types.Scene.arma = bpy.props.EnumProperty(items=arma_items, update=arma_upd)
+    bpy.types.Scene.smartsuit_hip = bpy.props.StringProperty("smartsuit_hip")
+    bpy.types.Scene.smartsuit_stomach = bpy.props.StringProperty("smartsuit_stomach")
+    bpy.types.Scene.smartsuit_chest = bpy.props.StringProperty("smartsuit_chest")
+    bpy.types.Scene.smartsuit_neck = bpy.props.StringProperty("smartsuit_neck")
+    bpy.types.Scene.smartsuit_head = bpy.props.StringProperty("smartsuit_head")
+    bpy.types.Scene.smartsuit_leftShoulder = bpy.props.StringProperty("smartsuit_leftShoulder")
+    bpy.types.Scene.smartsuit_leftArm = bpy.props.StringProperty("smartsuit_leftArm")
+    bpy.types.Scene.smartsuit_leftForeArm = bpy.props.StringProperty("smartsuit_leftForeArm")
+    bpy.types.Scene.smartsuit_leftHand = bpy.props.StringProperty("smartsuit_leftHand")
+    bpy.types.Scene.smartsuit_rightShoulder = bpy.props.StringProperty("smartsuit_rightShoulder")
+    bpy.types.Scene.smartsuit_rightArm = bpy.props.StringProperty("smartsuit_rightArm")
+    bpy.types.Scene.smartsuit_rightForearm = bpy.props.StringProperty("smartsuit_rightForearm")
+    bpy.types.Scene.smartsuit_rightHand = bpy.props.StringProperty("smartsuit_rightHand")
+    bpy.types.Scene.smartsuit_leftUpLeg = bpy.props.StringProperty("smartsuit_leftUpLeg")
+    bpy.types.Scene.smartsuit_leftLeg = bpy.props.StringProperty("smartsuit_leftLeg")
+    bpy.types.Scene.smartsuit_leftFoot = bpy.props.StringProperty("smartsuit_leftFoot")
+    bpy.types.Scene.smartsuit_rightUpleg = bpy.props.StringProperty("smartsuit_rightUpleg")
+    bpy.types.Scene.smartsuit_rightLeg = bpy.props.StringProperty("smartsuit_rightLeg")
+    bpy.types.Scene.smartsuit_rightFoot = bpy.props.StringProperty("smartsuit_rightFoot")
     
 def unregister ():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Object.ignit_panel
     del bpy.types.Object.my_string_prop
     del bpy.types.Object.suit_id_prop
+    
+    del bpy.types.Scene.arma
+    del bpy.types.Scene.smartsuit_hip
+    del bpy.types.Scene.smartsuit_stomach
+    del bpy.types.Scene.smartsuit_chest
+    del bpy.types.Scene.smartsuit_neck
+    del bpy.types.Scene.smartsuit_head
+    del bpy.types.Scene.smartsuit_leftShoulder
+    del bpy.types.Scene.smartsuit_leftArm
+    del bpy.types.Scene.smartsuit_leftForeArm
+    del bpy.types.Scene.smartsuit_leftHand
+    del bpy.types.Scene.smartsuit_rightShoulder
+    del bpy.types.Scene.smartsuit_rightArm
+    del bpy.types.Scene.smartsuit_rightForearm
+    del bpy.types.Scene.smartsuit_rightHand
+    del bpy.types.Scene.smartsuit_leftUpLeg
+    del bpy.types.Scene.smartsuit_leftLeg
+    del bpy.types.Scene.smartsuit_leftFoot
+    del bpy.types.Scene.smartsuit_rightUpleg
+    del bpy.types.Scene.smartsuit_rightLeg
+    del bpy.types.Scene.smartsuit_rightFoot
 
 if __name__ == "__main__":
     register()
