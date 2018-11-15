@@ -178,15 +178,6 @@ class SmartsuitReceiver():
 
 receiver = SmartsuitReceiver()
 
-class SmartsuitProperty(bpy.types.PropertyGroup):
-
-    bpy.types.Scene.smartsuit_bone = bpy.props.StringProperty("smartsuit_bone")
-    bpy.types.Scene.smartsuit_hip = bpy.props.StringProperty("Hip")
-    coll = bpy.props.CollectionProperty(
-        type = bpy.types.PropertyGroup
-    )
-
-
 #LISTENERS ARE HANDLED HERE
 class SmartsuitStartListener(bpy.types.Operator):
     bl_idname = "smartsuit.start_listener"
@@ -204,6 +195,31 @@ class SmartsuitStopListener(bpy.types.Operator):
         receiver.stop()
         return{'FINISHED'}
 
+class SmartsuitProperty(bpy.types.PropertyGroup):
+
+    bpy.types.Scene.Hip = bpy.props.StringProperty("smartsuit_hip")
+    bpy.types.Scene.Stomach = bpy.props.StringProperty("smartsuit_stomach")
+    bpy.types.Scene.Chest = bpy.props.StringProperty("smartsuit_chest")
+    bpy.types.Scene.Neck = bpy.props.StringProperty("smartsuit_neck")
+    bpy.types.Scene.Head = bpy.props.StringProperty("smartsuit_head")
+    bpy.types.Scene.Left_Shoulder = bpy.props.StringProperty("smartsuit_leftShoulder")
+    bpy.types.Scene.Left_Arm = bpy.props.StringProperty("smartsuit_leftArm")
+    bpy.types.Scene.Left_Forearm = bpy.props.StringProperty("smartsuit_leftForeArm")
+    bpy.types.Scene.Left_Hand = bpy.props.StringProperty("smartsuit_leftHand")
+    bpy.types.Scene.Right_Shoulder = bpy.props.StringProperty("smartsuit_rightShoulder")
+    bpy.types.Scene.Right_Arm = bpy.props.StringProperty("smartsuit_rightArm")
+    bpy.types.Scene.Right_Forearm = bpy.props.StringProperty("smartsuit_rightForearm")
+    bpy.types.Scene.Right_Hand = bpy.props.StringProperty("smartsuit_rightHand")
+    bpy.types.Scene.Left_Up_Leg = bpy.props.StringProperty("smartsuit_leftUpLeg")
+    bpy.types.Scene.Left_Leg = bpy.props.StringProperty("smartsuit_leftLeg")
+    bpy.types.Scene.Left_Foot = bpy.props.StringProperty("smartsuit_leftFoot")
+    bpy.types.Scene.Right_Up_Leg = bpy.props.StringProperty("smartsuit_rightUpleg")
+    bpy.types.Scene.Right_Leg = bpy.props.StringProperty("smartsuit_rightLeg")
+    bpy.types.Scene.Right_Foot = bpy.props.StringProperty("smartsuit_rightFoot")
+    
+    coll = bpy.props.CollectionProperty(
+        type = bpy.types.PropertyGroup
+    )
 
 #UI IS HANDLED HERE
 class IgnitProperties(bpy.types.PropertyGroup):
@@ -212,8 +228,7 @@ class IgnitProperties(bpy.types.PropertyGroup):
         description = "My enum description",
         items = [
             ("Receiver" , "Receiver" , "Description..."),
-            ("Controller", "Controller", "other description"),
-            #("Space Grey", "Space Grey", "Some other description")            
+            ("Controller", "Controller", "other description")        
         ],
         #update=update_after_enum()
     )
@@ -258,14 +273,53 @@ class IGLayoutDemoPanel(bpy.types.Panel):
                 row.operator("smartsuit.start_listener")
 
         elif scene.ignit_panel.my_enum == 'Controller':
-            col = layout.column(align=True)
-            col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
+            #col = layout.column(align=True)
+            #col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
 
             row = layout.row()
-            row.prop_search(context.scene, "smartsuit_bone", context.scene, "objects")
+            row.prop_search(context.scene, "Hip", context.scene, "objects", icon = 'BONE_DATA')
             row = layout.row()
-            row.prop_search(context.scene, "smartsuit_hip", context.scene, "objects")
+            row.prop_search(context.scene, "Stomach", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Chest", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Neck", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Head", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Shoulder", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Arm", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Forearm", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Hand", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Shoulder", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Arm", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Forearm", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Hand", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Up_Leg", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Leg", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Left_Foot", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Up_Leg", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Leg", context.scene, "objects", icon = 'BONE_DATA')
+            row = layout.row()
+            row.prop_search(context.scene, "Right_Foot", context.scene, "objects", icon = 'BONE_DATA')
+            
 
+#layout.prop(scene, "mychosenObject")
+
+def scene_mychosenobject_poll(self, object):
+    return object.type == 'CURVE'
 
 #register and unregister all the relevant classes in the file
 def register ():
