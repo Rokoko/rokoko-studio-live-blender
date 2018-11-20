@@ -2,14 +2,17 @@
 bl_info = {"name": "Smartsuit", "author": "Rokoko", "category": "Animation"}
 
 import bpy
+from bpy.props import BoolProperty
 from threading import Thread
 from time import sleep
 from random import randint
-from mathutils import Vector
 from socket import *
 from enum import Enum
 import numpy as np
 import struct
+import mathutils
+from mathutils import Quaternion 
+import math
 
 from bpy.types import(
         Panel,
@@ -26,6 +29,58 @@ from bpy.props import(
 portNumber = 0
 suitID = "default"
 initial_suitname = "default"
+
+enable_component = True
+
+class CharacterRotations():
+    def __init__(self):
+        self.character_hip              = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_stomach          = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_chest            = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_neck             = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_head             = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_shoulder    = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_arm         = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_forearm     = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_hand        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_shoulder   = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_arm        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_forearm    = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_hand       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_upleg       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_leg         = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_left_foot        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_upleg      = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_leg        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.character_right_foot       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        
+#character rotations
+character_rotations = CharacterRotations()
+
+class RotationOffsets():
+    def __init__(self):
+        self.offset_hip              = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_stomach          = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_chest            = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_neck             = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_head             = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_shoulder    = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_arm         = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_forearm     = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_hand        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_shoulder   = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_arm        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_forearm    = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_hand       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_upleg       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_leg         = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_left_foot        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_upleg      = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_leg        = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_right_foot       = Quaternion((0.0, 0.0, 0.0, 0.0))
+
+#character rotations
+rotation_offsets = RotationOffsets()
 
 #SUIT AND FRAME CLASSES ARE HANDLED HERE
 class Suit():
@@ -47,6 +102,28 @@ class Frame():
         self.gyro = []
         self.magnetometer = []
         self.microseconds = 0
+        
+class SensorAddress():
+    def __init__(self):
+        self.hip_sensor              = 160
+        self.stomach_sensor          = 1
+        self.chest_sensor            = 2
+        self.neck_sensor             = 3
+        self.head_sensor             = 129
+        self.left_shoulder_sensor    = 130
+        self.left_arm_sensor         = 131
+        self.left_forearm_sensor     = 161
+        self.left_hand_sensor        = 162
+        self.right_shoulder_sensor   = 163
+        self.right_arm_sensor        = 64
+        self.right_forearm_sensor    = 33
+        self.right_hand_sensor       = 34
+        self.left_upleg_sensor       = 35
+        self.left_leg_sensor         = 36
+        self.left_foot_sensor        = 97
+        self.right_upleg_sensor      = 98
+        self.right_leg_sensor        = 99
+        self.right_foot_sensor       = 100
         
         
 #RECEIVER IS HANDLED HERE
@@ -201,7 +278,53 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
  
     def execute(self, context):
         print("HERE")
+        
+        global rotation_offsets
+        global character_rotations
+        ideal_rotation = TPoseRotations()
+        
+        rotation_offsets.offset_hip               = ideal_rotation.hip.inverted() * character_rotations.character_hip
+        rotation_offsets.offset_stomach           = ideal_rotation.stomach.inverted() * character_rotations.character_stomach
+        rotation_offsets.offset_chest             = ideal_rotation.chest.inverted() * character_rotations.character_chest
+        rotation_offsets.offset_neck              = ideal_rotation.neck.inverted() * character_rotations.character_neck
+        rotation_offsets.offset_head              = ideal_rotation.head.inverted() * character_rotations.character_head
+        rotation_offsets.offset_left_shoulder     = ideal_rotation.left_shoulder.inverted() * character_rotations.character_left_shoulder
+        rotation_offsets.offset_left_arm          = ideal_rotation.left_arm.inverted() * character_rotations.character_left_arm
+        rotation_offsets.offset_left_forearm      = ideal_rotation.left_forearm.inverted() * character_rotations.character_left_forearm
+        rotation_offsets.offset_left_hand         = ideal_rotation.left_hand.inverted() * character_rotations.character_left_hand
+        rotation_offsets.offset_right_shoulder    = ideal_rotation.right_shoulder.inverted() * character_rotations.character_right_shoulder
+        rotation_offsets.offset_right_arm         = ideal_rotation.right_arm.inverted() * character_rotations.character_right_arm
+        rotation_offsets.offset_right_forearm     = ideal_rotation.right_forearm.inverted() * character_rotations.character_right_forearm
+        rotation_offsets.offset_right_hand        = ideal_rotation.right_hand.inverted() * character_rotations.character_right_hand
+        rotation_offsets.offset_left_upleg        = ideal_rotation.left_upleg.inverted() * character_rotations.character_left_upleg
+        rotation_offsets.offset_left_leg          = ideal_rotation.left_leg.inverted() * character_rotations.character_left_leg
+        rotation_offsets.offset_left_foot         = ideal_rotation.left_foot.inverted() * character_rotations.character_left_foot
+        rotation_offsets.offset_right_upleg       = ideal_rotation.right_upleg.inverted() * character_rotations.character_right_upleg
+        rotation_offsets.offset_right_leg         = ideal_rotation.right_leg.inverted() * character_rotations.character_right_leg
+        rotation_offsets.offset_right_foot        = ideal_rotation.right_foot.inverted() * character_rotations.character_right_foot
+        
         return{'FINISHED'}  
+    
+#Enable/Disable Operator
+class ButtonEnableDisableComponent(bpy.types.Operator):
+    bl_label = "Enable Component"
+    bl_idname = "button.enable_disable_component"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def execute(self, context):
+       #switch bool property to opposite. if you don't toggle just set to False
+        global enable_component
+        if enable_component:
+            enable_component = False
+            receiver.stop()
+        else:
+            enable_component = True
+            receiver.stop()
+        context.scene.my_bool_property = not context.scene.my_bool_property
+        return {'FINISHED'}
 
 #UI IS HANDLED HERE
 class IgnitProperties(bpy.types.PropertyGroup):
@@ -231,8 +354,18 @@ class SmartsuitProPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.object
+        
+        row = layout.row()
+        row.scale_y = 3.0
+        enable_component
+        if enable_component:
+            layout.operator("button.enable_disable_component", text = "Disable Component")
+        else:
+            layout.operator("button.enable_disable_component", text = "Enable Component")
+        
         row = layout.row()
         row.prop(scene.smartsuit_panel, "my_enum", expand=True)
+        row.enabled = context.scene.my_bool_property
         
         global portNumber 
         global suitID
@@ -241,17 +374,21 @@ class SmartsuitProPanel(bpy.types.Panel):
             obj = context.object
             #ID bpy.types.Object.suit_id_prop
             col = layout.column(align = True)
+            col.enabled = context.scene.my_bool_property
             col.prop(obj, "suit_id_prop")
             suitID = obj.suit_id_prop
             #PORT
             col = layout.column(align = True)
-            col.prop(obj, "my_string_prop")
-            portNumber = obj.my_string_prop
+            col.enabled = context.scene.my_bool_property
+            col.prop(obj, "streaming_port_property")
+            portNumber = obj.streaming_port_property
             if receiver.running:
                 row = layout.row()
+                row.enabled = context.scene.my_bool_property
                 row.operator("Smartsuit.stop_listener")
             else:
                 row = layout.row()
+                row.enabled = context.scene.my_bool_property
                 row.operator("smartsuit.start_listener")
 
         elif scene.smartsuit_panel.my_enum == 'Controller':
@@ -261,6 +398,7 @@ class SmartsuitProPanel(bpy.types.Panel):
             
             sce = context.scene
             col = layout.column()
+            col.enabled = context.scene.my_bool_property
             col.prop(sce, "arma", text = "Armature")
 
             col.prop_search(sce, "arma_name", bpy.data, "armatures", text="Armature name")
@@ -274,7 +412,7 @@ class SmartsuitProPanel(bpy.types.Panel):
                 col.prop_search(sce, "smartsuit_head", arma, "bones", icon = 'BONE_DATA', text = "Head")
                 col.prop_search(sce, "smartsuit_leftShoulder", arma, "bones", icon = 'BONE_DATA', text = "Left Shoulder")
                 col.prop_search(sce, "smartsuit_leftArm", arma, "bones", icon = 'BONE_DATA', text = "Left Arm")
-                col.prop_search(sce, "smartsuit_leftForeArm", arma, "bones", icon = 'BONE_DATA', text = "Left Forearm")
+                col.prop_search(sce, "smartsuit_leftForearm", arma, "bones", icon = 'BONE_DATA', text = "Left Forearm")
                 col.prop_search(sce, "smartsuit_leftHand", arma, "bones", icon = 'BONE_DATA', text = "Left Hand")
                 col.prop_search(sce, "smartsuit_rightShoulder", arma, "bones", icon = 'BONE_DATA', text = "Right Shoulder")
                 col.prop_search(sce, "smartsuit_rightArm", arma, "bones", icon = 'BONE_DATA', text = "Right Arm")
@@ -286,11 +424,35 @@ class SmartsuitProPanel(bpy.types.Panel):
                 col.prop_search(sce, "smartsuit_rightUpleg", arma, "bones", icon = 'BONE_DATA', text = "Right Up Leg")
                 col.prop_search(sce, "smartsuit_rightLeg", arma, "bones", icon = 'BONE_DATA', text = "Right Leg")
                 col.prop_search(sce, "smartsuit_rightFoot", arma, "bones", icon = 'BONE_DATA', text = "Right Foot")
+
+                #store current character values
+                global character_rotations
+                character_rotations.character_hip               = arma.bones[sce.smartsuit_hip].matrix.to_quaternion()
+                character_rotations.character_stomach           = arma.bones[sce.smartsuit_stomach].matrix.to_quaternion()
+                character_rotations.character_chest             = arma.bones[sce.smartsuit_chest].matrix.to_quaternion()
+                character_rotations.character_neck              = arma.bones[sce.smartsuit_neck].matrix.to_quaternion()
+                character_rotations.character_head              = arma.bones[sce.smartsuit_head].matrix.to_quaternion()
+                character_rotations.character_left_shoulder     = arma.bones[sce.smartsuit_leftShoulder].matrix.to_quaternion()
+                character_rotations.character_left_arm          = arma.bones[sce.smartsuit_leftArm].matrix.to_quaternion()
+                character_rotations.character_left_forearm      = arma.bones[sce.smartsuit_leftForearm].matrix.to_quaternion()
+                character_rotations.character_left_hand         = arma.bones[sce.smartsuit_leftHand].matrix.to_quaternion()
+                character_rotations.character_right_shoulder    = arma.bones[sce.smartsuit_rightShoulder].matrix.to_quaternion()
+                character_rotations.character_right_arm         = arma.bones[sce.smartsuit_rightArm].matrix.to_quaternion()
+                character_rotations.character_right_forearm     = arma.bones[sce.smartsuit_rightForearm].matrix.to_quaternion()
+                character_rotations.character_right_hand        = arma.bones[sce.smartsuit_rightHand].matrix.to_quaternion()
+                #character_rotations.character_left_upleg        = arma.bones[sce.smartsuit_leftUpleg].matrix.to_quaternion()
+                character_rotations.character_left_leg          = arma.bones[sce.smartsuit_leftLeg].matrix.to_quaternion()
+                character_rotations.character_left_foot         = arma.bones[sce.smartsuit_leftFoot].matrix.to_quaternion()
+                character_rotations.character_right_upleg       = arma.bones[sce.smartsuit_rightUpleg].matrix.to_quaternion()
+                character_rotations.character_right_leg         = arma.bones[sce.smartsuit_rightLeg].matrix.to_quaternion()
+                character_rotations.character_right_foot        = arma.bones[sce.smartsuit_rightFoot].matrix.to_quaternion()
                 
             col = layout.column(align=True)
+            col.enabled = context.scene.my_bool_property
             col.operator("button.initialize_skeleton")
             
- 
+def work_bone():
+     print("eheh")
             
 def arma_items(self, context):
     obs = []
@@ -315,36 +477,36 @@ def bone_items(self, context):
 class TPoseRotations():
     def __init__(self):
         #self.root = [90,-90,0] #correct??
-        self.hip =              [-0.000000, 0.707, 0.707, 0.000000]
-        self.stomach =          [1.000, 0.000, 0.000, 0.000]
-        self.chest =            [1.000, 0.000, -0.000, 0.000]
-        self.neck =             [1.000, 0.000, -0.000, 0.000]
-        self.head =             [1.000, 0.000, 0.000, 0.000]
-        self.left_shoulder =    [1.000, 0.000, -0.000, -0.000]
-        self.left_arm =         [1.000, 0.000, -0.000000, -0.000000]
-        self.left_forearm =     [1.000, -0.000, -0.000, -0.00000]
-        self.left_hand =        [1.000, 0.000, 0.000000, 0.000001]
-        self.right_shoulder =   [1.000, -0.000, -0.000, 0.000]
-        self.right_arm =        [1.000, -0.000, 0.000001, 0.000001]
-        self.right_forearm =    [1.000, 0.000, -0.000, 0.0000000]
-        self.right_hand =       [1.000, 0.000, -0.000, 0.000]
-        self.left_upleg =       [1.000, -0.000, -0.000000, -0.000000]
-        self.left_leg =         [1.000, -0.000, 0.000000, 0.000000]
-        self.left_foot =        [1.000, 0.000001, -0.000001, -0.000]
-        self.right_upleg =      [1.000, -0.000, -0.000, 0.000000]
-        self.right_leg =        [1.000, 0.000, -0.000, -0.000000]
-        self.right_foot =       [1.000, 0.000000, 0.000000, -0.000]
-
+        self.hip =              Quaternion((-0.000000, 0.707, 0.707, 0.000000))
+        self.stomach =          Quaternion((1.000, 0.000, 0.000, 0.000))
+        self.chest =            Quaternion((1.000, 0.000, -0.000, 0.000))
+        self.neck =             Quaternion((1.000, 0.000, -0.000, 0.000))
+        self.head =             Quaternion((1.000, 0.000, 0.000, 0.000))
+        self.left_shoulder =    Quaternion((1.000, 0.000, -0.000, -0.000))
+        self.left_arm =         Quaternion((1.000, 0.000, -0.000000, -0.000000))
+        self.left_forearm =     Quaternion((1.000, -0.000, -0.000, -0.00000))
+        self.left_hand =        Quaternion((1.000, 0.000, 0.000000, 0.000001))
+        self.right_shoulder =   Quaternion((1.000, -0.000, -0.000, 0.000))
+        self.right_arm =        Quaternion((1.000, -0.000, 0.000001, 0.000001))
+        self.right_forearm =    Quaternion((1.000, 0.000, -0.000, 0.0000000))
+        self.right_hand =       Quaternion((1.000, 0.000, -0.000, 0.000))
+        self.left_upleg =       Quaternion((1.000, -0.000, -0.000000, -0.000000))
+        self.left_leg =         Quaternion((1.000, -0.000, 0.000000, 0.000000))
+        self.left_foot =        Quaternion((1.000, 0.000001, -0.000001, -0.000))
+        self.right_upleg =      Quaternion((1.000, -0.000, -0.000, 0.000000))
+        self.right_leg =        Quaternion((1.000, 0.000, -0.000, -0.000000))
+        self.right_foot =       Quaternion((1.000, 0.000000, 0.000000, -0.000))
 
 #register and unregister all the relevant classes in the file
 def register ():
     bpy.utils.register_module(__name__)
     bpy.types.Object.smartsuit_panel = bpy.props.PointerProperty(type=IgnitProperties)
-    bpy.types.Object.my_string_prop = bpy.props.StringProperty \
+    bpy.types.Scene.my_bool_property = BoolProperty(name='My Bool Property', default = True)# create bool property for switching
+    bpy.types.Object.streaming_port_property = bpy.props.StringProperty \
       (
         name = "Streaming port",
         description = "My description",
-        default = "default"
+        default = "14041"
       )
       
     bpy.types.Object.suit_id_prop = bpy.props.StringProperty \
@@ -363,13 +525,13 @@ def register ():
     bpy.types.Scene.smartsuit_head = bpy.props.StringProperty("smartsuit_head")
     bpy.types.Scene.smartsuit_leftShoulder = bpy.props.StringProperty("smartsuit_leftShoulder")
     bpy.types.Scene.smartsuit_leftArm = bpy.props.StringProperty("smartsuit_leftArm")
-    bpy.types.Scene.smartsuit_leftForeArm = bpy.props.StringProperty("smartsuit_leftForeArm")
+    bpy.types.Scene.smartsuit_leftForearm = bpy.props.StringProperty("smartsuit_leftForearm")
     bpy.types.Scene.smartsuit_leftHand = bpy.props.StringProperty("smartsuit_leftHand")
     bpy.types.Scene.smartsuit_rightShoulder = bpy.props.StringProperty("smartsuit_rightShoulder")
     bpy.types.Scene.smartsuit_rightArm = bpy.props.StringProperty("smartsuit_rightArm")
     bpy.types.Scene.smartsuit_rightForearm = bpy.props.StringProperty("smartsuit_rightForearm")
     bpy.types.Scene.smartsuit_rightHand = bpy.props.StringProperty("smartsuit_rightHand")
-    bpy.types.Scene.smartsuit_leftUpLeg = bpy.props.StringProperty("smartsuit_leftUpLeg")
+    bpy.types.Scene.smartsuit_leftUpleg = bpy.props.StringProperty("smartsuit_leftUpleg")
     bpy.types.Scene.smartsuit_leftLeg = bpy.props.StringProperty("smartsuit_leftLeg")
     bpy.types.Scene.smartsuit_leftFoot = bpy.props.StringProperty("smartsuit_leftFoot")
     bpy.types.Scene.smartsuit_rightUpleg = bpy.props.StringProperty("smartsuit_rightUpleg")
@@ -379,7 +541,8 @@ def register ():
 def unregister ():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Object.smartsuit_panel
-    del bpy.types.Object.my_string_prop
+    del bpy.types.Scene.my_bool_property
+    del bpy.types.Object.streaming_port_property
     del bpy.types.Object.suit_id_prop
     
     del bpy.types.Scene.arma
@@ -391,13 +554,13 @@ def unregister ():
     del bpy.types.Scene.smartsuit_head
     del bpy.types.Scene.smartsuit_leftShoulder
     del bpy.types.Scene.smartsuit_leftArm
-    del bpy.types.Scene.smartsuit_leftForeArm
+    del bpy.types.Scene.smartsuit_leftForearm
     del bpy.types.Scene.smartsuit_leftHand
     del bpy.types.Scene.smartsuit_rightShoulder
     del bpy.types.Scene.smartsuit_rightArm
     del bpy.types.Scene.smartsuit_rightForearm
     del bpy.types.Scene.smartsuit_rightHand
-    del bpy.types.Scene.smartsuit_leftUpLeg
+    del bpy.types.Scene.smartsuit_leftUpleg
     del bpy.types.Scene.smartsuit_leftLeg
     del bpy.types.Scene.smartsuit_leftFoot
     del bpy.types.Scene.smartsuit_rightUpleg
