@@ -1,6 +1,8 @@
 #defining plugin informations visible when user adds it in user preferences
 bl_info = {"name": "Smartsuit", "author": "Rokoko", "category": "Animation"}
 
+#import FBX primary: Y secondary: X - correct for edit mode but not pose mode
+
 import bpy
 from bpy.props import BoolProperty
 from threading import Thread
@@ -133,6 +135,9 @@ class SensorAddress():
         self.right_upleg_sensor      = 98
         self.right_leg_sensor        = 99
         self.right_foot_sensor       = 100
+        self.addr_list               = [160,1,2,3,129,130,131,161,162,163,64,33,34,45,36,97,98,99,100]
+    
+address_map = SensorAddress()
         
         
 #RECEIVER IS HANDLED HERE
@@ -171,7 +176,7 @@ class SmartsuitReceiver():
                 suitname = (data[:offset-1]).decode('unicode_escape')
                 
                 global suitID
-                print("                 SUIT ID: " + str(suitID))
+                #print("                 SUIT ID: " + str(suitID))
                 global initial_suitname
                 if count == 0:
                     initial_suitname = (data[:offset-1]).decode('unicode_escape')
@@ -192,7 +197,7 @@ class SmartsuitReceiver():
                     current_index = offset
                     suit = Suit()
                     
-                    print("Suit corresponds to selected one")
+                    #print("Suit corresponds to selected one")
                     
                     for i in range(int(sensors)):
                         try:
@@ -228,7 +233,7 @@ class SmartsuitReceiver():
                             current_index += offset
                             z = struct.unpack('f', data[current_index:current_index+offset])[0]
                             current_index += offset
-                            frame.quaternion.append([w, x, y, z])
+                            frame.quaternion.append(Quaternion((w, x, y, z)))
                             #gyro
                             x = struct.unpack('f', data[current_index:current_index+offset])[0]
                             current_index += offset
@@ -250,22 +255,15 @@ class SmartsuitReceiver():
                             current_index += offset
                             
                             suit.frames.append(frame)
-                            #send_frame_to_controller(suit.frames)
-                            #print("returning")
-                            #print(suit.get_frame_from_sensor(1))
                             
-                            if suit.get_frame_from_sensor(1):
-                                apply_animation(suit.get_frame_from_sensor(1))
-                            
-#                            for frame in suit.frames:
-#                                if frame.get_sensor() == sensor:
-#                                    return frames
-                            
-                            
+                            for current_sensor in address_map.addr_list:
+                                if suit.get_frame_from_sensor(current_sensor):
+                                    apply_animation(suit.get_frame_from_sensor(current_sensor))
+
                         except Exception as e:
-                            print(e)
-                else:
-                    print("Suit doesn't corresponds to selected one")
+                            print(e)                      
+                #else:
+                    #print("Suit doesn't corresponds to selected one.  SuitID is " + str(suitID) + ".      Suitname is " + str(suitname)+ ".      Initial name is " + str(initial_suitname))
             except:
                 pass
         sock.shutdown(SHUT_RDWR)
@@ -278,35 +276,93 @@ class SmartsuitReceiver():
 receiver = SmartsuitReceiver()
 
 def apply_animation(frame):
-    print("APLLY ANIMMMM")
     print()
-    print()
-
-    for b in bpy.context.scene.objects.active.pose.bones:
-        if (b.basename)
-        print(b.basename)
-        # use the decompose method
-        loc, rot, sca = b.matrix_basis.decompose()
-        # or use the to_quaternion method
-        rot = b.matrix_basis.to_quaternion()
-        print(rot)
-        print()
+    #print(frame)
+    global rotation_offsets
+    global character_rotations
     
-#    ob = bpy.data.objects['Armature']
-#    bpy.context.scene.objects.active = ob
-#    bpy.ops.object.mode_set(mode='POSE')
+    for b in bpy.context.scene.objects.active.pose.bones:
+        #print(b)
+        #print(b.matrix_basis.to_quaternion())
 
-#    pbone = ob.pose.bones[bname]
-#    # Set rotation mode to Euler XYZ, easier to understand
-#    # than default quaternions
-#    pbone.rotation_mode = 'XYZ'
-#    # select axis in ['X','Y','Z']  <--bone local
-#    axis = 'Z'
-#    angle = 120
-#    pbone.rotation_euler.rotate_axis(axis, math.radians(angle))
-#    bpy.ops.object.mode_set(mode='OBJECT')
-#    #insert a keyframe
-#    pbone.keyframe_insert(data_path="rotation_euler" ,frame=1)
+        rot = b.matrix_basis.to_quaternion()
+        
+        b.rotation_mode = 'QUATERNION'
+        
+        sce = bpy.context.scene
+        arma = bpy.data.armatures.get(sce.arma_name)
+        print(frame.get_sensor())
+        
+        #sensorBone.rotation*boneOffset
+        
+        if frame.get_sensor() == 160 and b.basename == str(arma.bones[sce.smartsuit_hip].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_hip
+            break
+            #print("!!!!!!!!!!!  " + str(character_rotations.character_hip))
+            #print("!!!!!!!!!!!  " + str(rotation_offsets.offset_hip))
+            #print("!!!!!!!!!!!  " + str(character_rotations.character_hip * rotation_offsets.offset_hip))
+        if frame.get_sensor() == 160 and b.basename == str(arma.bones[sce.smartsuit_hip].basename):
+            b.rotation_quaternion == frame.quaternion[0] * rotation_offsets.offset_hip
+            #character_rotations.character_hip = character_rotations.character_hip * rotation_offsets.offset_hip
+            break
+        elif frame.get_sensor() == 1 and b.basename == str(arma.bones[sce.smartsuit_stomach].basename): #STOMACH
+            #b.rotation_quaternion = character_rotations.character_stomach * rotation_offsets.offset_stomach
+            #character_rotations.character_stomach = character_rotations.character_stomach * rotation_offsets.offset_stomach #* mathutils.Euler((0.0, math.radians(10.0), 0.0), 'XYZ').to_quaternion()
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_stomach
+            break
+        elif frame.get_sensor() == 2 and b.basename == str(arma.bones[sce.smartsuit_chest].basename): #CHEST
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_chest
+            break
+        elif frame.get_sensor() == 3 and b.basename == str(arma.bones[sce.smartsuit_neck].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_neck
+            break
+        elif frame.get_sensor() == 129 and b.basename == str(arma.bones[sce.smartsuit_head].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_head
+            break
+        elif frame.get_sensor() == 130 and b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_shoulder
+            break
+        elif frame.get_sensor() == 131 and b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_arm
+            break
+        elif frame.get_sensor() == 161 and b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_forearm
+            break
+        elif frame.get_sensor() == 162 and b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_hand
+            break
+        elif frame.get_sensor() == 163 and b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_shoulder
+            break
+        elif frame.get_sensor() == 64 and b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_arm
+            break
+        elif frame.get_sensor() == 33 and b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_forearm
+            break
+        elif frame.get_sensor() == 34 and b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_hand
+            break
+        elif frame.get_sensor() == 35 and b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_upleg
+            break
+        elif frame.get_sensor() == 36 and b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_leg
+            break
+        elif frame.get_sensor() == 97 and b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_left_foot
+            break
+        elif frame.get_sensor() == 98 and b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_upleg
+            break
+        elif frame.get_sensor() == 99 and b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_leg
+            break
+        elif frame.get_sensor() == 100 and b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
+            b.rotation_quaternion = frame.quaternion[0] * rotation_offsets.offset_right_foot
+            break
+        else:
+            print ("PROBLEM " + str(frame.get_sensor()) + "     " + str(b.basename))
 
 #LISTENERS ARE HANDLED HERE
 class SmartsuitStartListener(bpy.types.Operator):
@@ -330,10 +386,95 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
     bl_label = "Initialize skeleton"
  
     def execute(self, context):
-        print("HERE")
+        
+        print()
+        print()
+        print()
+        print()
+        print()
         
         global rotation_offsets
         global character_rotations
+        
+        for b in bpy.context.scene.objects.active.pose.bones:
+            #print(b)
+            # use the decompose method
+            #loc, rot, sca = b.matrix_basis.decompose()
+            # or use the to_quaternion method
+            rot = b.matrix_basis.to_quaternion()
+            b.rotation_mode = 'QUATERNION'
+            #print(rot)
+            #print()
+            sce = context.scene
+            arma = bpy.data.armatures.get(sce.arma_name)
+            #print(arma.bones[sce.smartsuit_hip].basename)
+            #print(arma.bones[sce.smartsuit_hip].matrix_local.to_quaternion())
+            #print(b.basename)
+            #print(b.matrix_basis.to_quaternion())
+            #print(b.matrix_channel.to_quaternion())
+            
+            #store current character values
+            if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
+                character_rotations.character_hip = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
+                character_rotations.character_stomach = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
+                character_rotations.character_chest = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_neck].basename):
+                character_rotations.character_neck = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_head].basename):
+                character_rotations.character_head = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
+                character_rotations.character_left_shoulder = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
+                character_rotations.character_left_arm = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
+                character_rotations.character_left_forearm = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
+                character_rotations.character_left_hand = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
+                character_rotations.character_right_shoulder = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
+                character_rotations.character_right_arm = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
+                character_rotations.character_right_forearm = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
+                character_rotations.character_right_hand = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
+                character_rotations.character_left_upleg = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
+                character_rotations.character_left_leg = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
+                character_rotations.character_left_foot = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
+                character_rotations.character_right_upleg = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
+                character_rotations.character_right_leg = rot
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
+                character_rotations.character_right_foot = rot
+            else:
+                print ("PROBLEM: " + str(b.basename))
+            
+        print("HERE")
+
         ideal_rotation = TPoseRotations()
         
         rotation_offsets.offset_hip               = ideal_rotation.hip.inverted() * character_rotations.character_hip
@@ -355,6 +496,11 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
         rotation_offsets.offset_right_upleg       = ideal_rotation.right_upleg.inverted() * character_rotations.character_right_upleg
         rotation_offsets.offset_right_leg         = ideal_rotation.right_leg.inverted() * character_rotations.character_right_leg
         rotation_offsets.offset_right_foot        = ideal_rotation.right_foot.inverted() * character_rotations.character_right_foot
+        
+        #        print(rotation_offsets.offset_stomach)
+#        print(rotation_offsets.offset_chest)
+#        print(rotation_offsets.offset_neck)
+#        print(rotation_offsets.offset_head)
         
         return{'FINISHED'}  
     
@@ -477,28 +623,6 @@ class SmartsuitProPanel(bpy.types.Panel):
                 col.prop_search(sce, "smartsuit_rightUpleg", arma, "bones", icon = 'BONE_DATA', text = "Right Up Leg")
                 col.prop_search(sce, "smartsuit_rightLeg", arma, "bones", icon = 'BONE_DATA', text = "Right Leg")
                 col.prop_search(sce, "smartsuit_rightFoot", arma, "bones", icon = 'BONE_DATA', text = "Right Foot")
-
-                #store current character values
-                global character_rotations
-                character_rotations.character_hip               = arma.bones[sce.smartsuit_hip].matrix.to_quaternion()  #also try PoseBone.matrix_basis tp see the difference
-                character_rotations.character_stomach           = arma.bones[sce.smartsuit_stomach].matrix.to_quaternion()
-                character_rotations.character_chest             = arma.bones[sce.smartsuit_chest].matrix.to_quaternion()
-                character_rotations.character_neck              = arma.bones[sce.smartsuit_neck].matrix.to_quaternion()
-                character_rotations.character_head              = arma.bones[sce.smartsuit_head].matrix.to_quaternion()
-                character_rotations.character_left_shoulder     = arma.bones[sce.smartsuit_leftShoulder].matrix.to_quaternion()
-                character_rotations.character_left_arm          = arma.bones[sce.smartsuit_leftArm].matrix.to_quaternion()
-                character_rotations.character_left_forearm      = arma.bones[sce.smartsuit_leftForearm].matrix.to_quaternion()
-                character_rotations.character_left_hand         = arma.bones[sce.smartsuit_leftHand].matrix.to_quaternion()
-                character_rotations.character_right_shoulder    = arma.bones[sce.smartsuit_rightShoulder].matrix.to_quaternion()
-                character_rotations.character_right_arm         = arma.bones[sce.smartsuit_rightArm].matrix.to_quaternion()
-                character_rotations.character_right_forearm     = arma.bones[sce.smartsuit_rightForearm].matrix.to_quaternion()
-                character_rotations.character_right_hand        = arma.bones[sce.smartsuit_rightHand].matrix.to_quaternion()
-                character_rotations.character_left_upleg        = arma.bones[sce.smartsuit_leftUpleg].matrix.to_quaternion()
-                character_rotations.character_left_leg          = arma.bones[sce.smartsuit_leftLeg].matrix.to_quaternion()
-                character_rotations.character_left_foot         = arma.bones[sce.smartsuit_leftFoot].matrix.to_quaternion()
-                character_rotations.character_right_upleg       = arma.bones[sce.smartsuit_rightUpleg].matrix.to_quaternion()
-                character_rotations.character_right_leg         = arma.bones[sce.smartsuit_rightLeg].matrix.to_quaternion()
-                character_rotations.character_right_foot        = arma.bones[sce.smartsuit_rightFoot].matrix.to_quaternion()
                 
             col = layout.column(align=True)
             col.enabled = context.scene.my_bool_property
