@@ -89,10 +89,16 @@ class Suit():
         self.name = ""
         self.frames = []
         
+    def get_frame_from_sensor(self, sensor):
+        for frame in self.frames:
+            if frame.get_sensor() == sensor:
+                return frame
+        
 class Frame():
     
     def __init__(self):
         self.addr = b'\xff'
+        self.int_addr = -1
         self.isAnotherSensorConnected = b'\xff'
         self.behaviour = b'\xff'
         self.command = b'\xff'
@@ -102,6 +108,9 @@ class Frame():
         self.gyro = []
         self.magnetometer = []
         self.microseconds = 0
+        
+    def get_sensor(self):
+        return self.int_addr
         
 class SensorAddress():
     def __init__(self):
@@ -187,12 +196,15 @@ class SmartsuitReceiver():
                     
                     for i in range(int(sensors)):
                         try:
+                            
+                            suit.frames.clear()
                             frame = Frame()
                             firstbuffer = data[current_index:current_index+offset]
                             
                             intFirstbuffer = struct.unpack('I', data[current_index:current_index+offset])[0]
                             
                             frame.addr = struct.pack("B", intFirstbuffer & 0xff)
+                            frame.int_addr = intFirstbuffer & 0xff
                             
                             frame.isAnotherSensorConnected = bytes((intFirstbuffer >> 8) & 0xff)
                             frame.behaviour = bytes((intFirstbuffer >> 16) & 0xff)
@@ -237,8 +249,18 @@ class SmartsuitReceiver():
                             frame.microseconds = struct.unpack('I', data[current_index:current_index+offset])[0]
                             current_index += offset
                             
-                            suit.frames.clear()
                             suit.frames.append(frame)
+                            #send_frame_to_controller(suit.frames)
+                            #print("returning")
+                            #print(suit.get_frame_from_sensor(1))
+                            
+                            if suit.get_frame_from_sensor(1):
+                                apply_animation(suit.get_frame_from_sensor(1))
+                            
+#                            for frame in suit.frames:
+#                                if frame.get_sensor() == sensor:
+#                                    return frames
+                            
                             
                         except Exception as e:
                             print(e)
@@ -254,6 +276,37 @@ class SmartsuitReceiver():
         self.running = False
 
 receiver = SmartsuitReceiver()
+
+def apply_animation(frame):
+    print("APLLY ANIMMMM")
+    print()
+    print()
+
+    for b in bpy.context.scene.objects.active.pose.bones:
+        if (b.basename)
+        print(b.basename)
+        # use the decompose method
+        loc, rot, sca = b.matrix_basis.decompose()
+        # or use the to_quaternion method
+        rot = b.matrix_basis.to_quaternion()
+        print(rot)
+        print()
+    
+#    ob = bpy.data.objects['Armature']
+#    bpy.context.scene.objects.active = ob
+#    bpy.ops.object.mode_set(mode='POSE')
+
+#    pbone = ob.pose.bones[bname]
+#    # Set rotation mode to Euler XYZ, easier to understand
+#    # than default quaternions
+#    pbone.rotation_mode = 'XYZ'
+#    # select axis in ['X','Y','Z']  <--bone local
+#    axis = 'Z'
+#    angle = 120
+#    pbone.rotation_euler.rotate_axis(axis, math.radians(angle))
+#    bpy.ops.object.mode_set(mode='OBJECT')
+#    #insert a keyframe
+#    pbone.keyframe_insert(data_path="rotation_euler" ,frame=1)
 
 #LISTENERS ARE HANDLED HERE
 class SmartsuitStartListener(bpy.types.Operator):
@@ -418,7 +471,7 @@ class SmartsuitProPanel(bpy.types.Panel):
                 col.prop_search(sce, "smartsuit_rightArm", arma, "bones", icon = 'BONE_DATA', text = "Right Arm")
                 col.prop_search(sce, "smartsuit_rightForearm", arma, "bones", icon = 'BONE_DATA', text = "Right Forearm")
                 col.prop_search(sce, "smartsuit_rightHand", arma, "bones", icon = 'BONE_DATA', text = "Right Hand")
-                col.prop_search(sce, "smartsuit_leftUpLeg", arma, "bones", icon = 'BONE_DATA', text = "Left Up Leg")
+                col.prop_search(sce, "smartsuit_leftUpleg", arma, "bones", icon = 'BONE_DATA', text = "Left Up Leg")
                 col.prop_search(sce, "smartsuit_leftLeg", arma, "bones", icon = 'BONE_DATA', text = "Left Leg")
                 col.prop_search(sce, "smartsuit_leftFoot", arma, "bones", icon = 'BONE_DATA', text = "Left Foot")
                 col.prop_search(sce, "smartsuit_rightUpleg", arma, "bones", icon = 'BONE_DATA', text = "Right Up Leg")
@@ -427,7 +480,7 @@ class SmartsuitProPanel(bpy.types.Panel):
 
                 #store current character values
                 global character_rotations
-                character_rotations.character_hip               = arma.bones[sce.smartsuit_hip].matrix.to_quaternion()
+                character_rotations.character_hip               = arma.bones[sce.smartsuit_hip].matrix.to_quaternion()  #also try PoseBone.matrix_basis tp see the difference
                 character_rotations.character_stomach           = arma.bones[sce.smartsuit_stomach].matrix.to_quaternion()
                 character_rotations.character_chest             = arma.bones[sce.smartsuit_chest].matrix.to_quaternion()
                 character_rotations.character_neck              = arma.bones[sce.smartsuit_neck].matrix.to_quaternion()
@@ -440,7 +493,7 @@ class SmartsuitProPanel(bpy.types.Panel):
                 character_rotations.character_right_arm         = arma.bones[sce.smartsuit_rightArm].matrix.to_quaternion()
                 character_rotations.character_right_forearm     = arma.bones[sce.smartsuit_rightForearm].matrix.to_quaternion()
                 character_rotations.character_right_hand        = arma.bones[sce.smartsuit_rightHand].matrix.to_quaternion()
-                #character_rotations.character_left_upleg        = arma.bones[sce.smartsuit_leftUpleg].matrix.to_quaternion()
+                character_rotations.character_left_upleg        = arma.bones[sce.smartsuit_leftUpleg].matrix.to_quaternion()
                 character_rotations.character_left_leg          = arma.bones[sce.smartsuit_leftLeg].matrix.to_quaternion()
                 character_rotations.character_left_foot         = arma.bones[sce.smartsuit_leftFoot].matrix.to_quaternion()
                 character_rotations.character_right_upleg       = arma.bones[sce.smartsuit_rightUpleg].matrix.to_quaternion()
