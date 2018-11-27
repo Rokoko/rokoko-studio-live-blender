@@ -63,71 +63,72 @@ character_rotations = CharacterRotations()
 
 class RotationOffsets():
     def __init__(self):
-        self.offset_hip              = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_stomach          = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_chest            = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_neck             = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_head             = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_shoulder    = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_arm         = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_forearm     = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_hand        = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_shoulder   = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_arm        = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_forearm    = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_hand       = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_upleg       = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_leg         = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_left_foot        = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_upleg      = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_leg        = Quaternion((0.0, 0.0, 0.0, 0.0))
-        self.offset_right_foot       = Quaternion((0.0, 0.0, 0.0, 0.0))
+        self.offset_hip              = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_stomach          = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_chest            = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_neck             = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_head             = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_shoulder    = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_arm         = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_forearm     = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_hand        = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_shoulder   = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_arm        = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_forearm    = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_hand       = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_upleg       = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_leg         = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_left_foot        = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_upleg      = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_leg        = Quaternion((1.0, 0.0, 0.0, 0.0))
+        self.offset_right_foot       = Quaternion((1.0, 0.0, 0.0, 0.0))
 
 #character rotations
 rotation_offsets = RotationOffsets()
 
 class TPoseRotations():
     def __init__(self):
-#        self.hip =              Quaternion((0.0000, 1.0000, -0.0000, 0.0000))       # (179.9999640278213, -8.6514596632621e-06, -0.00010928302672020402)
-#        #self.hip =              Quaternion((0.0000, 1.0000, -0.0000, 0.0000))       # (179.9999640278213, -8.6514596632621e-06, -0.00010928302672020402)
-#        self.stomach =          Quaternion((0.0000, -0.0000, 1.0000, 0.0000))       # (-1.6627644312105827e-05, 179.999991348578, 6.329294126870617e-05)
-#        self.chest =            Quaternion((1.0000, -0.0000, 0.0000, -0.0000))      # (-3.166622691692359e-05, 5.008915419875408e-06, -2.7683269183022257e-12)
-#        self.neck =             Quaternion((1.0000, -0.0000, 0.0000, -0.0000))      # (-6.584304548521024e-05, -4.649582692995772e-12, -1.7302847674988336e-05)
-#        self.head =             Quaternion((1.0000, 0.0000, 0.0000, 0.0000))        # (0.00015898597751220708, -8.777585478335839e-14, 5.464151336010201e-05)
-#        self.left_shoulder =    Quaternion((0.7064, 0.0308, 0.0308, 0.7064))        # (5.000012234264331, -2.049056425315026e-05, 89.99996835353231)
-#        self.left_arm =         Quaternion((0.7064, -0.0308, 0.7064, -0.0308))      # (-90.00041231582837, 85.00002399427287, -90.00011178750489)
-#        self.left_forearm =     Quaternion((1.0000, 0.0000, 0.0000, 0.0000))        # (6.852871440756901e-05, 4.0580783691880345e-06, 4.923084207908311e-05)
-#        self.left_hand =        Quaternion((1.0000, -0.0000, -0.0000, -0.0000))     # (-1.6160629372008192e-05, -3.891070526730204e-05, -0.0001959952594585099)
-#        self.right_shoulder =   Quaternion((0.7071, -0.0000, 0.0000, -0.7071))      # (-2.659182443593447e-05, -8.777313143341238e-10, -89.99998884409983)
-#        self.right_arm =        Quaternion((0.7071, 0.0000, -0.7071, 0.0000))       # (9.229199187329988e-05, -89.99993420258647, 0.0)
-#        self.right_forearm =    Quaternion((1.0000, -0.0000, -0.0000, 0.0000))      # (-9.85182823577228e-05, -3.7664324460059345e-07, 2.521974800590258e-05)
-#        self.right_hand =       Quaternion((1.0000, 0.0000, -0.0000, -0.0000))      # (0.00020247717005401566, -2.4787370476730205e-06, -9.759400034329302e-06)
-#        self.left_upleg =       Quaternion((0.0000, -0.7071, -0.0000, -0.7071))     # (-179.99990938630796, -89.99993420258647, 0.0)
-#        self.left_leg =         Quaternion((1.0000, -0.0000, 0.0000, 0.0000))       #(-8.962425537623507e-05, -2.732068340007114e-05, 4.45268861807309e-05)
-#        self.left_foot =        Quaternion((0.7071, -0.0000, 0.7071, 0.0000))       # (-0.00017678782765272435, 89.99992054220813, 0.0)
-#        self.right_upleg =      Quaternion((0.0000, -0.7071, 0.0000, 0.7071))       #(-179.999991348578, 89.99989322145144, 0.0)
-#        self.right_leg =        Quaternion((1.0000, -0.0000, 0.0000, 0.0000))       #(-7.244569543242285e-05, -2.367822383577229e-05, 4.091792533789247e-05)
-#        self.right_foot =       Quaternion((0.7071, 0.0000, -0.7071, 0.0000))       # (5.3730861421926367e-05, -89.99998201391065, 0.0)
+        self.hip =              Quaternion((0.0000, 1.0000, -0.0000, 0.0000))       # (179.9999640278213, -8.6514596632621e-06, -0.00010928302672020402)
+        self.stomach =          Quaternion((0.0000, -0.0000, 1.0000, 0.0000))       # (-1.6627644312105827e-05, 179.999991348578, 6.329294126870617e-05)
+        self.chest =            Quaternion((1.0000, -0.0000, 0.0000, -0.0000))      # (-3.166622691692359e-05, 5.008915419875408e-06, -2.7683269183022257e-12)
+        self.neck =             Quaternion((1.0000, -0.0000, 0.0000, -0.0000))      # (-6.584304548521024e-05, -4.649582692995772e-12, -1.7302847674988336e-05)
+        self.head =             Quaternion((1.0000, 0.0000, 0.0000, 0.0000))        # (0.00015898597751220708, -8.777585478335839e-14, 5.464151336010201e-05)
+        self.left_shoulder =    Quaternion((0.7064, 0.0308, 0.0308, 0.7064))        # (5.000012234264331, -2.049056425315026e-05, 89.99996835353231)
+        self.left_arm =         Quaternion((0.7064, -0.0308, 0.7064, -0.0308))      # (-90.00041231582837, 85.00002399427287, -90.00011178750489)
+        self.left_forearm =     Quaternion((1.0000, 0.0000, 0.0000, 0.0000))        # (6.852871440756901e-05, 4.0580783691880345e-06, 4.923084207908311e-05)
+        self.left_hand =        Quaternion((1.0000, -0.0000, -0.0000, -0.0000))     # (-1.6160629372008192e-05, -3.891070526730204e-05, -0.0001959952594585099)
+        self.right_shoulder =   Quaternion((0.7071, -0.0000, 0.0000, -0.7071))      # (-2.659182443593447e-05, -8.777313143341238e-10, -89.99998884409983)
+        self.right_arm =        Quaternion((0.7071, 0.0000, -0.7071, 0.0000))       # (9.229199187329988e-05, -89.99993420258647, 0.0)
+        self.right_forearm =    Quaternion((1.0000, -0.0000, -0.0000, 0.0000))      # (-9.85182823577228e-05, -3.7664324460059345e-07, 2.521974800590258e-05)
+        self.right_hand =       Quaternion((1.0000, 0.0000, -0.0000, -0.0000))      # (0.00020247717005401566, -2.4787370476730205e-06, -9.759400034329302e-06)
+        self.left_upleg =       Quaternion((0.0000, -0.7071, -0.0000, -0.7071))     # (-179.99990938630796, -89.99993420258647, 0.0)
+        self.left_leg =         Quaternion((1.0000, -0.0000, 0.0000, 0.0000))       #(-8.962425537623507e-05, -2.732068340007114e-05, 4.45268861807309e-05)
+        self.left_foot =        Quaternion((0.7071, -0.0000, 0.7071, 0.0000))       # (-0.00017678782765272435, 89.99992054220813, 0.0)
+        self.right_upleg =      Quaternion((0.0000, -0.7071, 0.0000, 0.7071))       #(-179.999991348578, 89.99989322145144, 0.0)
+        self.right_leg =        Quaternion((1.0000, -0.0000, 0.0000, 0.0000))       #(-7.244569543242285e-05, -2.367822383577229e-05, 4.091792533789247e-05)
+        self.right_foot =       Quaternion((0.7071, 0.0000, -0.7071, 0.0000))       # (5.3730861421926367e-05, -89.99998201391065, 0.0)
         #self.hip =              Quaternion((-0.000000, 0.707, 0.707, 0.000000))
-        self.hip =              Quaternion((-0.000000, -0.000003, 1.000, 0.000000))
-        self.stomach =          Quaternion((1.000, 0.000, 0.000, 0.000))
-        self.chest =            Quaternion((1.000, 0.000, -0.000, 0.000))
-        self.neck =             Quaternion((1.000, 0.000, -0.000, 0.000))
-        self.head =             Quaternion((1.000, 0.000, 0.000, 0.000))
-        self.left_shoulder =    Quaternion((1.000, 0.000, -0.000, -0.000))
-        self.left_arm =         Quaternion((1.000, 0.000, -0.000000, -0.000000))
-        self.left_forearm =     Quaternion((1.000, -0.000, -0.000, -0.00000))
-        self.left_hand =        Quaternion((1.000, 0.000, 0.000000, 0.000001))
-        self.right_shoulder =   Quaternion((1.000, -0.000, -0.000, 0.000))
-        self.right_arm =        Quaternion((1.000, -0.000, 0.000001, 0.000001))
-        self.right_forearm =    Quaternion((1.000, 0.000, -0.000, 0.0000000))
-        self.right_hand =       Quaternion((1.000, 0.000, -0.000, 0.000))
-        self.left_upleg =       Quaternion((1.000, -0.000, -0.000000, -0.000000))
-        self.left_leg =         Quaternion((1.000, -0.000, 0.000000, 0.000000))
-        self.left_foot =        Quaternion((1.000, 0.000001, -0.000001, -0.000))
-        self.right_upleg =      Quaternion((1.000, -0.000, -0.000, 0.000000))
-        self.right_leg =        Quaternion((1.000, 0.000, -0.000, -0.000000))
-        self.right_foot =       Quaternion((1.000, 0.000000, 0.000000, -0.000))
+#        self.hip =              Quaternion((-0.000000, -0.000003, 1.000, 0.000000))
+#        self.stomach =          Quaternion((1.000, 0.000, 0.000, 0.000))
+#        self.chest =            Quaternion((1.000, 0.000, -0.000, 0.000))
+#        self.neck =             Quaternion((1.000, 0.000, -0.000, 0.000))
+#        self.head =             Quaternion((1.000, 0.000, 0.000, 0.000))
+#        self.left_shoulder =    Quaternion((1.000, 0.000, -0.000, -0.000))
+#        self.left_arm =         Quaternion((1.000, 0.000, -0.000000, -0.000000))
+#        self.left_forearm =     Quaternion((1.000, -0.000, -0.000, -0.00000))
+#        self.left_hand =        Quaternion((1.000, 0.000, 0.000000, 0.000001))
+#        self.right_shoulder =   Quaternion((1.000, -0.000, -0.000, 0.000))
+#        self.right_arm =        Quaternion((1.000, -0.000, 0.000001, 0.000001))
+#        self.right_forearm =    Quaternion((1.000, 0.000, -0.000, 0.0000000))
+#        self.right_hand =       Quaternion((1.000, 0.000, -0.000, 0.000))
+#        self.left_upleg =       Quaternion((1.000, -0.000, -0.000000, -0.000000))
+#        self.left_leg =         Quaternion((1.000, -0.000, 0.000000, 0.000000))
+#        self.left_foot =        Quaternion((1.000, 0.000001, -0.000001, -0.000))
+#        self.right_upleg =      Quaternion((1.000, -0.000, -0.000, 0.000000))
+#        self.right_leg =        Quaternion((1.000, 0.000, -0.000, -0.000000))
+#        self.right_foot =       Quaternion((1.000, 0.000000, 0.000000, -0.000))
+
+ideal_rotation = TPoseRotations()
 
 class ReferenceSpace():
     def __init__(self):
@@ -153,12 +154,17 @@ class ReferenceSpace():
             #result.z = -result.z
             #result.y = -result.y
             preModifier = Euler((0, 0, 0), 'XYZ').to_quaternion()
-            postModifier = Euler((-90, 0, 0), 'XYZ').to_quaternion()
-            unity_rotation = result * self.unity_default
+            postModifier = Euler((0, 90, 0), 'XYZ').to_quaternion()
+            unity_rotation = self.unity_default * result
+            #unity_rotation.x = -unity_rotation.x
+            #unity_rotation.y = -unity_rotation.y
     		#FQuat postModifier = FQuat::MakeFromEuler(FVector(0, 0, 180));
     		#return modifier * result * postModifier;
-            print ("!!!!!!!!!!!!! " + str(result))
-            return preModifier * unity_rotation * postModifier
+            #print ("!!!!!!!!!!!!! " + str(result))
+            #print ("_____________ " + str(unity_rotation))
+#            return rotation
+#            return rotation
+            return preModifier * result * postModifier
         else:
             return Quaternion.identity()
         
@@ -378,61 +384,61 @@ def apply_animation(sensor_frame):
             arma = bpy.data.armatures.get(sce.arma_name)
             #sensorBone.rotation*boneOffset
             if sensor_frame.get_sensor() == 160 and b.basename == str(arma.bones[sce.smartsuit_hip].basename):
-                b.rotation_quaternion == reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_hip
+                b.rotation_quaternion == ideal_rotation.hip.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_hip
                 not_found = False
             elif sensor_frame.get_sensor() == 161 and b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_stomach
+                b.rotation_quaternion = ideal_rotation.stomach.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_stomach
                 not_found = False
             elif sensor_frame.get_sensor() == 162 and b.basename == str(arma.bones[sce.smartsuit_chest].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_chest
+                b.rotation_quaternion = ideal_rotation.chest.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_chest
                 not_found = False
             elif sensor_frame.get_sensor() == 163 and b.basename == str(arma.bones[sce.smartsuit_neck].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_neck
+                b.rotation_quaternion = ideal_rotation.neck.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_neck
                 not_found = False
             elif sensor_frame.get_sensor() == 64 and b.basename == str(arma.bones[sce.smartsuit_head].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_head
+                b.rotation_quaternion = ideal_rotation.head.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_head
                 not_found = False
             elif sensor_frame.get_sensor() == 33 and b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_shoulder
+                b.rotation_quaternion = ideal_rotation.left_shoulder.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_shoulder
                 not_found = False
             elif sensor_frame.get_sensor() == 34 and b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_arm
+                b.rotation_quaternion = ideal_rotation.left_arm.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_arm
                 not_found = False
             elif sensor_frame.get_sensor() == 35 and b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_forearm
+                b.rotation_quaternion = ideal_rotation.left_forearm.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_forearm
                 not_found = False
             elif sensor_frame.get_sensor() == 36 and b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_hand
+                b.rotation_quaternion = ideal_rotation.left_hand.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_hand
                 not_found = False
             elif sensor_frame.get_sensor() == 97 and b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_shoulder
+                b.rotation_quaternion = ideal_rotation.right_shoulder.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_shoulder
                 not_found = False
             elif sensor_frame.get_sensor() == 98 and b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_arm
+                b.rotation_quaternion = ideal_rotation.right_arm.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_arm
                 not_found = False
             elif sensor_frame.get_sensor() == 99 and b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_forearm
+                b.rotation_quaternion = ideal_rotation.right_forearm.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_forearm
                 not_found = False
             elif sensor_frame.get_sensor() == 100 and b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_hand
+                b.rotation_quaternion = ideal_rotation.right_hand.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_hand
                 not_found = False
             elif sensor_frame.get_sensor() == 1 and b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_upleg
+                b.rotation_quaternion = ideal_rotation.left_upleg.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_upleg
                 not_found = False
             elif sensor_frame.get_sensor() == 2 and b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_leg
+                b.rotation_quaternion = ideal_rotation.left_leg.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_leg
                 not_found = False
             elif sensor_frame.get_sensor() == 3 and b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_foot
+                b.rotation_quaternion = ideal_rotation.left_foot.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_left_foot
                 not_found = False
             elif sensor_frame.get_sensor() == 129 and b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_upleg
+                b.rotation_quaternion = ideal_rotation.right_upleg.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_upleg
                 not_found = False
             elif sensor_frame.get_sensor() == 130 and b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_leg
+                b.rotation_quaternion = ideal_rotation.right_leg.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_leg
                 not_found = False
             elif sensor_frame.get_sensor() == 131 and b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
-                b.rotation_quaternion = reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_foot
+                b.rotation_quaternion = ideal_rotation.right_foot.inverted() * reference_space.get_quaternion_correct_rotation(sensor_frame.quaternion[0]) * rotation_offsets.offset_right_foot
                 not_found = False
             #else:
                 #print ("PROBLEM " + str(sensor_frame.get_sensor()) + "     " + str(b.basename))
@@ -478,70 +484,68 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
             #store current character values
             if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
                 character_rotations.character_hip = rot
-                print("!!!!!!!!! " + str(arma.bones[sce['smartsuit_hip']].matrix.to_euler().to_quaternion()))
-                print("!!!!!!!!! " + str(tuple(math.degrees(a) for a in arma.bones[sce['smartsuit_hip']].matrix.to_euler())))
-                print("!!!!!!!!! " + str( b.matrix_basis.to_quaternion()) )
-                print("!!!!!!!!! " + str( tuple(math.degrees(a) for a in b.matrix_basis.to_euler()) ))
+                #print("!!!!!!!!! " + str(arma.bones[sce['smartsuit_hip']].matrix.to_euler().to_quaternion()))
+                #print("!!!!!!!!! " + str(tuple(math.degrees(a) for a in arma.bones[sce['smartsuit_hip']].matrix.to_euler())))
+                #print("!!!!!!!!! " + str( b.matrix_basis.to_quaternion()) )
+                #print("!!!!!!!!! " + str( tuple(math.degrees(a) for a in b.matrix_basis.to_euler()) ))
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
-                character_rotations.character_stomach = rot
+                character_rotations.character_stomach = arma.bones[sce['smartsuit_stomach']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
-                character_rotations.character_chest = rot
+                character_rotations.character_chest = arma.bones[sce['smartsuit_chest']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_neck].basename):
-                character_rotations.character_neck = rot
+                character_rotations.character_neck = arma.bones[sce['smartsuit_neck']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_head].basename):
-                character_rotations.character_head = rot
+                character_rotations.character_head = arma.bones[sce['smartsuit_head']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
-                character_rotations.character_left_shoulder = rot
+                character_rotations.character_left_shoulder = arma.bones[sce['smartsuit_leftShoulder']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
-                character_rotations.character_left_arm = rot
+                character_rotations.character_left_arm = arma.bones[sce['smartsuit_leftArm']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
-                character_rotations.character_left_forearm = rot
+                character_rotations.character_left_forearm = arma.bones[sce['smartsuit_leftForearm']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
-                character_rotations.character_left_hand = rot
+                character_rotations.character_left_hand = arma.bones[sce['smartsuit_leftHand']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
-                character_rotations.character_right_shoulder = rot
+                character_rotations.character_right_shoulder = arma.bones[sce['smartsuit_rightShoulder']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
-                character_rotations.character_right_arm = rot
+                character_rotations.character_right_arm = arma.bones[sce['smartsuit_rightArm']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
-                character_rotations.character_right_forearm = rot
+                character_rotations.character_right_forearm = arma.bones[sce['smartsuit_rightForearm']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
-                character_rotations.character_right_hand = rot
+                character_rotations.character_right_hand = arma.bones[sce['smartsuit_rightHand']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
-                character_rotations.character_left_upleg = rot
+                character_rotations.character_left_upleg = arma.bones[sce['smartsuit_leftUpleg']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
-                character_rotations.character_left_leg = rot
+                character_rotations.character_left_leg = arma.bones[sce['smartsuit_leftLeg']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
-                character_rotations.character_left_foot = rot
+                character_rotations.character_left_foot = arma.bones[sce['smartsuit_leftFoot']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
-                character_rotations.character_right_upleg = rot
+                character_rotations.character_right_upleg = arma.bones[sce['smartsuit_rightUpleg']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
-                character_rotations.character_right_leg = rot
+                character_rotations.character_right_leg = arma.bones[sce['smartsuit_rightLeg']].matrix.to_euler().to_quaternion()
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
-                character_rotations.character_right_foot = rot
+                character_rotations.character_right_foot = arma.bones[sce['smartsuit_rightFoot']].matrix.to_euler().to_quaternion()
             else:
                 print ("PROBLEM: " + str(b.basename))
             
         print("HERE")
-
-        ideal_rotation = TPoseRotations()
         
         rotation_offsets.offset_hip               = ideal_rotation.hip.inverted() * character_rotations.character_hip
         rotation_offsets.offset_stomach           = ideal_rotation.stomach.inverted() * character_rotations.character_stomach
