@@ -35,6 +35,8 @@ suitID = "default"
 initial_suitname = "default"
 
 enable_component = True
+initialized_bones = False
+start_listener_enabled = False
 
 class CharacterRotations():
     def __init__(self):
@@ -349,6 +351,7 @@ def apply_animation(sensor_frame):
     #print(sensor_frame)
     global rotation_offsets
     global character_rotations
+    #print("Animating")
     
     not_found = True
     if not_found:
@@ -427,10 +430,91 @@ def apply_animation(sensor_frame):
 class Recorder ():
     def __init__(self):
         self.running = False
+        self.frame_num = 0
     
     def start_recording(self):
+        #self.thread = Thread(target = self.run_recording, args=[])
+        #self.thread.start()
+        
+    #def run_recording(self):
         self.running = True
+        self.frame_num = 0
         print("recording started")
+        previous_frame = -1
+        bpy.context.active_object.animation_data_clear()
+        #while self.running and self.frame_num != previous_frame:
+        for i in range(20):
+            for b in bpy.context.scene.objects.active.pose.bones:
+                bpy.context.scene.frame_set(self.frame_num)
+                
+                b.rotation_mode = 'QUATERNION'
+                
+                sce = bpy.context.scene
+                arma = bpy.data.armatures.get(sce.arma_name)
+                
+                if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
+                    b.keyframe_insert(data_path="location", frame = self.frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_neck].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_head].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
+                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
+                    continue
+                else:
+                    print ("PROBLEM: " + str(b.basename))
+
+            self.frame_num+=20
+            previous_frame = self.frame_num-20
+    
             
     def stop_recording(self):
         self.running = False
@@ -445,7 +529,14 @@ class SmartsuitStartListener(bpy.types.Operator):
     bl_label = "Start Listener"
  
     def execute(self, context):
-        receiver.start()
+        global start_listener_enabled
+        start_listener_enabled = True
+        if initialized_bones and start_listener_enabled:
+            context.scene.enable_recording = True
+            print("RECORDING ENABLED")
+            receiver.start()
+        else:
+            print("INITIALIZE SKELETON FIRST")
         return{'FINISHED'}    
 
 class SmartsuitStopListener(bpy.types.Operator):
@@ -453,6 +544,10 @@ class SmartsuitStopListener(bpy.types.Operator):
     bl_label = "Stop Listener"
  
     def execute(self, context):
+        global start_listener_enabled
+        start_listener_enabled = False
+        context.scene.enable_recording = not context.scene.enable_recording
+        print("RECORDING DISABLED")
         receiver.stop()
         return{'FINISHED'}
 
@@ -479,12 +574,12 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
     bl_label = "Initialize skeleton"
  
     def execute(self, context):
-        
-        print()
-        print()
-        print()
-        print()
-        print()
+        global initialized_bones
+        initialized_bones = True
+        if initialized_bones and start_listener_enabled:
+            context.scene.enable_recording = context.scene.enable_recording
+        else:
+            context.scene.enable_recording = not context.scene.enable_recording
         
         global rotation_offsets
         global character_rotations        
@@ -556,6 +651,7 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
                 character_rotations.character_right_foot = arma.bones[sce['smartsuit_rightFoot']].matrix.to_euler().to_quaternion()
+                continue
             else:
                 print ("PROBLEM: " + str(b.basename))
             
@@ -582,25 +678,25 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
         rotation_offsets.offset_right_foot        = ideal_rotation.right_foot.inverted() * character_rotations.character_right_foot
 
         #print(Quaternion.identity())
-        print(rotation_offsets.offset_hip)
-        print(rotation_offsets.offset_stomach)
-        print(rotation_offsets.offset_chest)
-        print(rotation_offsets.offset_neck)
-        print(rotation_offsets.offset_head)
-        print(rotation_offsets.offset_left_shoulder)
-        print(rotation_offsets.offset_left_arm)
-        print(rotation_offsets.offset_left_forearm)
-        print(rotation_offsets.offset_left_hand)
-        print(rotation_offsets.offset_right_shoulder)
-        print(rotation_offsets.offset_right_arm)
-        print(rotation_offsets.offset_right_forearm)
-        print(rotation_offsets.offset_right_hand)
-        print(rotation_offsets.offset_left_upleg)
-        print(rotation_offsets.offset_left_leg)
-        print(rotation_offsets.offset_left_foot)
-        print(rotation_offsets.offset_right_upleg)
-        print(rotation_offsets.offset_right_leg)
-        print(rotation_offsets.offset_right_foot)        
+#        print(rotation_offsets.offset_hip)
+#        print(rotation_offsets.offset_stomach)
+#        print(rotation_offsets.offset_chest)
+#        print(rotation_offsets.offset_neck)
+#        print(rotation_offsets.offset_head)
+#        print(rotation_offsets.offset_left_shoulder)
+#        print(rotation_offsets.offset_left_arm)
+#        print(rotation_offsets.offset_left_forearm)
+#        print(rotation_offsets.offset_left_hand)
+#        print(rotation_offsets.offset_right_shoulder)
+#        print(rotation_offsets.offset_right_arm)
+#        print(rotation_offsets.offset_right_forearm)
+#        print(rotation_offsets.offset_right_hand)
+#        print(rotation_offsets.offset_left_upleg)
+#        print(rotation_offsets.offset_left_leg)
+#        print(rotation_offsets.offset_left_foot)
+#        print(rotation_offsets.offset_right_upleg)
+#        print(rotation_offsets.offset_right_leg)
+#        print(rotation_offsets.offset_right_foot)        
 
         return{'FINISHED'}
 
@@ -611,25 +707,25 @@ class ButtonRestoreTpose(bpy.types.Operator):
     def execute(self, context):
         print("TPOSE RESTORED")
         
-        print(character_rotations.character_hip)
-        print(character_rotations.character_stomach)
-        print(character_rotations.character_chest)
-        print(character_rotations.character_neck)
-        print(character_rotations.character_head)
-        print(character_rotations.character_left_shoulder)
-        print(character_rotations.character_left_arm)
-        print(character_rotations.character_left_forearm)
-        print(character_rotations.character_left_hand)
-        print(character_rotations.character_right_shoulder)
-        print(character_rotations.character_right_arm)
-        print(character_rotations.character_right_forearm)
-        print(character_rotations.character_right_hand)
-        print(character_rotations.character_left_upleg)
-        print(character_rotations.character_left_leg)
-        print(character_rotations.character_left_foot)
-        print(character_rotations.character_right_upleg)
-        print(character_rotations.character_right_leg)
-        print(character_rotations.character_right_foot)
+#        print(character_rotations.character_hip)
+#        print(character_rotations.character_stomach)
+#        print(character_rotations.character_chest)
+#        print(character_rotations.character_neck)
+#        print(character_rotations.character_head)
+#        print(character_rotations.character_left_shoulder)
+#        print(character_rotations.character_left_arm)
+#        print(character_rotations.character_left_forearm)
+#        print(character_rotations.character_left_hand)
+#        print(character_rotations.character_right_shoulder)
+#        print(character_rotations.character_right_arm)
+#        print(character_rotations.character_right_forearm)
+#        print(character_rotations.character_right_hand)
+#        print(character_rotations.character_left_upleg)
+#        print(character_rotations.character_left_leg)
+#        print(character_rotations.character_left_foot)
+#        print(character_rotations.character_right_upleg)
+#        print(character_rotations.character_right_leg)
+#        print(character_rotations.character_right_foot)
         
         
         for b in bpy.context.scene.objects.active.pose.bones:
@@ -845,13 +941,19 @@ class SmartsuitProPanel(bpy.types.Panel):
             col.operator("button.restore_tpose")
             
         elif scene.smartsuit_panel.my_enum == 'Recording':
+#            if not initialized_bones:
+#                print("Skaleton has to be initialized first.")
+#            elif not start_listener_enabled:
+#                print("Listener has to be started first.")
+#            elif not initialized_bones and not start_listener_enabled:
+#                print("Skaleton has to be initialized and listerner has to be started first.")
             if recorder.running:
                 row = layout.row()
-                row.enabled = context.scene.enable_component
+                row.enabled = context.scene.enable_recording
                 row.operator("button.stop_recording")
             else:
                 row = layout.row()
-                row.enabled = context.scene.enable_component
+                row.enabled = context.scene.enable_recording
                 row.operator("button.start_recording")
                 
 def work_bone():
@@ -881,7 +983,8 @@ def bone_items(self, context):
 def register ():
     bpy.utils.register_module(__name__)
     bpy.types.Object.smartsuit_panel = bpy.props.PointerProperty(type=IgnitProperties)
-    bpy.types.Scene.enable_component = BoolProperty(name='Enable Component', default = True)# create bool property for switching
+    bpy.types.Scene.enable_component = BoolProperty(name='Enable Component', default = True)# create bool property for enabling component
+    bpy.types.Scene.enable_recording = BoolProperty(name='Enable Recording', default = False)# create bool property for enabling recording
     bpy.types.Object.streaming_port_property = bpy.props.StringProperty \
       (
         name = "Streaming port",
@@ -922,6 +1025,7 @@ def unregister ():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Object.smartsuit_panel
     del bpy.types.Scene.enable_component
+    del bpy.types.Scene.enable_recording
     del bpy.types.Object.streaming_port_property
     del bpy.types.Object.suit_id_prop
     
