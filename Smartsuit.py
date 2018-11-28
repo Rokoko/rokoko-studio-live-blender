@@ -209,7 +209,7 @@ class SensorAddress():
         self.right_upleg_sensor      = 129
         self.right_leg_sensor        = 130
         self.right_foot_sensor       = 131
-        self.addr_list               = [160,161,162,163,64,33,34,35,36,97,98,99,100,1,2,3,129,130,131]#[160,1,2,3,129,130,131,161,162,163,64,33,34,45,36,97,98,99,100]
+        self.addr_list               = [160,161,162,163,64,33,34,35,36,97,98,99,100,1,2,3,129,130,131]
     
 address_map = SensorAddress()
         
@@ -227,7 +227,7 @@ class SmartsuitReceiver():
         self.thread = Thread(target = self.run, args=[])
         self.thread.start()
     def run(self):
-        UDP_IP = "" #"" or "localhost" ?
+        UDP_IP = ""
         
         if portNumber == 0:
             UDP_PORT = 14041
@@ -520,10 +520,6 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
             #store current character values
             if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
                 character_rotations.character_hip = rot
-                #print("!!!!!!!!! " + str(arma.bones[sce['smartsuit_hip']].matrix.to_euler().to_quaternion()))
-                #print("!!!!!!!!! " + str(tuple(math.degrees(a) for a in arma.bones[sce['smartsuit_hip']].matrix.to_euler())))
-                #print("!!!!!!!!! " + str( b.matrix_basis.to_quaternion()) )
-                #print("!!!!!!!!! " + str( tuple(math.degrees(a) for a in b.matrix_basis.to_euler()) ))
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
                 character_rotations.character_stomach = arma.bones[sce['smartsuit_stomach']].matrix.to_euler().to_quaternion()
@@ -733,7 +729,7 @@ class ButtonEnableDisableComponent(bpy.types.Operator):
         return True
 
     def execute(self, context):
-       #switch bool property to opposite. if you don't toggle just set to False
+       #switch bool property to opposite
         global enable_component
         if enable_component:
             enable_component = False
@@ -752,8 +748,8 @@ class IgnitProperties(bpy.types.PropertyGroup):
         name = "My options",
         description = "My enum description",
         items = [
-            ("Receiver" , "Receiver" , "Description..."),
             ("Controller", "Controller", "other description"),
+            ("Receiver" , "Receiver" , "Description..."),
             ("Recording", "Recording", "other description")        
         ],
         #update=update_after_enum()
@@ -814,12 +810,15 @@ class SmartsuitProPanel(bpy.types.Panel):
                 row.operator("smartsuit.start_listener")
 
         elif scene.smartsuit_panel.my_enum == 'Controller':
-            #col = layout.column(align=True)
-            #col.operator("mesh.primitive_monkey_add", text="AddRig", icon='ERROR')
-            
-            
             sce = context.scene
             col = layout.column()
+            
+            col.enabled = context.scene.enable_component
+            col.operator("button.initialize_skeleton")
+
+            col.enabled = context.scene.enable_component
+            col.operator("button.restore_tpose")
+            
             col.enabled = context.scene.enable_component
             col.prop(sce, "arma", text = "Armature")
 
@@ -858,23 +857,8 @@ class SmartsuitProPanel(bpy.types.Panel):
                     #print ( bonename, tuple(math.degrees(a) for a in arma.bones[sce[bonename]].matrix.to_euler()))
                     #print ( bonename, arma.bones[sce[bonename]].matrix.to_euler().to_quaternion())
                     #print ( bonename, arma.bones[sce[bonename]].rotation_quaternion )
-                    
-            col = layout.column(align=True)
-            col.enabled = context.scene.enable_component
-            col.operator("button.initialize_skeleton")
-            
-            col = layout.column(align=True)
-            col.enabled = context.scene.enable_component
-            col.operator("button.restore_tpose")
             
         elif scene.smartsuit_panel.my_enum == 'Recording':
-#            if not initialized_bones:
-#                print("Skaleton has to be initialized first.")
-#            elif not start_listener_enabled:
-#                print("Listener has to be started first.")
-#            elif not initialized_bones and not start_listener_enabled:
-#                print("Skaleton has to be initialized and listerner has to be started first.")
-            #print("!! " + str(context.scene.enable_recording))
             if recorder.running:
                 row = layout.row()
                 row.enabled = context.scene.enable_recording
@@ -882,7 +866,7 @@ class SmartsuitProPanel(bpy.types.Panel):
             else:
                 row = layout.row()
                 row.enabled = context.scene.enable_recording
-                row.operator("button.start_recording")
+                row.operator("button.start_recording", icon='REC')
                 
 def work_bone():
      print("eheh")
@@ -984,17 +968,10 @@ if __name__ == "__main__":
     
 frames_count = 0
 def RunPerFrame(scene):
-    #time_started = int(round(time.time() * 1000))
-    #time_difference = 0
     global frames_count
     if recorder.running:
         frame_num = bpy.context.scene.frame_current
-        #time_started = int(round(time.time() * 1000))
-        #print (time_started)
-        #bpy.context.active_object.animation_data_clear()
-    #for i in range(60):s
         for b in bpy.context.scene.objects.active.pose.bones:
-            #bpy.context.scene.frame_set(self.frame_num)
             
             b.rotation_mode = 'QUATERNION'
             
@@ -1002,10 +979,10 @@ def RunPerFrame(scene):
             arma = bpy.data.armatures.get(sce.arma_name) 
             
             if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
-                b.keyframe_insert(data_path="location", frame = frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                b.keyframe_insert(data_path="location", frame = frame_num)
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
-                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
                 continue
             elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
                 b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
@@ -1059,19 +1036,7 @@ def RunPerFrame(scene):
                 b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
                 continue
 
-        
-        #current_time = int(round(time.time() * 1000))
-        #time_difference = (((current_time-time_started)/1000)%60)
         frames_count+=1
-        #print(frames_count)
-        #print (current_time)
-        #self.frame_num = (((current_time-time_started)/1000)%60)/30
-        #print(self.frame_num)
-        #self.frame_num+=1
-#    
-#    #print("frame received")
-#    
-#bpy.app.handlers.frame_change_pre.append(RunPerFrame)
 
 bpy.app.handlers.frame_change_pre.append(RunPerFrame)
 
