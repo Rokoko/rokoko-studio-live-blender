@@ -17,6 +17,8 @@ from mathutils import Quaternion
 from mathutils import Euler
 from mathutils import Vector
 import math
+import time
+    
 
 from bpy.types import(
         Panel,
@@ -35,6 +37,7 @@ suitID = "default"
 initial_suitname = "default"
 
 enable_component = True
+enable_record = False
 initialized_bones = False
 start_listener_enabled = False
 
@@ -433,91 +436,13 @@ class Recorder ():
         self.frame_num = 0
     
     def start_recording(self):
-        #self.thread = Thread(target = self.run_recording, args=[])
-        #self.thread.start()
-        
-    #def run_recording(self):
         self.running = True
-        self.frame_num = 0
-        print("recording started")
-        previous_frame = -1
-        bpy.context.active_object.animation_data_clear()
-        #while self.running and self.frame_num != previous_frame:
-        for i in range(20):
-            for b in bpy.context.scene.objects.active.pose.bones:
-                bpy.context.scene.frame_set(self.frame_num)
-                
-                b.rotation_mode = 'QUATERNION'
-                
-                sce = bpy.context.scene
-                arma = bpy.data.armatures.get(sce.arma_name)
-                
-                if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
-                    b.keyframe_insert(data_path="location", frame = self.frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_neck].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_head].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
-                    b.keyframe_insert(data_path="rotation_quaternion", frame = self.frame_num)
-                    continue
-                else:
-                    print ("PROBLEM: " + str(b.basename))
-
-            self.frame_num+=20
-            previous_frame = self.frame_num-20
-    
+        bpy.ops.screen.animation_play()
             
     def stop_recording(self):
         self.running = False
+        bpy.ops.screen.animation_play()
+        enable_record = False 
         print("recording stopped")
         
 recorder = Recorder()
@@ -530,13 +455,20 @@ class SmartsuitStartListener(bpy.types.Operator):
  
     def execute(self, context):
         global start_listener_enabled
+        global enable_record
         start_listener_enabled = True
         if initialized_bones and start_listener_enabled:
-            context.scene.enable_recording = True
+            enable_record = True
             print("RECORDING ENABLED")
             receiver.start()
         else:
+            enable_record = False
             print("INITIALIZE SKELETON FIRST")
+        
+        if not enable_record:
+            context.scene.enable_recording = False
+        else: 
+            context.scene.enable_recording = True
         return{'FINISHED'}    
 
 class SmartsuitStopListener(bpy.types.Operator):
@@ -546,7 +478,6 @@ class SmartsuitStopListener(bpy.types.Operator):
     def execute(self, context):
         global start_listener_enabled
         start_listener_enabled = False
-        context.scene.enable_recording = not context.scene.enable_recording
         print("RECORDING DISABLED")
         receiver.stop()
         return{'FINISHED'}
@@ -576,10 +507,6 @@ class ButtonInitializeSkeleton(bpy.types.Operator):
     def execute(self, context):
         global initialized_bones
         initialized_bones = True
-        if initialized_bones and start_listener_enabled:
-            context.scene.enable_recording = context.scene.enable_recording
-        else:
-            context.scene.enable_recording = not context.scene.enable_recording
         
         global rotation_offsets
         global character_rotations        
@@ -947,6 +874,7 @@ class SmartsuitProPanel(bpy.types.Panel):
 #                print("Listener has to be started first.")
 #            elif not initialized_bones and not start_listener_enabled:
 #                print("Skaleton has to be initialized and listerner has to be started first.")
+            #print("!! " + str(context.scene.enable_recording))
             if recorder.running:
                 row = layout.row()
                 row.enabled = context.scene.enable_recording
@@ -1054,4 +982,97 @@ def unregister ():
 if __name__ == "__main__":
     register()
     
+frames_count = 0
+def RunPerFrame(scene):
+    #time_started = int(round(time.time() * 1000))
+    #time_difference = 0
+    global frames_count
+    if recorder.running:
+        frame_num = bpy.context.scene.frame_current
+        #time_started = int(round(time.time() * 1000))
+        #print (time_started)
+        #bpy.context.active_object.animation_data_clear()
+    #for i in range(60):s
+        for b in bpy.context.scene.objects.active.pose.bones:
+            #bpy.context.scene.frame_set(self.frame_num)
+            
+            b.rotation_mode = 'QUATERNION'
+            
+            sce = bpy.context.scene
+            arma = bpy.data.armatures.get(sce.arma_name) 
+            
+            if b.basename == str(arma.bones[sce.smartsuit_hip].basename):
+                b.keyframe_insert(data_path="location", frame = frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_stomach].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num) # for other bones b.keyframe_insert(data_path="rotation_quaternion", index = -1)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_chest].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_neck].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_head].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftShoulder].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftArm].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftForearm].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftHand].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightShoulder].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightArm].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightForearm].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightHand].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftUpleg].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftLeg].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_leftFoot].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightUpleg].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightLeg].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+            elif b.basename == str(arma.bones[sce.smartsuit_rightFoot].basename):
+                b.keyframe_insert(data_path="rotation_quaternion", frame = frame_num)
+                continue
+
+        
+        #current_time = int(round(time.time() * 1000))
+        #time_difference = (((current_time-time_started)/1000)%60)
+        frames_count+=1
+        #print(frames_count)
+        #print (current_time)
+        #self.frame_num = (((current_time-time_started)/1000)%60)/30
+        #print(self.frame_num)
+        #self.frame_num+=1
+#    
+#    #print("frame received")
+#    
+#bpy.app.handlers.frame_change_pre.append(RunPerFrame)
+
+bpy.app.handlers.frame_change_pre.append(RunPerFrame)
+
 print("DONE")
