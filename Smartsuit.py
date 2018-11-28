@@ -107,26 +107,6 @@ class TPoseRotations():
         self.right_upleg =      Quaternion((0.0000, -0.7071, 0.0000, 0.7071))       #(-179.999991348578, 89.99989322145144, 0.0)
         self.right_leg =        Quaternion((1.0000, -0.0000, 0.0000, 0.0000))       #(-7.244569543242285e-05, -2.367822383577229e-05, 4.091792533789247e-05)
         self.right_foot =       Quaternion((0.7071, 0.0000, -0.7071, 0.0000))       # (5.3730861421926367e-05, -89.99998201391065, 0.0)
-        #self.hip =              Quaternion((-0.000000, 0.707, 0.707, 0.000000))
-#        self.hip =              Quaternion((-0.000000, -0.000003, 1.000, 0.000000))
-#        self.stomach =          Quaternion((1.000, 0.000, 0.000, 0.000))
-#        self.chest =            Quaternion((1.000, 0.000, -0.000, 0.000))
-#        self.neck =             Quaternion((1.000, 0.000, -0.000, 0.000))
-#        self.head =             Quaternion((1.000, 0.000, 0.000, 0.000))
-#        self.left_shoulder =    Quaternion((1.000, 0.000, -0.000, -0.000))
-#        self.left_arm =         Quaternion((1.000, 0.000, -0.000000, -0.000000))
-#        self.left_forearm =     Quaternion((1.000, -0.000, -0.000, -0.00000))
-#        self.left_hand =        Quaternion((1.000, 0.000, 0.000000, 0.000001))
-#        self.right_shoulder =   Quaternion((1.000, -0.000, -0.000, 0.000))
-#        self.right_arm =        Quaternion((1.000, -0.000, 0.000001, 0.000001))
-#        self.right_forearm =    Quaternion((1.000, 0.000, -0.000, 0.0000000))
-#        self.right_hand =       Quaternion((1.000, 0.000, -0.000, 0.000))
-#        self.left_upleg =       Quaternion((1.000, -0.000, -0.000000, -0.000000))
-#        self.left_leg =         Quaternion((1.000, -0.000, 0.000000, 0.000000))
-#        self.left_foot =        Quaternion((1.000, 0.000001, -0.000001, -0.000))
-#        self.right_upleg =      Quaternion((1.000, -0.000, -0.000, 0.000000))
-#        self.right_leg =        Quaternion((1.000, 0.000, -0.000, -0.000000))
-#        self.right_foot =       Quaternion((1.000, 0.000000, 0.000000, -0.000))
 
 ideal_rotation = TPoseRotations()
 
@@ -443,14 +423,30 @@ def apply_animation(sensor_frame):
             #else:
                 #print ("PROBLEM " + str(sensor_frame.get_sensor()) + "     " + str(b.basename))
 
+
+class Recorder ():
+    def __init__(self):
+        self.running = False
+    
+    def start_recording(self):
+        self.running = True
+        print("recording started")
+            
+    def stop_recording(self):
+        self.running = False
+        print("recording stopped")
+        
+recorder = Recorder()
+
 #LISTENERS ARE HANDLED HERE
+#receiver
 class SmartsuitStartListener(bpy.types.Operator):
     bl_idname = "smartsuit.start_listener"
     bl_label = "Start Listener"
  
     def execute(self, context):
         receiver.start()
-        return{'FINISHED'}   
+        return{'FINISHED'}    
 
 class SmartsuitStopListener(bpy.types.Operator):
     bl_idname = "smartsuit.stop_listener"
@@ -459,7 +455,25 @@ class SmartsuitStopListener(bpy.types.Operator):
     def execute(self, context):
         receiver.stop()
         return{'FINISHED'}
+
+#recording    
+class ButtonStartRecording(bpy.types.Operator):
+    bl_idname = "button.start_recording"
+    bl_label = "Start Recording"
+ 
+    def execute(self, context):
+        recorder.start_recording()
+        return{'FINISHED'}
     
+class ButtonStopRecording(bpy.types.Operator):
+    bl_idname = "button.stop_recording"
+    bl_label = "Stop Recording"
+ 
+    def execute(self, context):
+        recorder.stop_recording()
+        return{'FINISHED'}    
+
+#controller    
 class ButtonInitializeSkeleton(bpy.types.Operator):
     bl_idname = "button.initialize_skeleton"
     bl_label = "Initialize skeleton"
@@ -701,10 +715,12 @@ class ButtonEnableDisableComponent(bpy.types.Operator):
         if enable_component:
             enable_component = False
             receiver.stop()
+            recorder.stop_recording()
         else:
             enable_component = True
             receiver.stop()
-        context.scene.my_bool_property = not context.scene.my_bool_property
+            recorder.stop_recording()
+        context.scene.enable_component = not context.scene.enable_component
         return {'FINISHED'}
 
 #UI IS HANDLED HERE
@@ -714,7 +730,8 @@ class IgnitProperties(bpy.types.PropertyGroup):
         description = "My enum description",
         items = [
             ("Receiver" , "Receiver" , "Description..."),
-            ("Controller", "Controller", "other description")        
+            ("Controller", "Controller", "other description"),
+            ("Recording", "Recording", "other description")        
         ],
         #update=update_after_enum()
     )
@@ -747,7 +764,7 @@ class SmartsuitProPanel(bpy.types.Panel):
         
         row = layout.row()
         row.prop(scene.smartsuit_panel, "my_enum", expand=True)
-        row.enabled = context.scene.my_bool_property
+        row.enabled = context.scene.enable_component
         
         global portNumber 
         global suitID
@@ -756,21 +773,21 @@ class SmartsuitProPanel(bpy.types.Panel):
             obj = context.object
             #ID bpy.types.Object.suit_id_prop
             col = layout.column(align = True)
-            col.enabled = context.scene.my_bool_property
+            col.enabled = context.scene.enable_component
             col.prop(obj, "suit_id_prop")
             suitID = obj.suit_id_prop
             #PORT
             col = layout.column(align = True)
-            col.enabled = context.scene.my_bool_property
+            col.enabled = context.scene.enable_component
             col.prop(obj, "streaming_port_property")
             portNumber = obj.streaming_port_property
             if receiver.running:
                 row = layout.row()
-                row.enabled = context.scene.my_bool_property
+                row.enabled = context.scene.enable_component
                 row.operator("Smartsuit.stop_listener")
             else:
                 row = layout.row()
-                row.enabled = context.scene.my_bool_property
+                row.enabled = context.scene.enable_component
                 row.operator("smartsuit.start_listener")
 
         elif scene.smartsuit_panel.my_enum == 'Controller':
@@ -780,7 +797,7 @@ class SmartsuitProPanel(bpy.types.Panel):
             
             sce = context.scene
             col = layout.column()
-            col.enabled = context.scene.my_bool_property
+            col.enabled = context.scene.enable_component
             col.prop(sce, "arma", text = "Armature")
 
             col.prop_search(sce, "arma_name", bpy.data, "armatures", text="Armature name")
@@ -818,18 +835,24 @@ class SmartsuitProPanel(bpy.types.Panel):
                     #print ( bonename, tuple(math.degrees(a) for a in arma.bones[sce[bonename]].matrix.to_euler()))
                     #print ( bonename, arma.bones[sce[bonename]].matrix.to_euler().to_quaternion())
                     #print ( bonename, arma.bones[sce[bonename]].rotation_quaternion )
-                #print ( "smartsuit_hip", tuple(math.degrees(a) for a in arma.bones[sce['smartsuit_hip']].matrix.to_euler()))
-                #print ( "smartsuit_hip", arma.bones[sce['smartsuit_hip']].matrix.to_euler().to_quaternion())
-                
+                    
             col = layout.column(align=True)
-            col.enabled = context.scene.my_bool_property
+            col.enabled = context.scene.enable_component
             col.operator("button.initialize_skeleton")
             
             col = layout.column(align=True)
-            col.enabled = context.scene.my_bool_property
+            col.enabled = context.scene.enable_component
             col.operator("button.restore_tpose")
-
-    
+            
+        elif scene.smartsuit_panel.my_enum == 'Recording':
+            if recorder.running:
+                row = layout.row()
+                row.enabled = context.scene.enable_component
+                row.operator("button.stop_recording")
+            else:
+                row = layout.row()
+                row.enabled = context.scene.enable_component
+                row.operator("button.start_recording")
                 
 def work_bone():
      print("eheh")
@@ -858,7 +881,7 @@ def bone_items(self, context):
 def register ():
     bpy.utils.register_module(__name__)
     bpy.types.Object.smartsuit_panel = bpy.props.PointerProperty(type=IgnitProperties)
-    bpy.types.Scene.my_bool_property = BoolProperty(name='My Bool Property', default = True)# create bool property for switching
+    bpy.types.Scene.enable_component = BoolProperty(name='Enable Component', default = True)# create bool property for switching
     bpy.types.Object.streaming_port_property = bpy.props.StringProperty \
       (
         name = "Streaming port",
@@ -898,7 +921,7 @@ def register ():
 def unregister ():
     bpy.utils.unregister_module(__name__)
     del bpy.types.Object.smartsuit_panel
-    del bpy.types.Scene.my_bool_property
+    del bpy.types.Scene.enable_component
     del bpy.types.Object.streaming_port_property
     del bpy.types.Object.suit_id_prop
     
