@@ -38,7 +38,7 @@ class ReceiverStart(bpy.types.Operator):
         self.receiver = Receiver(context.scene.ssp_receiver_port)
 
         context.window_manager.modal_handler_add(self)
-        self.timer = context.window_manager.event_timer_add(1 / 20, window=bpy.context.window)
+        self.timer = context.window_manager.event_timer_add(1 / context.scene.ssp_receiver_fps, window=bpy.context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
