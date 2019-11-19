@@ -1,4 +1,5 @@
 import bpy
+from ..core.receiver import Receiver
 
 receiver_enabled = False
 
@@ -14,6 +15,7 @@ class ReceiverStart(bpy.types.Operator):
     bl_description = "Start receiving data from Rokoko Studio"
     bl_options = {'REGISTER'}
 
+    receiver = None
     timer = None
 
     def modal(self, context, event):
@@ -22,30 +24,29 @@ class ReceiverStart(bpy.types.Operator):
 
         # This gets run every frame
         if event.type == 'TIMER':
-            test()
+            self.receiver.run()
 
         return {'PASS_THROUGH'}
 
     def execute(self, context):
-        print('Starting receiver')
-
         global receiver_enabled
-        if receiver_enabled:
-            print('ALREADY RUNNING')
-            return {'CANCELLED'}
+        if receiver_enabled or self.receiver:
+            raise RuntimeError('Receiver is already enabled.')
 
         receiver_enabled = True
 
+        self.receiver = Receiver(context.scene.ssp_receiver_port)
+
         context.window_manager.modal_handler_add(self)
-        self.timer = context.window_manager.event_timer_add( 1 / 60, window=bpy.context.window)
+        self.timer = context.window_manager.event_timer_add(1 / 20, window=bpy.context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
-        print('Stopping receiver')
-
         global receiver_enabled
         receiver_enabled = False
         context.window_manager.event_timer_remove(self.timer)
+
+        del self.receiver
 
         return {'CANCELLED'}
 

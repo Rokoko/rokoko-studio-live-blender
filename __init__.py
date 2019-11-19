@@ -11,11 +11,13 @@ bl_info = {
 # If reloading, use importlib to load modules
 if "bpy" not in locals():
     import bpy
+    from . import core
     from . import panels
     from . import operators
     from . import properties
 else:
     import importlib
+    importlib.reload(core)
     importlib.reload(panels)
     importlib.reload(operators)
     importlib.reload(properties)
