@@ -15,15 +15,18 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
     bl_label = 'SmartsuitPro Receiver'
 
     def draw(self, context):
-        scene = context.scene
         layout = self.layout
         layout.use_property_split = True
 
         col = layout.column()
 
         col.enabled = not receiver.receiver_enabled
+
         row = col.row(align=True)
-        row.prop(context.scene, 'ssp_receiver_port', text = "Port:")
+        row.prop(context.scene, 'ssp_receiver_port', text="Port:")
+
+        row = col.row(align=True)
+        row.prop(context.scene, 'ssp_receiver_fps', text="FPS:")
 
         if receiver.receiver_enabled:
             layout.operator(ReceiverStop.bl_idname, icon='ARMATURE_DATA')

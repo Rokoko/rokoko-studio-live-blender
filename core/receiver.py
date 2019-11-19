@@ -1,4 +1,5 @@
 import bpy
+import json
 import socket
 from threading import Thread
 
@@ -8,10 +9,11 @@ from threading import Thread
 class Receiver:
 
     def run(self):
+        data = None
         recieved = True
 
         try:
-            data = self.sock.recvfrom(32768)
+            data, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
             recieved = False
             print('No packet')
@@ -20,12 +22,26 @@ class Receiver:
             print('Packet too long')
 
         if recieved:
-            print('\n\n', data)
+            # print('\n\n', data)
+            # print('Got something')
+            self.process_data(data)
+            pass
+
+    @staticmethod
+    def process_data(data):
+        json_data = json.loads(data)
+        version = json_data['version']
+        timestamp = json_data['timestamp']
+        playbacktimestamp = json_data['playbackTimestamp']
+        props = json_data['props']
+        trackers = json_data['trackers']
+        faces = json_data['faces']
+        actors = json_data['actors']
 
     def __init__(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setblocking(0)
+        self.sock.setblocking(False)
         self.sock.bind(("127.0.0.1", port))
 
         print("SmartsuitPro started listening on port " + str(port))
