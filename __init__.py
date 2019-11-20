@@ -1,3 +1,4 @@
+# Important plugin info for Blender
 bl_info = {
     'name': 'Rokoko SmartsuitPro',
     'author': 'Rokoko',
@@ -8,7 +9,9 @@ bl_info = {
     'blender': (2, 80, 0),
 }
 
-# If reloading, use importlib to load modules
+# If first startup of this plugin, load all modules normally
+# If reloading the plugin, use importlib to reload modules
+# This lets you do adjustments to the plugin on the fly without having to restart Blender
 if "bpy" not in locals():
     import bpy
     from . import core
@@ -23,8 +26,10 @@ else:
     importlib.reload(properties)
 
 
+# List of all buttons and panels
 classes = [
     panels.main.ReceiverPanel,
+    panels.objects.ObjectsPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
 ]
