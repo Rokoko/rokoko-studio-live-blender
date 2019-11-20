@@ -71,18 +71,19 @@ def animate():
                 return
 
             obj.rotation_mode = 'QUATERNION'
-            obj.location = (
+            obj.location = pos_studio_to_blender(
                 prop[0]['position']['x'],
                 prop[0]['position']['y'],
                 prop[0]['position']['z'],
             )
-            obj.rotation_quaternion = (
+            obj.rotation_quaternion = rot_studio_to_blender(
                 prop[0]['rotation']['w'],
                 prop[0]['rotation']['x'],
                 prop[0]['rotation']['y'],
                 prop[0]['rotation']['z'],
             )
-        if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('TR|'):
+
+        elif obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('TR|'):
             obj_id = obj.ssp_animations_props_trackers.split('|')[1]
             tracker = [tracker for tracker in trackers if tracker['name'] == obj_id]
 
@@ -92,14 +93,22 @@ def animate():
                 return
 
             obj.rotation_mode = 'QUATERNION'
-            obj.location = (
+            obj.location = pos_studio_to_blender(
                 tracker[0]['position']['x'],
                 tracker[0]['position']['y'],
                 tracker[0]['position']['z'],
             )
-            obj.rotation_quaternion = (
-                prop[0]['rotation']['w'],
-                prop[0]['rotation']['x'],
-                prop[0]['rotation']['y'],
-                prop[0]['rotation']['z'],
+            obj.rotation_quaternion = rot_studio_to_blender(
+                tracker[0]['rotation']['w'],
+                tracker[0]['rotation']['x'],
+                tracker[0]['rotation']['y'],
+                tracker[0]['rotation']['z'],
             )
+
+
+def pos_studio_to_blender(x, y, z):
+    return -x, -z, y
+
+
+def rot_studio_to_blender(w, x, y, z):
+    return w, x, z, -y
