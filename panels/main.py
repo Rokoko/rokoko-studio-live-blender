@@ -41,3 +41,18 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
             row.operator(ReceiverStop.bl_idname, icon='PAUSE')
         else:
             row.operator(ReceiverStart.bl_idname, icon='PLAY')
+
+        # # Show a list of all assigned objects, not yet working correctly
+        # for obj in bpy.data.objects:
+        #     if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('PR|'):
+        #         row = layout.row(align=True)
+        #         row.label(text='Prop: ' + obj.name + ' - ' + obj.ssp_animations_props_trackers.split('|')[2])
+        #     if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('TR|'):
+        #         row = layout.row(align=True)
+        #         row.label(text='Tracker: ' + obj.name + ' - ' + obj.ssp_animations_props_trackers.split('|')[1])
+        #     if obj.ssp_animations_faces:
+        #         row = layout.row(align=True)
+        #         row.label(text='Face: ' + obj.name + ' - ' + obj.ssp_animations_faces)
+        #     if obj.ssp_animations_actors:
+        #         row = layout.row(align=True)
+        #         row.label(text='Actor: ' + obj.name + ' - ' + obj.ssp_animations_actors.split('|')[1])

@@ -41,6 +41,12 @@ class ObjectsPanel(bpy.types.Panel):
     @staticmethod
     def draw_face(context, layout):
         row = layout.row(align=True)
+        row.label(text='Attach to tracker or prop:')
+
+        row = layout.row(align=True)
+        row.prop(context.object, 'ssp_animations_props_trackers')
+
+        row = layout.row(align=True)
         row.label(text='Attach to face:')
 
         row = layout.row(align=True)

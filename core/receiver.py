@@ -37,6 +37,8 @@ class Receiver:
         animations.faces = data['faces']
         animations.actors = data['actors']
 
+        animations.animate()
+
     def __init__(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -48,9 +50,3 @@ class Receiver:
     def __del__(self):
         self.sock.close()
         print("SmartsuitPro stopped listening")
-
-
-def get_shapekeys(context):
-    choices = ['Hahah', 'Ey du nabo', 'ojoj']
-
-    return choices
