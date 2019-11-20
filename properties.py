@@ -14,7 +14,7 @@ def register():
     Scene.ssp_receiver_fps = IntProperty(
         name='FPS',
         description="How often is the data received",
-        default=30,
+        default=60,
         min=1,
         max=100
     )
