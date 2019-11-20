@@ -1,12 +1,8 @@
 import bpy
 from ..core.receiver import Receiver
+from ..core.animations import clear_animations
 
 receiver_enabled = False
-
-
-def test():
-    for obj in bpy.data.objects:
-        obj.location.x += 0.01
 
 
 class ReceiverStart(bpy.types.Operator):
@@ -35,8 +31,11 @@ class ReceiverStart(bpy.types.Operator):
 
         receiver_enabled = True
 
+        clear_animations()
+
         self.receiver = Receiver(context.scene.ssp_receiver_port)
 
+        # Add this operator a model operator
         context.window_manager.modal_handler_add(self)
         self.timer = context.window_manager.event_timer_add(1 / context.scene.ssp_receiver_fps, window=bpy.context.window)
         return {'RUNNING_MODAL'}

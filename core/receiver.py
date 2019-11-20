@@ -1,7 +1,7 @@
 import bpy
 import json
 import socket
-from threading import Thread
+from . import animations
 
 
 # class that handles data received from suits and decides is it is proper to use
@@ -9,11 +9,11 @@ from threading import Thread
 class Receiver:
 
     def run(self):
-        data = None
+        data_raw = None
         recieved = True
 
         try:
-            data, address = self.sock.recvfrom(32768)  # Maybe up to 65536
+            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
             recieved = False
             print('No packet')
@@ -22,21 +22,20 @@ class Receiver:
             print('Packet too long')
 
         if recieved:
-            # print('\n\n', data)
-            # print('Got something')
-            self.process_data(data)
-            pass
+            self.process_data(json.loads(data_raw))
 
     @staticmethod
     def process_data(data):
-        json_data = json.loads(data)
-        version = json_data['version']
-        timestamp = json_data['timestamp']
-        playbacktimestamp = json_data['playbackTimestamp']
-        props = json_data['props']
-        trackers = json_data['trackers']
-        faces = json_data['faces']
-        actors = json_data['actors']
+        if not data:
+            return
+
+        # animations.version = self.json_data['version']
+        # animations.timestamp = self.json_data['timestamp']
+        # animations.playbacktimestamp = self.json_data['playbackTimestamp']
+        animations.props = data['props']
+        animations.trackers = data['trackers']
+        animations.faces = data['faces']
+        animations.actors = data['actors']
 
     def __init__(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -49,3 +48,9 @@ class Receiver:
     def __del__(self):
         self.sock.close()
         print("SmartsuitPro stopped listening")
+
+
+def get_shapekeys(context):
+    choices = ['Hahah', 'Ey du nabo', 'ojoj']
+
+    return choices

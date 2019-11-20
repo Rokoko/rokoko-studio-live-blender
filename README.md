@@ -17,3 +17,5 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
  - In the 3D View press 'N' and a toolbar will appear
  - Select SmartsuitPro in that toolbar
  - Press 'Start Receiver' to start receiving data from Rokoko Studio
+ - Select an object in the hierarchy, open the object category, open the Smartsuit Pro Panel
+ - Assign a prop to this object
