@@ -12,13 +12,13 @@ class Receiver:
         recieved = True
 
         try:
-            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
+            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536 32768
         except BlockingIOError:
             recieved = False
             print('No packet')
-        except OSError:
+        except OSError as e:
             recieved = False
-            print('Packet too long')
+            print('Packet error:', e.strerror)
 
         if recieved:
             self.process_data(json.loads(data_raw))
