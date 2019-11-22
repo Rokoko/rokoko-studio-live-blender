@@ -19,7 +19,7 @@ def clear_animations():
 
 # Creates the list of props and trackers for the objects panel
 def get_props_trackers(self, context):
-    choices = []
+    choices = [('None', '-None-', 'None')]
 
     for prop in props:
         # 1. Will be returned by context.scene
@@ -35,7 +35,7 @@ def get_props_trackers(self, context):
 
 # Creates the list of faces for the objects panel
 def get_faces(self, context):
-    choices = []
+    choices = [('None', '-None-', 'None')]
 
     for face in faces:
         # 1. Will be returned by context.scene
@@ -48,7 +48,7 @@ def get_faces(self, context):
 
 # Creates the list of actors for the objects panel
 def get_actors(self, context):
-    choices = []
+    choices = [('None', '-None-', 'None')]
 
     for actor in actors:
         # 1. Will be returned by context.scene
@@ -61,49 +61,49 @@ def get_actors(self, context):
 
 def animate():
     for obj in bpy.data.objects:
-        if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('PR|'):
-            obj_id = obj.ssp_animations_props_trackers.split('|')[1]
-            prop = [prop for prop in props if prop['id'] == obj_id]
+        if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers != 'None':
+            obj_id = obj.ssp_animations_props_trackers.split('|')
+            if obj_id[0] == 'PR':
+                prop = [prop for prop in props if prop['id'] == obj_id[1]]
 
-            # print('PROP', obj.name, obj_id, prop)
+                # print('PROP', obj.name, obj_id, prop)
 
-            if not prop:
-                return
+                if not prop:
+                    return
 
-            obj.rotation_mode = 'QUATERNION'
-            obj.location = pos_studio_to_blender(
-                prop[0]['position']['x'],
-                prop[0]['position']['y'],
-                prop[0]['position']['z'],
-            )
-            obj.rotation_quaternion = rot_studio_to_blender(
-                prop[0]['rotation']['w'],
-                prop[0]['rotation']['x'],
-                prop[0]['rotation']['y'],
-                prop[0]['rotation']['z'],
-            )
+                obj.rotation_mode = 'QUATERNION'
+                obj.location = pos_studio_to_blender(
+                    prop[0]['position']['x'],
+                    prop[0]['position']['y'],
+                    prop[0]['position']['z'],
+                )
+                obj.rotation_quaternion = rot_studio_to_blender(
+                    prop[0]['rotation']['w'],
+                    prop[0]['rotation']['x'],
+                    prop[0]['rotation']['y'],
+                    prop[0]['rotation']['z'],
+                )
 
-        elif obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('TR|'):
-            obj_id = obj.ssp_animations_props_trackers.split('|')[1]
-            tracker = [tracker for tracker in trackers if tracker['name'] == obj_id]
+            elif obj_id[0] == 'TR':
+                tracker = [tracker for tracker in trackers if tracker['name'] == obj_id[1]]
 
-            # print('TRACKER', obj.name, obj_id)
+                # print('TRACKER', obj.name, obj_id)
 
-            if not tracker:
-                return
+                if not tracker:
+                    return
 
-            obj.rotation_mode = 'QUATERNION'
-            obj.location = pos_studio_to_blender(
-                tracker[0]['position']['x'],
-                tracker[0]['position']['y'],
-                tracker[0]['position']['z'],
-            )
-            obj.rotation_quaternion = rot_studio_to_blender(
-                tracker[0]['rotation']['w'],
-                tracker[0]['rotation']['x'],
-                tracker[0]['rotation']['y'],
-                tracker[0]['rotation']['z'],
-            )
+                obj.rotation_mode = 'QUATERNION'
+                obj.location = pos_studio_to_blender(
+                    tracker[0]['position']['x'],
+                    tracker[0]['position']['y'],
+                    tracker[0]['position']['z'],
+                )
+                obj.rotation_quaternion = rot_studio_to_blender(
+                    tracker[0]['rotation']['w'],
+                    tracker[0]['rotation']['x'],
+                    tracker[0]['rotation']['y'],
+                    tracker[0]['rotation']['z'],
+                )
 
 
 def pos_studio_to_blender(x, y, z):
