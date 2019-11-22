@@ -61,8 +61,8 @@ def get_actors(self, context):
 
 def animate():
     for obj in bpy.data.objects:
-        if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers != 'None':
-            obj_id = obj.ssp_animations_props_trackers.split('|')
+        if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+            obj_id = obj.rsl_animations_props_trackers.split('|')
             if obj_id[0] == 'PR':
                 prop = [prop for prop in props if prop['id'] == obj_id[1]]
 

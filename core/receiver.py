@@ -4,8 +4,7 @@ import socket
 from . import animations
 
 
-# class that handles data received from suits and decides is it is proper to use
-# applies the animation when the start listener button is pressed
+# Starts UPD server and handles data received from Rokoko Studio
 class Receiver:
 
     def run(self):
@@ -45,8 +44,8 @@ class Receiver:
         self.sock.setblocking(False)
         self.sock.bind(("127.0.0.1", port))
 
-        print("SmartsuitPro started listening on port " + str(port))
+        print("Rokoko Studio Live started listening on port " + str(port))
 
     def __del__(self):
         self.sock.close()
-        print("SmartsuitPro stopped listening")
+        print("Rokoko Studio Live stopped listening")

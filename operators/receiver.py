@@ -6,7 +6,7 @@ receiver_enabled = False
 
 
 class ReceiverStart(bpy.types.Operator):
-    bl_idname = "ssp.receiver_start"
+    bl_idname = "rsl.receiver_start"
     bl_label = "Start Receiver"
     bl_description = "Start receiving data from Rokoko Studio"
     bl_options = {'REGISTER'}
@@ -33,11 +33,11 @@ class ReceiverStart(bpy.types.Operator):
 
         clear_animations()
 
-        self.receiver = Receiver(context.scene.ssp_receiver_port)
+        self.receiver = Receiver(context.scene.rsl_receiver_port)
 
         # Add this operator a model operator
         context.window_manager.modal_handler_add(self)
-        self.timer = context.window_manager.event_timer_add(1 / context.scene.ssp_receiver_fps, window=bpy.context.window)
+        self.timer = context.window_manager.event_timer_add(1 / context.scene.rsl_receiver_fps, window=bpy.context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
@@ -57,7 +57,7 @@ class ReceiverStart(bpy.types.Operator):
 
 
 class ReceiverStop(bpy.types.Operator):
-    bl_idname = "ssp.receiver_stop"
+    bl_idname = "rsl.receiver_stop"
     bl_label = "Stop Receiver"
     bl_description = "Stop receiving data from Rokoko Studio"
     bl_options = {'REGISTER'}
