@@ -51,7 +51,11 @@ def register():
 def unregister():
     print("### Unloading Rokoko Studio Live...")
 
-    # Register all classes
+    # Shut down receiver if the plugin is disabled while it is running
+    if operators.receiver.receiver_enabled:
+        operators.receiver.ReceiverStart.force_disable()
+
+    # Unregister all classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 

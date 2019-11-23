@@ -1,4 +1,3 @@
-import bpy
 import json
 import socket
 from . import animations
@@ -7,20 +6,22 @@ from . import animations
 # Starts UPD server and handles data received from Rokoko Studio
 class Receiver:
 
+    sock = None
+
     def run(self):
         data_raw = None
-        recieved = True
+        received = True
 
         try:
-            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536 32768
+            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
-            recieved = False
+            received = False
             print('No packet')
         except OSError as e:
-            recieved = False
+            received = False
             print('Packet error:', e.strerror)
 
-        if recieved:
+        if received:
             self.process_data(json.loads(data_raw))
 
     @staticmethod
@@ -38,7 +39,7 @@ class Receiver:
 
         animations.animate()
 
-    def __init__(self, port):
+    def start(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
@@ -46,6 +47,7 @@ class Receiver:
 
         print("Rokoko Studio Live started listening on port " + str(port))
 
-    def __del__(self):
+    def stop(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
         print("Rokoko Studio Live stopped listening")
