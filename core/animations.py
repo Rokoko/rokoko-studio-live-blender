@@ -77,8 +77,9 @@ def animate():
                 return
 
             for shape in animation_lists.face_shapes:
-                obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].slider_min = -1
-                obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].value = face[0][shape] / 100
+                if obj.data.shape_keys.key_blocks.get(getattr(mesh, 'rsl_face_' + shape)):
+                    obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].slider_min = -1
+                    obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].value = face[0][shape] / 100
 
 
 def pos_studio_to_blender(x, y, z):

@@ -1,9 +1,10 @@
 from bpy.types import Scene, Object, Mesh
-from bpy.props import IntProperty, StringProperty, EnumProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, CollectionProperty, PointerProperty
 from .core import animation_lists
 
 
 def register():
+    # Receiver
     Scene.rsl_receiver_port = IntProperty(
         name='Streaming Port',
         description="The port defined in Rokoko Studio",
@@ -38,8 +39,4 @@ def register():
 
     # Face shapekeys
     for shape in animation_lists.face_shapes:
-        setattr(Mesh, 'rsl_face_' + shape, EnumProperty(
-            name=shape,
-            description='Select the shapekey that should be moved by this shape',
-            items=animation_lists.get_face_shapes
-        ))
+        setattr(Mesh, 'rsl_face_' + shape, StringProperty())

@@ -55,14 +55,13 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_faces')
 
-        mesh = bpy.data.meshes[context.object.name]
-
         if context.object.rsl_animations_faces and context.object.rsl_animations_faces != 'None':
             layout.separator()
             row = layout.row(align=True)
             row.label(text='Select Shapekeys:')
             row.operator(DetectFaceShapes.bl_idname)
 
+            mesh = bpy.data.meshes[context.object.name]
             for shape in animation_lists.face_shapes:
                 row = layout.row(align=True)
-                row.prop(mesh, 'rsl_face_' + shape)
+                row.prop_search(mesh, 'rsl_face_' + shape, context.object.data.shape_keys, "key_blocks", text=shape)
