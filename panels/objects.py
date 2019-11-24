@@ -63,6 +63,8 @@ class ObjectsPanel(bpy.types.Panel):
 
     @staticmethod
     def draw_face(context, layout):
+        obj = context.object
+
         row = layout.row(align=True)
         row.scale_y = 0.2
         row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
@@ -80,15 +82,19 @@ class ObjectsPanel(bpy.types.Panel):
             return
 
         row = layout.row(align=True)
-        row.prop(context.object, 'rsl_animations_faces')
+        row.prop(obj, 'rsl_animations_faces')
 
-        if context.object.rsl_animations_faces and context.object.rsl_animations_faces != 'None':
+        if obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
             layout.separator()
             row = layout.row(align=True)
             row.label(text='Select Shapekeys:')
             row.operator(DetectFaceShapes.bl_idname)
 
-            mesh = bpy.data.meshes[context.object.name]
+            if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
+                row = layout.row(align=True)
+                row.label(text='This mesh has no shapekeys!', icon='INFO')
+                return
+
             for shape in animation_lists.face_shapes:
                 row = layout.row(align=True)
-                row.prop_search(mesh, 'rsl_face_' + shape, context.object.data.shape_keys, "key_blocks", text=shape)
+                row.prop_search(obj, 'rsl_face_' + shape, obj.data.shape_keys, "key_blocks", text=shape)

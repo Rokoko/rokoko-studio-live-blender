@@ -41,7 +41,7 @@ def register():
 
     # Face shapekeys
     for shape in animation_lists.face_shapes:
-        setattr(Mesh, 'rsl_face_' + shape, StringProperty(
+        setattr(Object, 'rsl_face_' + shape, StringProperty(
             name=shape,
             description='Select the shapekey that should be animated by this shape'
         ))

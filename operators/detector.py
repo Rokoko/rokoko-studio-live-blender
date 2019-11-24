@@ -10,7 +10,6 @@ class DetectFaceShapes(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        mesh = bpy.data.meshes[obj.name]
 
         if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
             self.report({'ERROR'}, 'This mesh has no shapekeys!')
@@ -18,6 +17,6 @@ class DetectFaceShapes(bpy.types.Operator):
 
         for shape in animation_lists.face_shapes:
             if shape in obj.data.shape_keys.key_blocks:
-                setattr(mesh, 'rsl_face_' + shape, shape)
+                setattr(obj, 'rsl_face_' + shape, shape)
 
         return {'FINISHED'}
