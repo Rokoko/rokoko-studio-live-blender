@@ -1,5 +1,5 @@
 from bpy.types import Scene, Object, Mesh
-from bpy.props import IntProperty, StringProperty, EnumProperty, CollectionProperty, PointerProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty
 from .core import animation_lists
 
 

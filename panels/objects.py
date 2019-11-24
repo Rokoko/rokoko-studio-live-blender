@@ -1,5 +1,5 @@
 import bpy
-from ..core import animation_lists
+from ..core import animations, animation_lists
 from ..operators.detector import DetectFaceShapes
 
 
@@ -19,6 +19,7 @@ class ObjectsPanel(bpy.types.Panel):
             self.draw_actor(context, layout)
 
         elif obj.type == 'MESH':
+            self.draw_tracker(context, layout)
             self.draw_face(context, layout)
 
         else:
@@ -29,6 +30,11 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.label(text='Attach to tracker or prop:')
 
+        if not animations.trackers and not animations.props:
+            row = layout.row(align=True)
+            row.label(text='No prop or tracker data available.', icon='INFO')
+            return
+
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_props_trackers')
 
@@ -37,20 +43,25 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.label(text='Attach to actor:')
 
+        if not animations.actors:
+            row = layout.row(align=True)
+            row.label(text='No actor data available.', icon='INFO')
+            return
+
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_actors')
 
     @staticmethod
     def draw_face(context, layout):
-        row = layout.row(align=True)
-        row.label(text='Attach to tracker or prop:')
-
-        row = layout.row(align=True)
-        row.prop(context.object, 'rsl_animations_props_trackers')
-
         layout.separator()
+
         row = layout.row(align=True)
         row.label(text='Attach to face:')
+
+        if not animations.faces:
+            row = layout.row(align=True)
+            row.label(text='No face data available.', icon='INFO')
+            return
 
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_faces')

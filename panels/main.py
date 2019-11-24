@@ -1,4 +1,5 @@
 import bpy
+from ..core import animations
 from ..operators import receiver
 from ..operators.receiver import ReceiverStart, ReceiverStop
 
@@ -46,16 +47,17 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         # Show a list of all assigned objects, not yet working correctly
         for obj in bpy.data.objects:
-            if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
-                if obj.rsl_animations_props_trackers.startswith('PR|'):
-                    # inputs.append('Prop: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[2])
-                    inputs.append('Prop: ' + obj.rsl_animations_props_trackers.split('|')[2] + ' --> ' + obj.name)
-                elif obj.rsl_animations_props_trackers.startswith('TR|'):
-                    # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
-                    inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
-            if obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+            if animations.props or animations.trackers:
+                if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+                    if obj.rsl_animations_props_trackers.startswith('PR|'):
+                        # inputs.append('Prop: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[2])
+                        inputs.append('Prop: ' + obj.rsl_animations_props_trackers.split('|')[2] + ' --> ' + obj.name)
+                    elif obj.rsl_animations_props_trackers.startswith('TR|'):
+                        # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
+                        inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
+            if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
                 inputs.append('Face: ' + obj.name + ' - ' + obj.rsl_animations_faces)
-            if obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
                 inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors.split('|')[1])
 
         if inputs:
