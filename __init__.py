@@ -32,6 +32,7 @@ classes = [
     panels.objects.ObjectsPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
+    operators.detector.DetectFaceShapes,
 ]
 
 

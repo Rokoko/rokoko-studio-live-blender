@@ -1,4 +1,5 @@
 import bpy
+from . import animation_lists
 
 # version = None
 # timestamp = None
@@ -15,48 +16,6 @@ def clear_animations():
     trackers = []
     faces = []
     actors = []
-
-
-# Creates the list of props and trackers for the objects panel
-def get_props_trackers(self, context):
-    choices = [('None', '-None-', 'None')]
-
-    for prop in props:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append(('PR|' + prop['id'] + '|' + prop['name'], 'Prop: ' + prop['name'], 'Prop: ' + prop['name']))
-
-    for tracker in trackers:
-        choices.append(('TR|' + tracker['name'], 'Tracker: ' + tracker['name'], 'Tracker: ' + tracker['name']))
-
-    return choices
-
-
-# Creates the list of faces for the objects panel
-def get_faces(self, context):
-    choices = [('None', '-None-', 'None')]
-
-    for face in faces:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append((face['faceId'], face['faceId'], face['faceId']))
-
-    return choices
-
-
-# Creates the list of actors for the objects panel
-def get_actors(self, context):
-    choices = [('None', '-None-', 'None')]
-
-    for actor in actors:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append((actor['id'] + '|' + actor['name'], actor['name'], actor['name']))
-
-    return choices
 
 
 def animate():
@@ -104,6 +63,22 @@ def animate():
                     tracker[0]['rotation']['y'],
                     tracker[0]['rotation']['z'],
                 )
+
+        if obj.type == 'MESH':
+            mesh = bpy.data.meshes[obj.name]
+            if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
+                continue
+            if not obj.rsl_animations_faces or obj.rsl_animations_faces == 'None':
+                continue
+
+            face = [face for face in faces if face['faceId'] == obj.rsl_animations_faces]
+
+            if not face:
+                return
+
+            for shape in animation_lists.face_shapes:
+                obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].slider_min = -1
+                obj.data.shape_keys.key_blocks[getattr(mesh, 'rsl_face_' + shape)].value = face[0][shape] / 100
 
 
 def pos_studio_to_blender(x, y, z):

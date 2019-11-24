@@ -1,6 +1,6 @@
-from bpy.types import Scene, Object
+from bpy.types import Scene, Object, Mesh
 from bpy.props import IntProperty, StringProperty, EnumProperty
-from .core import animations
+from .core import animation_lists
 
 
 def register():
@@ -18,18 +18,28 @@ def register():
         min=1,
         max=100
     )
+
+    # Objects
     Object.rsl_animations_props_trackers = EnumProperty(
         name='Tracker or Prop',
         description='Select the prop or tracker that you want to attach this object to',
-        items=animations.get_props_trackers
+        items=animation_lists.get_props_trackers
     )
     Object.rsl_animations_faces = EnumProperty(
         name='Face',
         description='Select the prop that you want to attach this object to',
-        items=animations.get_faces
+        items=animation_lists.get_faces
     )
     Object.rsl_animations_actors = EnumProperty(
         name='Actor',
         description='Select the prop that you want to attach this object to',
-        items=animations.get_actors
+        items=animation_lists.get_actors
     )
+
+    # Face shapekeys
+    for shape in animation_lists.face_shapes:
+        setattr(Mesh, 'rsl_face_' + shape, EnumProperty(
+            name=shape,
+            description='Select the shapekey that should be moved by this shape',
+            items=animation_lists.get_face_shapes
+        ))
