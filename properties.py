@@ -1,5 +1,5 @@
 from bpy.types import Scene, Object, Mesh
-from bpy.props import IntProperty, StringProperty, EnumProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty
 from .core import animation_lists
 
 
@@ -20,6 +20,8 @@ def register():
         max=100
     )
 
+    Scene.rsl_ui_refresher = BoolProperty()
+
     # Objects
     Object.rsl_animations_props_trackers = EnumProperty(
         name='Tracker or Prop',
@@ -39,4 +41,7 @@ def register():
 
     # Face shapekeys
     for shape in animation_lists.face_shapes:
-        setattr(Mesh, 'rsl_face_' + shape, StringProperty())
+        setattr(Mesh, 'rsl_face_' + shape, StringProperty(
+            name=shape,
+            description='Select the shapekey that should be animated by this shape'
+        ))
