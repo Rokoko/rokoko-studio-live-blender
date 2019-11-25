@@ -45,3 +45,10 @@ def register():
             name=shape,
             description='Select the shapekey that should be animated by this shape'
         ))
+
+    # Actor bones
+    for bone in animation_lists.actor_bones:
+        setattr(Object, 'rsl_actor_' + bone, StringProperty(
+            name=bone,
+            description='Select the bone that corresponds to the actors bone'
+        ))

@@ -1,6 +1,6 @@
 import bpy
 from ..core import animations, animation_lists
-from ..operators.detector import DetectFaceShapes
+from ..operators.detector import DetectFaceShapes, DetectActorBones
 
 
 # Create a panel in the Object category of all objects
@@ -15,15 +15,13 @@ class ObjectsPanel(bpy.types.Panel):
         layout = self.layout
         obj = context.object
 
-        if obj.type == 'ARMATURE':
-            self.draw_actor(context, layout)
+        self.draw_tracker(context, layout)
 
-        elif obj.type == 'MESH':
-            self.draw_tracker(context, layout)
+        if obj.type == 'MESH':
             self.draw_face(context, layout)
 
-        else:
-            self.draw_tracker(context, layout)
+        elif obj.type == 'ARMATURE':
+            self.draw_actor(context, layout)
 
     @staticmethod
     def draw_tracker(context, layout):
@@ -43,23 +41,6 @@ class ObjectsPanel(bpy.types.Panel):
 
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_props_trackers')
-
-    @staticmethod
-    def draw_actor(context, layout):
-        row = layout.row(align=True)
-        row.scale_y = 0.2
-        row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
-
-        row = layout.row(align=True)
-        row.label(text='Attach to actor:')
-
-        if not animations.actors:
-            row = layout.row(align=True)
-            row.label(text='No actor data available.', icon='INFO')
-            return
-
-        row = layout.row(align=True)
-        row.prop(context.object, 'rsl_animations_actors')
 
     @staticmethod
     def draw_face(context, layout):
@@ -98,3 +79,32 @@ class ObjectsPanel(bpy.types.Panel):
             for shape in animation_lists.face_shapes:
                 row = layout.row(align=True)
                 row.prop_search(obj, 'rsl_face_' + shape, obj.data.shape_keys, "key_blocks", text=shape)
+
+    @staticmethod
+    def draw_actor(context, layout):
+        obj = context.object
+
+        row = layout.row(align=True)
+        row.scale_y = 0.2
+        row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
+
+        row = layout.row(align=True)
+        row.label(text='Attach to actor:')
+
+        if not animations.actors:
+            row = layout.row(align=True)
+            row.label(text='No actor data available.', icon='INFO')
+            return
+
+        row = layout.row(align=True)
+        row.prop(context.object, 'rsl_animations_actors')
+
+        if obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            layout.separator()
+            row = layout.row(align=True)
+            row.label(text='Select Bones:')
+            row.operator(DetectActorBones.bl_idname)
+
+            for shape in animation_lists.actor_bones:
+                row = layout.row(align=True)
+                row.prop_search(obj, 'rsl_actor_' + shape, obj.pose, "bones", text=shape)

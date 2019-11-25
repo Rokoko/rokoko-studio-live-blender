@@ -33,6 +33,7 @@ classes = [
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.detector.DetectFaceShapes,
+    operators.detector.DetectActorBones,
 ]
 
 

@@ -20,6 +20,7 @@ def clear_animations():
 
 def animate():
     for obj in bpy.data.objects:
+        # Animate all trackers and props
         if props or trackers:
             if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
                 obj_id = obj.rsl_animations_props_trackers.split('|')
@@ -56,7 +57,8 @@ def animate():
                             tracker[0]['rotation']['z'],
                         )
 
-        if obj.type == 'MESH' and faces:
+        # Animate all faces
+        if faces and obj.type == 'MESH':
             if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
                 continue
             if not obj.rsl_animations_faces or obj.rsl_animations_faces == 'None':
@@ -71,8 +73,30 @@ def animate():
                     obj.data.shape_keys.key_blocks[getattr(obj, 'rsl_face_' + shape)].slider_min = -1
                     obj.data.shape_keys.key_blocks[getattr(obj, 'rsl_face_' + shape)].value = face[0][shape] / 100
 
-        elif obj.type == 'ARMATURE' and actors:
-            pass
+        # Animate all actors
+        elif actors and obj.type == 'ARMATURE' and obj.mode == 'POSE':
+            if not obj.rsl_animations_actors or obj.rsl_animations_actors == 'None':
+                continue
+
+            actor = [actor for actor in actors if actor['id'] == obj.rsl_animations_actors]
+            if not actor:
+                continue
+
+            for bone_name in animation_lists.actor_bones:
+                bone = obj.pose.bones.get(getattr(obj, 'rsl_actor_' + bone_name))
+                if bone:
+                    bone.rotation_mode = 'QUATERNION'
+                    # bone.location = (
+                    #     actor[0][bone_name]['position']['x'],
+                    #     actor[0][bone_name]['position']['y'],
+                    #     actor[0][bone_name]['position']['z'],
+                    # )
+                    bone.rotation_quaternion = (
+                        actor[0][bone_name]['rotation']['w'],
+                        -actor[0][bone_name]['rotation']['x'],
+                        actor[0][bone_name]['rotation']['y'],
+                        actor[0][bone_name]['rotation']['z'],
+                    )
 
 
 def pos_studio_to_blender(x, y, z):

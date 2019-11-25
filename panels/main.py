@@ -58,7 +58,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
             if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
                 inputs.append('Face: ' + obj.name + ' - ' + obj.rsl_animations_faces)
             if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-                inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors.split('|')[1])
+                inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors)
 
         if inputs:
             layout.separator()

@@ -16,44 +16,125 @@ face_shapes = [
     'eyeLookUpRight',
     'eyeSquintRight',
     'eyeWideRight',
-    "jawForward",
-    "jawLeft",
-    "jawRight",
-    "jawOpen",
-    "mouthClose",
-    "mouthFunnel",
-    "mouthPucker",
-    "mouthLeft",
-    "mouthRight",
-    "mouthSmileLeft",
-    "mouthSmileRight",
-    "mouthFrownLeft",
-    "mouthFrownRight",
-    "mouthDimpleLeft",
-    "mouthDimpleRight",
-    "mouthStretchLeft",
-    "mouthStretchRight",
-    "mouthRollLower",
-    "mouthRollUpper",
-    "mouthShrugLower",
-    "mouthShrugUpper",
-    "mouthPressLeft",
-    "mouthPressRight",
-    "mouthLowerDownLeft",
-    "mouthLowerDownRight",
-    "mouthUpperUpLeft",
-    "mouthUpperUpRight",
-    "browDownLeft",
-    "browDownRight",
-    "browInnerUp",
-    "browOuterUpLeft",
-    "browOuterUpRight",
-    "cheekPuff",
-    "cheekSquintLeft",
-    "cheekSquintRight",
-    "noseSneerLeft",
-    "noseSneerRight",
-    "tongueOut"
+    'jawForward',
+    'jawLeft',
+    'jawRight',
+    'jawOpen',
+    'mouthClose',
+    'mouthFunnel',
+    'mouthPucker',
+    'mouthLeft',
+    'mouthRight',
+    'mouthSmileLeft',
+    'mouthSmileRight',
+    'mouthFrownLeft',
+    'mouthFrownRight',
+    'mouthDimpleLeft',
+    'mouthDimpleRight',
+    'mouthStretchLeft',
+    'mouthStretchRight',
+    'mouthRollLower',
+    'mouthRollUpper',
+    'mouthShrugLower',
+    'mouthShrugUpper',
+    'mouthPressLeft',
+    'mouthPressRight',
+    'mouthLowerDownLeft',
+    'mouthLowerDownRight',
+    'mouthUpperUpLeft',
+    'mouthUpperUpRight',
+    'browDownLeft',
+    'browDownRight',
+    'browInnerUp',
+    'browOuterUpLeft',
+    'browOuterUpRight',
+    'cheekPuff',
+    'cheekSquintLeft',
+    'cheekSquintRight',
+    'noseSneerLeft',
+    'noseSneerRight',
+    'tongueOut'
+]
+
+# Face shapekeys
+actor_bones = [
+    'hip',
+    'spine',
+    'chest',
+    'neck',
+    'head',
+
+    'leftShoulder',
+    'leftUpperArm',
+    'leftLowerArm',
+    'leftHand',
+
+    'rightShoulder',
+    'rightUpperArm',
+    'rightLowerArm',
+    'rightHand',
+
+    'leftUpLeg',
+    'leftLeg',
+    'leftFoot',
+    'leftToe',
+    'leftToeEnd',
+
+    'rightUpLeg',
+    'rightLeg',
+    'rightFoot',
+    'rightToe',
+    'rightToeEnd',
+
+    'leftThumbProximal',
+    'leftThumbMedial',
+    'leftThumbDistal',
+    'leftThumbTip',
+
+    'leftIndexProximal',
+    'leftIndexMedial',
+    'leftIndexDistal',
+    'leftIndexTip',
+
+    'leftMiddleProximal',
+    'leftMiddleMedial',
+    'leftMiddleDistal',
+    'leftMiddleTip',
+
+    'leftRingProximal',
+    'leftRingMedial',
+    'leftRingDistal',
+    'leftRingTip',
+
+    'leftLittleProximal',
+    'leftLittleMedial',
+    'leftLittleDistal',
+    'leftLittleTip',
+
+    'rightThumbProximal',
+    'rightThumbMedial',
+    'rightThumbDistal',
+    'rightThumbTip',
+
+    'rightIndexProximal',
+    'rightIndexMedial',
+    'rightIndexDistal',
+    'rightIndexTip',
+
+    'rightMiddleProximal',
+    'rightMiddleMedial',
+    'rightMiddleDistal',
+    'rightMiddleTip',
+
+    'rightRingProximal',
+    'rightRingMedial',
+    'rightRingDistal',
+    'rightRingTip',
+
+    'rightLittleProximal',
+    'rightLittleMedial',
+    'rightLittleDistal',
+    'rightLittleTip',
 ]
 
 
@@ -94,23 +175,6 @@ def get_actors(self, context):
         # 1. Will be returned by context.scene
         # 2. Will be shown in lists
         # 3. will be shown in the hover description (below description)
-        choices.append((actor['id'] + '|' + actor['name'], actor['name'], actor['name']))
-
-    return choices
-
-
-# Creates the list of actors for the objects panel
-def get_face_shapes(self, context):
-    choices = []
-    mesh = context.object
-
-    if not hasattr(mesh.data, 'shape_keys') or not hasattr(mesh.data.shape_keys, 'key_blocks'):
-        return choices
-
-    for shapekey in mesh.data.shape_keys.key_blocks:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append((shapekey.name, shapekey.name, shapekey.name))
+        choices.append((actor['id'], actor['id'], actor['id']))
 
     return choices
