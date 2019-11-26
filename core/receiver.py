@@ -1,27 +1,27 @@
-import bpy
 import json
 import socket
 from . import animations
 
 
-# class that handles data received from suits and decides is it is proper to use
-# applies the animation when the start listener button is pressed
+# Starts UPD server and handles data received from Rokoko Studio
 class Receiver:
+
+    sock = None
 
     def run(self):
         data_raw = None
-        recieved = True
+        received = True
 
         try:
             data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
-            recieved = False
+            received = False
             print('No packet')
-        except OSError:
-            recieved = False
-            print('Packet too long')
+        except OSError as e:
+            received = False
+            print('Packet error:', e.strerror)
 
-        if recieved:
+        if received:
             self.process_data(json.loads(data_raw))
 
     @staticmethod
@@ -39,14 +39,15 @@ class Receiver:
 
         animations.animate()
 
-    def __init__(self, port):
+    def start(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
         self.sock.bind(("127.0.0.1", port))
 
-        print("SmartsuitPro started listening on port " + str(port))
+        print("Rokoko Studio Live started listening on port " + str(port))
 
-    def __del__(self):
+    def stop(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
-        print("SmartsuitPro stopped listening")
+        print("Rokoko Studio Live stopped listening")

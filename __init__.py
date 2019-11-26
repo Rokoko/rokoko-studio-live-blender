@@ -1,10 +1,10 @@
 # Important plugin info for Blender
 bl_info = {
-    'name': 'Rokoko SmartsuitPro',
+    'name': 'Rokoko Studio Live for Blender',
     'author': 'Rokoko',
     'category': 'Animation',
-    'location': 'View 3D > Tool Shelf > SmartsuitPro',
-    'description': 'Import your Smartsuit animation directly into Blender',
+    'location': 'View 3D > Tool Shelf > Rokoko',
+    'description': 'Stream your Rokoko Studio animations directly into Blender',
     'version': (0, 1),
     'blender': (2, 80, 0),
 }
@@ -32,12 +32,14 @@ classes = [
     panels.objects.ObjectsPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
+    operators.detector.DetectFaceShapes,
+    operators.detector.DetectActorBones,
 ]
 
 
 # register and unregister all classes
 def register():
-    print("\n### Loading SmartsuitPro...")
+    print("\n### Loading Rokoko Studio Live...")
 
     # Register all classes
     for cls in classes:
@@ -45,17 +47,21 @@ def register():
 
     properties.register()
 
-    print("### Loaded SmartsuitPro successfully!\n")
+    print("### Loaded Rokoko Studio Live successfully!\n")
 
 
 def unregister():
-    print("### Unloading SmartsuitPro...")
+    print("### Unloading Rokoko Studio Live...")
 
-    # Register all classes
+    # Shut down receiver if the plugin is disabled while it is running
+    if operators.receiver.receiver_enabled:
+        operators.receiver.ReceiverStart.force_disable()
+
+    # Unregister all classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
-    print("### Unloaded SmartsuitPro successfully!\n")
+    print("### Unloaded Rokoko Studio Live successfully!\n")
 
 
 if __name__ == '__main__':

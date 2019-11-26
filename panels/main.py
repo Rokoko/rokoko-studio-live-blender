@@ -1,21 +1,22 @@
 import bpy
+from ..core import animations
 from ..operators import receiver
 from ..operators.receiver import ReceiverStart, ReceiverStop
 
 
-# Initializes the SmartsuitPro panel in the toolbar
+# Initializes the Rokoko panel in the toolbar
 class ToolPanel(object):
-    bl_label = 'SmartsuitPro'
-    bl_idname = 'VIEW3D_TS_smartsuitpro'
-    bl_category = 'SmartsuitPro'
+    bl_label = 'Rokoko'
+    bl_idname = 'VIEW3D_TS_rokoko'
+    bl_category = 'Rokoko'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 
 
-# Main panel of the SmartsuitPro panel
+# Main panel of the Rokoko panel
 class ReceiverPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_ssp_receiver'
-    bl_label = 'SmartsuitPro Receiver'
+    bl_idname = 'VIEW3D_PT_rsl_receiver'
+    bl_label = 'Rokoko Studio Live'
 
     def draw(self, context):
         layout = self.layout
@@ -27,11 +28,11 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         row = col.row(align=True)
         row.label(text='Port:')
-        row.prop(context.scene, 'ssp_receiver_port', text='')
+        row.prop(context.scene, 'rsl_receiver_port', text='')
 
         row = col.row(align=True)
         row.label(text='FPS:')
-        row.prop(context.scene, 'ssp_receiver_fps', text='')
+        row.prop(context.scene, 'rsl_receiver_fps', text='')
 
         layout.separator()
 
@@ -42,17 +43,29 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         else:
             row.operator(ReceiverStart.bl_idname, icon='PLAY')
 
-        # # Show a list of all assigned objects, not yet working correctly
-        # for obj in bpy.data.objects:
-        #     if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('PR|'):
-        #         row = layout.row(align=True)
-        #         row.label(text='Prop: ' + obj.name + ' - ' + obj.ssp_animations_props_trackers.split('|')[2])
-        #     if obj.ssp_animations_props_trackers and obj.ssp_animations_props_trackers.startswith('TR|'):
-        #         row = layout.row(align=True)
-        #         row.label(text='Tracker: ' + obj.name + ' - ' + obj.ssp_animations_props_trackers.split('|')[1])
-        #     if obj.ssp_animations_faces:
-        #         row = layout.row(align=True)
-        #         row.label(text='Face: ' + obj.name + ' - ' + obj.ssp_animations_faces)
-        #     if obj.ssp_animations_actors:
-        #         row = layout.row(align=True)
-        #         row.label(text='Actor: ' + obj.name + ' - ' + obj.ssp_animations_actors.split('|')[1])
+        inputs = []
+
+        # Show a list of all assigned objects, not yet working correctly
+        for obj in bpy.data.objects:
+            if animations.props or animations.trackers:
+                if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+                    if obj.rsl_animations_props_trackers.startswith('PR|'):
+                        # inputs.append('Prop: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[2])
+                        inputs.append('Prop: ' + obj.rsl_animations_props_trackers.split('|')[2] + ' --> ' + obj.name)
+                    elif obj.rsl_animations_props_trackers.startswith('TR|'):
+                        # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
+                        inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
+            if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+                inputs.append('Face: ' + obj.name + ' - ' + obj.rsl_animations_faces)
+            if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+                inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors)
+
+        if inputs:
+            layout.separator()
+            row = layout.row(align=True)
+            row.label(text='Inputs:')
+
+            for input_text in inputs:
+                row = layout.row(align=True)
+                row.scale_y = 0.75
+                row.label(text='  ' + input_text)
