@@ -34,6 +34,8 @@ classes = [
     operators.receiver.ReceiverStop,
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
+    operators.actor.InitTPose,
+    operators.actor.ResetTPose,
 ]
 
 

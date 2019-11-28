@@ -15,9 +15,10 @@ class DetectFaceShapes(bpy.types.Operator):
             self.report({'ERROR'}, 'This mesh has no shapekeys!')
             return {'CANCELLED'}
 
-        for shape in animation_lists.face_shapes:
-            if shape in obj.data.shape_keys.key_blocks:
-                setattr(obj, 'rsl_face_' + shape, shape)
+        for shape_name in animation_lists.face_shapes:
+            for shapekey in obj.data.shape_keys.key_blocks:
+                if shape_name.lower() in shapekey.name.lower():
+                    setattr(obj, 'rsl_face_' + shape_name, shapekey.name)
 
         return {'FINISHED'}
 
@@ -31,10 +32,24 @@ class DetectActorBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
 
-        for bone in animation_lists.actor_bones:
-            bone_name = 'Character1_' + bone[0].capitalize() + bone[1:]
-            print(bone_name)
-            if bone_name in obj.pose.bones:
-                setattr(obj, 'rsl_actor_' + bone, bone_name)
+        # TODO: Remove this
+        # bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+        #
+        # for bone in obj.data.edit_bones:
+        #     if len(bone.children) == 1:
+        #         p1 = bone.head
+        #         p2 = bone.children[0].head
+        #         dist = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2) ** (1 / 2)
+        #
+        #         # Only connect them if the other bone is a certain distance away, otherwise blender will delete them
+        #         if dist > 0.005:
+        #             bone.tail = bone.children[0].head
+        #
+        # bpy.ops.object.mode_set(mode='POSE', toggle=False)
+
+        for bone_name in animation_lists.actor_bones.keys():
+            for bone in obj.pose.bones:
+                if bone_name.lower() in bone.name.lower():
+                    setattr(obj, 'rsl_actor_' + bone_name, bone.name)
 
         return {'FINISHED'}

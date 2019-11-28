@@ -1,6 +1,8 @@
 import json
 import socket
 from . import animations
+import datetime
+import time
 
 
 # Starts UPD server and handles data received from Rokoko Studio
@@ -9,6 +11,8 @@ class Receiver:
     sock = None
 
     def run(self):
+        # start_time = time.clock()
+
         data_raw = None
         received = True
 
@@ -23,6 +27,13 @@ class Receiver:
 
         if received:
             self.process_data(json.loads(data_raw))
+
+        # end_time = time.clock()
+        # delta = end_time - start_time
+        # print()
+        # print(start_time)
+        # print(end_time)
+        # print(time.clock(), delta, 60 / delta)
 
     @staticmethod
     def process_data(data):

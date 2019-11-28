@@ -1,6 +1,7 @@
 import bpy
 from ..core import animations, animation_lists
 from ..operators.detector import DetectFaceShapes, DetectActorBones
+from ..operators.actor import InitTPose, ResetTPose
 
 
 # Create a panel in the Object category of all objects
@@ -91,20 +92,30 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.label(text='Attach to actor:')
 
+        row = layout.row(align=True)
+        row.prop(context.object, 'rsl_animations_actors')
+
+        layout.separator()
+        row = layout.row(align=True)
+        row.prop(obj, 'rsl_euler_0')
+        row.prop(obj, 'rsl_euler_1')
+        row.prop(obj, 'rsl_euler_2')
+        row.prop(obj, 'rsl_euler_3')
+
+        layout.separator()
+        row = layout.row(align=True)
+        row.label(text='Select Bones:')
+        row.operator(DetectActorBones.bl_idname)
+        row.operator(InitTPose.bl_idname)
+        row.operator(ResetTPose.bl_idname)
+
         if not animations.actors:
             row = layout.row(align=True)
             row.label(text='No actor data available.', icon='INFO')
             return
 
-        row = layout.row(align=True)
-        row.prop(context.object, 'rsl_animations_actors')
-
         if obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-            layout.separator()
-            row = layout.row(align=True)
-            row.label(text='Select Bones:')
-            row.operator(DetectActorBones.bl_idname)
 
-            for shape in animation_lists.actor_bones:
+            for shape in animation_lists.actor_bones.keys():
                 row = layout.row(align=True)
                 row.prop_search(obj, 'rsl_actor_' + shape, obj.pose, "bones", text=shape)
