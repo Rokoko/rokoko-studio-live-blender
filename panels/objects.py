@@ -1,7 +1,7 @@
 import bpy
 from ..core import animations, animation_lists
 from ..operators.detector import DetectFaceShapes, DetectActorBones
-from ..operators.actor import InitTPose, ResetTPose
+from ..operators.actor import InitTPose, ResetTPose, PrintCurrentPose
 
 
 # Create a panel in the Object category of all objects
@@ -108,6 +108,7 @@ class ObjectsPanel(bpy.types.Panel):
         row.operator(DetectActorBones.bl_idname)
         row.operator(InitTPose.bl_idname)
         row.operator(ResetTPose.bl_idname)
+        row.operator(PrintCurrentPose.bl_idname)
 
         if not animations.actors:
             row = layout.row(align=True)

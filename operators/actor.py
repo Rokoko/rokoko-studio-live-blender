@@ -80,3 +80,29 @@ class ResetTPose(bpy.types.Operator):
                 bone.rotation_quaternion = rot
 
         return {'FINISHED'}
+
+
+class PrintCurrentPose(bpy.types.Operator):
+    bl_idname = "rsl.print_current_pose"
+    bl_label = "Print"
+    bl_description = "Debugging. Prints world rotation of armature bones"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.object
+        if obj.type != 'ARMATURE':
+            self.report({'ERROR'}, 'This is not an armature!')
+            return {'CANCELLED'}
+
+        for bone in obj.pose.bones:
+            bone.rotation_mode = 'QUATERNION'
+            rot = bone.matrix.to_euler().to_quaternion().copy()
+            i = 5
+            print('actor_bones[\'' + bone.name + '\'] = Quaternion(('
+                  + str(round(rot[0], i)) + ', '
+                  + str(round(rot[1], i)) + ', '
+                  + str(round(rot[2], i)) + ', '
+                  + str(round(rot[3], i))
+                  + '))')
+
+        return {'FINISHED'}
