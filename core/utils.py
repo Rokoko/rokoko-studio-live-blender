@@ -2,23 +2,24 @@ import bpy
 import time
 
 import numpy as np
-from mathutils import Euler, Quaternion
+from mathutils import Euler, Quaternion, Vector
 
 
-def ui_refresh():
-    # A way to refresh the ui
-    refreshed = False
-    while not refreshed:
-        if hasattr(bpy.data, 'window_managers'):
-            for windowManager in bpy.data.window_managers:
-                for window in windowManager.windows:
-                    for area in window.screen.areas:
-                        print(windowManager.name, window, area)
-                        area.tag_redraw()
-            refreshed = True
-            # print('Refreshed UI')
-        else:
-            time.sleep(0.5)
+def ui_refresh_properties():
+    # Refreshes the panel
+    for windowManager in bpy.data.window_managers:
+        for window in windowManager.windows:
+            for area in window.screen.areas:
+                if area.type == 'PROPERTIES':
+                    area.tag_redraw()
+
+
+def ui_refresh_all():
+    # Refreshes the panel
+    for windowManager in bpy.data.window_managers:
+        for window in windowManager.windows:
+            for area in window.screen.areas:
+                area.tag_redraw()
 
 
 # class containing function that represent Blender's coordinate space - currently uses functions used for unity plugin
@@ -57,3 +58,20 @@ class ReferenceSpace():
 
     def get_quaternion_correct_rotation(self, quaternion):
         return self.Quaternion_fromUnity(quaternion)
+
+
+matmul = (lambda a, b: a.__matmul__(b))
+
+
+class BoneConverterPoseMode:
+    def __init__(self, pose_bone):
+        mat = pose_bone.matrix.to_3x3()
+        mat[1], mat[2] = mat[2].copy(), mat[1].copy()
+        self.__mat = mat.transposed()
+        self.__mat_rot = pose_bone.matrix_basis.to_3x3()
+        self.convert_rotation = self._convert_rotation
+
+    def _convert_rotation(self, rota):
+        rot = Quaternion((rota.w, rota.x, rota.y, rota.z))
+        rot = Quaternion(matmul(self.__mat, rot.axis) * -1, rot.angle)
+        return matmul(self.__mat_rot, rot.to_matrix()).to_quaternion()

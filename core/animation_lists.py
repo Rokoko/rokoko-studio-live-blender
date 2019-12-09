@@ -141,76 +141,76 @@ face_shapes = [
 # ]
 
 # # Reference model bones, this is used to calculate the offset of the received data
-actor_bones = OrderedDict()
 
 # From tpose reference model
-# actor_bones['hip'] = Quaternion((1.0, -0.0, -0.0, 0.0))
-# actor_bones['spine'] = Quaternion((1.0, 0.0, 0.0, -0.0))
-# actor_bones['chest'] = Quaternion((1.0, 0.0, 0.0, -0.0))
-# actor_bones['neck'] = Quaternion((1.0, 0.0, 0.0, -0.0))
-# actor_bones['head'] = Quaternion((1.0, 0.0, 0.0, -0.0))
-#
-# actor_bones['leftShoulder'] = Quaternion((0.0, 0.707107, 0.707107, -0.0))
-# actor_bones['leftUpperArm'] = Quaternion((0.5, -0.5, -0.5, -0.5))
-# actor_bones['leftLowerArm'] = Quaternion((0.499999, -0.500001, -0.500001, -0.5))
-# actor_bones['leftHand'] = Quaternion((0.499999, -0.5, -0.500001, -0.5))
-#
-# actor_bones['rightShoulder'] = Quaternion((1e-06, -0.707107, 0.707106, 0.0))
-# actor_bones['rightUpperArm'] = Quaternion((0.5, -0.5, 0.5, 0.5))
-# actor_bones['rightLowerArm'] = Quaternion((0.5, -0.500001, 0.499999, 0.5))
-# actor_bones['rightHand'] = Quaternion((0.5, -0.5, 0.5, 0.5))
-#
-# actor_bones['leftUpLeg'] = Quaternion((-0.0, 0.707107, 0.0, 0.707106))
-# actor_bones['leftLeg'] = Quaternion((1e-06, 0.707107, -1e-06, 0.707106))
-# actor_bones['leftFoot'] = Quaternion((-0.0, -1e-06, -0.707107, -0.707106))
-# actor_bones['leftToe'] = Quaternion((0.0, 2e-06, 0.707107, 0.707107))
-# actor_bones['leftToeEnd'] = Quaternion((0.0, 2e-06, 0.707107, 0.707107))
-#
-# actor_bones['rightUpLeg'] = Quaternion((-0.0, 0.707107, -0.0, -0.707106))
-# actor_bones['rightLeg'] = Quaternion((-0.0, 0.707107, -0.0, -0.707106))
-# actor_bones['rightFoot'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
-# actor_bones['rightToe'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
-# actor_bones['rightToeEnd'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
-#
-# actor_bones['leftThumbProximal'] = Quaternion((0.532703, 0.110084, -0.070133, -0.836176))
-# actor_bones['leftThumbMedial'] = Quaternion((0.57966, 0.019215, 0.075366, -0.811138))
-# actor_bones['leftThumbDistal'] = Quaternion((0.579945, -0.006088, 0.110676, -0.80708))
-#
-# actor_bones['leftIndexProximal'] = Quaternion((0.452686, -0.55591, -0.41048, -0.563512))
-# actor_bones['leftIndexMedial'] = Quaternion((0.376252, -0.610241, -0.333415, -0.61227))
-# actor_bones['leftIndexDistal'] = Quaternion((0.293381, -0.654131, -0.250646, -0.650551))
-#
-# actor_bones['leftMiddleProximal'] = Quaternion((0.430458, -0.560985, -0.430461, -0.560985))
-# actor_bones['leftMiddleMedial'] = Quaternion((0.353556, -0.61237, -0.353558, -0.612371))
-# actor_bones['leftMiddleDistal'] = Quaternion((0.270597, -0.653281, -0.2706, -0.653282))
-#
-# actor_bones['leftRingProximal'] = Quaternion((0.372484, -0.617536, -0.473547, -0.505626))
-# actor_bones['leftRingMedial'] = Quaternion((0.288694, -0.660872, -0.403501, -0.563109))
-# actor_bones['leftRingDistal'] = Quaternion((0.19996, -0.692901, -0.326544, -0.610961))
-#
-# actor_bones['leftLittleProximal'] = Quaternion((0.349962, -0.620115, -0.492061, -0.500858))
-# actor_bones['leftLittleMedial'] = Quaternion((0.266028, -0.66049, -0.422473, -0.560801))
-# actor_bones['leftLittleDistal'] = Quaternion((0.177544, -0.68956, -0.345665, -0.611147))
-#
-# actor_bones['rightThumbProximal'] = Quaternion((0.532703, 0.110084, 0.070131, 0.836176))
-# actor_bones['rightThumbMedial'] = Quaternion((0.579659, 0.019214, -0.075368, 0.811138))
-# actor_bones['rightThumbDistal'] = Quaternion((0.579946, -0.006088, -0.110678, 0.807079))
-#
-# actor_bones['rightIndexProximal'] = Quaternion((0.452687, -0.55591, 0.410478, 0.563512))
-# actor_bones['rightIndexMedial'] = Quaternion((0.376254, -0.610241, 0.333414, 0.61227))
-# actor_bones['rightIndexDistal'] = Quaternion((0.293383, -0.654131, 0.250645, 0.65055))
-#
-# actor_bones['rightMiddleProximal'] = Quaternion((0.43046, -0.560986, 0.430459, 0.560985))
-# actor_bones['rightMiddleMedial'] = Quaternion((0.353557, -0.612371, 0.353557, 0.61237))
-# actor_bones['rightMiddleDistal'] = Quaternion((0.270599, -0.653281, 0.270599, 0.653281))
-#
-# actor_bones['rightRingProximal'] = Quaternion((0.372486, -0.617537, 0.473546, 0.505626))
-# actor_bones['rightRingMedial'] = Quaternion((0.288696, -0.660872, 0.403499, 0.563109))
-# actor_bones['rightRingDistal'] = Quaternion((0.199962, -0.692901, 0.326543, 0.61096))
-#
-# actor_bones['rightLittleProximal'] = Quaternion((0.349964, -0.620115, 0.49206, 0.500858))
-# actor_bones['rightLittleMedial'] = Quaternion((0.26603, -0.66049, 0.422473, 0.560801))
-# actor_bones['rightLittleDistal'] = Quaternion((0.177546, -0.689561, 0.345664, 0.611146))
+actor_bones_ref = OrderedDict()
+actor_bones_ref['hip'] = Quaternion((1.0, -0.0, -0.0, 0.0))
+actor_bones_ref['spine'] = Quaternion((1.0, 0.0, 0.0, -0.0))
+actor_bones_ref['chest'] = Quaternion((1.0, 0.0, 0.0, -0.0))
+actor_bones_ref['neck'] = Quaternion((1.0, 0.0, 0.0, -0.0))
+actor_bones_ref['head'] = Quaternion((1.0, 0.0, 0.0, -0.0))
+
+actor_bones_ref['leftShoulder'] = Quaternion((0.0, 0.707107, 0.707107, -0.0))
+actor_bones_ref['leftUpperArm'] = Quaternion((0.5, -0.5, -0.5, -0.5))
+actor_bones_ref['leftLowerArm'] = Quaternion((0.499999, -0.500001, -0.500001, -0.5))
+actor_bones_ref['leftHand'] = Quaternion((0.499999, -0.5, -0.500001, -0.5))
+
+actor_bones_ref['rightShoulder'] = Quaternion((1e-06, -0.707107, 0.707106, 0.0))
+actor_bones_ref['rightUpperArm'] = Quaternion((0.5, -0.5, 0.5, 0.5))
+actor_bones_ref['rightLowerArm'] = Quaternion((0.5, -0.500001, 0.499999, 0.5))
+actor_bones_ref['rightHand'] = Quaternion((0.5, -0.5, 0.5, 0.5))
+
+actor_bones_ref['leftUpLeg'] = Quaternion((-0.0, 0.707107, 0.0, 0.707106))
+actor_bones_ref['leftLeg'] = Quaternion((1e-06, 0.707107, -1e-06, 0.707106))
+actor_bones_ref['leftFoot'] = Quaternion((-0.0, -1e-06, -0.707107, -0.707106))
+actor_bones_ref['leftToe'] = Quaternion((0.0, 2e-06, 0.707107, 0.707107))
+actor_bones_ref['leftToeEnd'] = Quaternion((0.0, 2e-06, 0.707107, 0.707107))
+
+actor_bones_ref['rightUpLeg'] = Quaternion((-0.0, 0.707107, -0.0, -0.707106))
+actor_bones_ref['rightLeg'] = Quaternion((-0.0, 0.707107, -0.0, -0.707106))
+actor_bones_ref['rightFoot'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
+actor_bones_ref['rightToe'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
+actor_bones_ref['rightToeEnd'] = Quaternion((0.0, -0.0, 0.707107, 0.707107))
+
+actor_bones_ref['leftThumbProximal'] = Quaternion((0.532703, 0.110084, -0.070133, -0.836176))
+actor_bones_ref['leftThumbMedial'] = Quaternion((0.57966, 0.019215, 0.075366, -0.811138))
+actor_bones_ref['leftThumbDistal'] = Quaternion((0.579945, -0.006088, 0.110676, -0.80708))
+
+actor_bones_ref['leftIndexProximal'] = Quaternion((0.452686, -0.55591, -0.41048, -0.563512))
+actor_bones_ref['leftIndexMedial'] = Quaternion((0.376252, -0.610241, -0.333415, -0.61227))
+actor_bones_ref['leftIndexDistal'] = Quaternion((0.293381, -0.654131, -0.250646, -0.650551))
+
+actor_bones_ref['leftMiddleProximal'] = Quaternion((0.430458, -0.560985, -0.430461, -0.560985))
+actor_bones_ref['leftMiddleMedial'] = Quaternion((0.353556, -0.61237, -0.353558, -0.612371))
+actor_bones_ref['leftMiddleDistal'] = Quaternion((0.270597, -0.653281, -0.2706, -0.653282))
+
+actor_bones_ref['leftRingProximal'] = Quaternion((0.372484, -0.617536, -0.473547, -0.505626))
+actor_bones_ref['leftRingMedial'] = Quaternion((0.288694, -0.660872, -0.403501, -0.563109))
+actor_bones_ref['leftRingDistal'] = Quaternion((0.19996, -0.692901, -0.326544, -0.610961))
+
+actor_bones_ref['leftLittleProximal'] = Quaternion((0.349962, -0.620115, -0.492061, -0.500858))
+actor_bones_ref['leftLittleMedial'] = Quaternion((0.266028, -0.66049, -0.422473, -0.560801))
+actor_bones_ref['leftLittleDistal'] = Quaternion((0.177544, -0.68956, -0.345665, -0.611147))
+
+actor_bones_ref['rightThumbProximal'] = Quaternion((0.532703, 0.110084, 0.070131, 0.836176))
+actor_bones_ref['rightThumbMedial'] = Quaternion((0.579659, 0.019214, -0.075368, 0.811138))
+actor_bones_ref['rightThumbDistal'] = Quaternion((0.579946, -0.006088, -0.110678, 0.807079))
+
+actor_bones_ref['rightIndexProximal'] = Quaternion((0.452687, -0.55591, 0.410478, 0.563512))
+actor_bones_ref['rightIndexMedial'] = Quaternion((0.376254, -0.610241, 0.333414, 0.61227))
+actor_bones_ref['rightIndexDistal'] = Quaternion((0.293383, -0.654131, 0.250645, 0.65055))
+
+actor_bones_ref['rightMiddleProximal'] = Quaternion((0.43046, -0.560986, 0.430459, 0.560985))
+actor_bones_ref['rightMiddleMedial'] = Quaternion((0.353557, -0.612371, 0.353557, 0.61237))
+actor_bones_ref['rightMiddleDistal'] = Quaternion((0.270599, -0.653281, 0.270599, 0.653281))
+
+actor_bones_ref['rightRingProximal'] = Quaternion((0.372486, -0.617537, 0.473546, 0.505626))
+actor_bones_ref['rightRingMedial'] = Quaternion((0.288696, -0.660872, 0.403499, 0.563109))
+actor_bones_ref['rightRingDistal'] = Quaternion((0.199962, -0.692901, 0.326543, 0.61096))
+
+actor_bones_ref['rightLittleProximal'] = Quaternion((0.349964, -0.620115, 0.49206, 0.500858))
+actor_bones_ref['rightLittleMedial'] = Quaternion((0.26603, -0.66049, 0.422473, 0.560801))
+actor_bones_ref['rightLittleDistal'] = Quaternion((0.177546, -0.689561, 0.345664, 0.611146))
 
 
 # From Studio Live export
@@ -282,6 +282,7 @@ actor_bones = OrderedDict()
 
 
 # Tpose from Studio live
+actor_bones = OrderedDict()
 actor_bones['hip'] = Quaternion((-1.0, 0.0, -0.0, 0.0))
 actor_bones['spine'] = Quaternion((-0.0, -0.0, 0.0, -1.0))
 actor_bones['chest'] = Quaternion((-0.0, -0.0, 0.0, -1.0))

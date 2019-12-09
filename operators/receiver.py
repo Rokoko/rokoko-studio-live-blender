@@ -1,6 +1,7 @@
 import bpy
 from ..core.receiver import Receiver
 from ..core.animations import clear_animations
+from ..core.utils import ui_refresh_all
 
 timer = None
 receiver = None
@@ -14,7 +15,8 @@ class ReceiverStart(bpy.types.Operator):
     bl_options = {'REGISTER'}
 
     def modal(self, context, event):
-        if event.type == 'ESC' or not receiver_enabled:
+        # If ECS or F8 is pressed, cancel
+        if event.type == 'ESC' or event.type == 'F8' or not receiver_enabled:
             return self.cancel(context)
 
         # This gets run every frame
@@ -48,6 +50,7 @@ class ReceiverStart(bpy.types.Operator):
         receiver.stop()
 
         context.window_manager.event_timer_remove(timer)
+        ui_refresh_all()
 
         return {'CANCELLED'}
 

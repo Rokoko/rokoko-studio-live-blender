@@ -56,9 +56,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                         # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
                         inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
             if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
-                inputs.append('Face: ' + obj.name + ' - ' + obj.rsl_animations_faces)
+                inputs.append('Face: ' + obj.rsl_animations_faces + ' --> ' + obj.name)
             if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-                inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors)
+                inputs.append('Actor: ' + obj.rsl_animations_actors + ' --> ' + obj.name)
 
         if inputs:
             layout.separator()

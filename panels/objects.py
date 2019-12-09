@@ -1,7 +1,7 @@
 import bpy
 from ..core import animations, animation_lists
 from ..operators.detector import DetectFaceShapes, DetectActorBones
-from ..operators.actor import InitTPose, ResetTPose, PrintCurrentPose
+from ..operators.actor import InitTPose, ResetTPose, PrintCurrentPose, SaveTargetPose
 
 
 # Create a panel in the Object category of all objects
@@ -26,12 +26,6 @@ class ObjectsPanel(bpy.types.Panel):
 
     @staticmethod
     def draw_tracker(context, layout):
-        # Adding this to refresh the UI when hovered over this
-        # Useful because starting the receiver doesn't update the up automatically
-        row = layout.row(align=True)
-        row.scale_y = 0.2
-        row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
-
         row = layout.row(align=True)
         row.label(text='Attach to tracker or prop:')
 
@@ -46,10 +40,6 @@ class ObjectsPanel(bpy.types.Panel):
     @staticmethod
     def draw_face(context, layout):
         obj = context.object
-
-        row = layout.row(align=True)
-        row.scale_y = 0.2
-        row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
 
         layout.separator()
 
@@ -85,9 +75,7 @@ class ObjectsPanel(bpy.types.Panel):
     def draw_actor(context, layout):
         obj = context.object
 
-        row = layout.row(align=True)
-        row.scale_y = 0.2
-        row.prop(context.scene, 'rsl_ui_refresher', text=' ', toggle=True, emboss=False)
+        layout.separator()
 
         row = layout.row(align=True)
         row.label(text='Attach to actor:')
@@ -95,12 +83,12 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_actors')
 
-        layout.separator()
-        row = layout.row(align=True)
-        row.prop(obj, 'rsl_euler_0')
-        row.prop(obj, 'rsl_euler_1')
-        row.prop(obj, 'rsl_euler_2')
-        row.prop(obj, 'rsl_euler_3')
+        # layout.separator()
+        # row = layout.row(align=True)
+        # row.prop(obj, 'rsl_euler_0')
+        # row.prop(obj, 'rsl_euler_1')
+        # row.prop(obj, 'rsl_euler_2')
+        # row.prop(obj, 'rsl_euler_3')
 
         layout.separator()
         row = layout.row(align=True)
@@ -108,7 +96,11 @@ class ObjectsPanel(bpy.types.Panel):
         row.operator(DetectActorBones.bl_idname)
         row.operator(InitTPose.bl_idname)
         row.operator(ResetTPose.bl_idname)
-        row.operator(PrintCurrentPose.bl_idname)
+
+        # row = layout.row(align=True)
+        # row.label(text='Debug:')
+        # row.operator(PrintCurrentPose.bl_idname)
+        # row.operator(SaveTargetPose.bl_idname)
 
         if not animations.actors:
             row = layout.row(align=True)

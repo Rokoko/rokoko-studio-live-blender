@@ -39,6 +39,7 @@ classes = [
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
+    operators.actor.SaveTargetPose,
 ]
 
 

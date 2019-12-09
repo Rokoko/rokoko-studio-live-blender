@@ -3,6 +3,7 @@ import time
 import bpy
 from bpy_extras.io_utils import axis_conversion
 from mathutils import Quaternion, Euler, Vector, Matrix
+import math
 
 from . import animation_lists
 from . import utils
@@ -114,10 +115,12 @@ def animate_actors(obj):
     # Get tpose data from custom data
     tpose_rot = custom_data.get('rsl_tpose_rotation')
     tpose_rot_glob = custom_data.get('rsl_tpose_rotation_global')
-    if not tpose_rot or not tpose_rot_glob:
+    target_pose_rot = custom_data.get('rsl_target_pose_rotation')
+    if not tpose_rot or not tpose_rot_glob or not target_pose_rot:
         print('NO TPOSE DATA')
         return
 
+    # print()
     # Go over every mapped bone and animate it
     for bone_name, ref_rot in animation_lists.actor_bones.items():
 
@@ -126,11 +129,12 @@ def animate_actors(obj):
 
         # Gets the assigned pose bone and it's local and global t-pose rotations
         bone = obj.pose.bones.get(bone_name_assigned)
-        bone_norm = obj.data.bones.get(bone_name_assigned)
+        bone_data = obj.data.bones.get(bone_name_assigned)
         rot = tpose_rot.get(bone_name_assigned)
         rot_glob = tpose_rot_glob.get(bone_name_assigned)
+        target_glob = target_pose_rot.get(bone_name_assigned)
 
-        if not bone or not rot or not rot_glob:
+        if not bone or not rot or not rot_glob or not target_glob:
             continue
 
         '''
@@ -147,18 +151,18 @@ def animate_actors(obj):
 
         # Set the bones quaternion mode
         bone.rotation_mode = 'QUATERNION'
+        bone_data.use_inherit_rotation = False
 
         # The local and global rotation of the models t-pose, which was set by the user
         bone_tpose_rot = Quaternion(rot)
         bone_tpose_rot_glob = Quaternion(rot_glob)
+        bone_target_pose_rot = Quaternion(target_glob)
 
         # The current global rotation of this bone
         # INFO: Find a way to calculate the offset without using this to eliminate weird jiggling!
+        # Edit: Found it, disabling use_inherit_rotation fixes it
         bone_current_pose = Quaternion(bone.matrix.to_euler().to_quaternion())
         bone_current_pose2 = obj.matrix_world @ bone.matrix
-
-        print(bone_name, bone_current_pose, bone_current_pose2)
-        # , bone_norm.roll
 
         # The new pose in which the bone should be (still in Studio space)
         bone_new_pose_raw = Quaternion((
@@ -168,7 +172,7 @@ def animate_actors(obj):
             actor[0][bone_name]['rotation']['z'],
         ))
 
-        # Studios reference t-pose rotation
+        # Studios reference t-pose rotation (still in Studio space)
         bone_reference_raw = Quaternion((
             ref_rot.w,
             ref_rot.x,
@@ -176,16 +180,65 @@ def animate_actors(obj):
             ref_rot.z,
         ))
 
+        # Studios reference t-pose rotation imported into blender
+        bone_reference_imported = animation_lists.actor_bones_ref[bone_name]
+
+        converter = utils.BoneConverterPoseMode(bone)
+
         # Function to convert from Studio to Blender space
         # This does not work and has to be figured out
         # Converting from (w,x,y,z) to (w,z,y,-x) almost works
         def rot_to_blender(rota):
             return Quaternion((
                 rota.w,
-                rota.z,
-                rota.y,
                 rota.x,
-            ))
+                -rota.y,
+                -rota.z,
+            )) @ Quaternion((0, 0, 0, 1))
+
+        def rot_to_blender_best(rota):
+            return Quaternion((
+                rota.w,
+                rota.x,
+                rota.y,
+                -rota.z,
+            )) @ Quaternion((0, 0, 0, 1))
+
+        def rot_to_blender_after(rota):
+            return Quaternion((
+                rota.w,
+                rota.x,
+                -rota.y,
+                rota.z,
+            )) # @ Quaternion((0, 0, 0, 1))
+
+        def rot_to_blender2(rota):
+            m = axis_conversion(from_forward='Z',
+                                from_up='Y',
+                                to_forward='Y',
+                                to_up='-Z').to_4x4()
+
+            rot = m.to_euler().to_quaternion()
+
+            return rota @ rot
+
+        def rot_to_blender3(rota):
+            mat = bone.matrix.to_3x3()
+            mat[1], mat[2] = mat[2].copy(), mat[1].copy()
+            __mat = mat.transposed()
+            __mat_rot = bone.matrix_basis.to_3x3()
+
+            rot = Quaternion((rota.w, rota.x, rota.y, rota.z))
+            rot = Quaternion((__mat @ rot.axis) * -1, rot.angle)
+            return (__mat_rot @ rot.to_matrix()).to_quaternion()
+
+        def rot_to_blender0(rota):
+            return Quaternion((
+                rota.w,
+                -rota.z,
+                -rota.y,
+                rota.x,
+            ))  # @ Quaternion((0, 0, 0, 1))
 
         def rot_to_blender2(rota):
             m = axis_conversion(from_forward='Z',
@@ -197,37 +250,189 @@ def animate_actors(obj):
 
             return rota @ rot
 
+        def rotate_around_center(mat_rot, center):
+            return (Matrix.Translation(center) *
+                    mat_rot *
+                    Matrix.Translation(-center))
 
+        def rotation_90(rot_old):
+            q = Quaternion((1, 0, 0), math.radians(90))
+            rot_new = q @ rot_old
+            return rot_new
 
         '''
             Offset and pose calculations start here
         '''
 
-        # Get offset between studio reference tpose and new bone rotation
-        rot_offset_new = bone_reference_raw.inverted() @ bone_new_pose_raw
+        rot_offset_ref = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_reference_raw)
+        rot_offset_target = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_new_pose_raw)
 
-        # print(rot_offset_new, rot_to_blender(rot_offset_new), rot_to_blender2(rot_offset_new))
+        rot_ref = bone_tpose_rot @ rot_offset_ref
+        rot_target = bone_tpose_rot @ rot_offset_target
+
+        rot_offset_new = rot_ref.inverted() @ rot_target
+        bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
+
+
+
+
+
+        '''
+            Below are previous calculation tests
+        '''
+
+        continue
+
+        # bone.rotation_quaternion = bone_reference_raw
+
+        # eu = Euler(map(math.radians, (0.0, 0.0, 90.0)), 'XYZ').to_matrix().to_4x4()
+        # newRotMat = rotate_around_center(eu, bone.matrix.location) * bone.matrix
+
+        # q = Quaternion((0, 1, 0), math.radians(90))
+        # print(q)
+        # print(Quaternion((0, -0.707107, 0, -0.707107)).inverted() @ Quaternion((-0.707107, 0, -0.707107, 0)))
+        #
+        # bone.rotation_quaternion = q @ bone_reference_raw @ Quaternion((0, 0, 0, -1))
+
+        # print(bone_name, bone.rotation_quaternion, bone.matrix_local.rotation_quaternion)
+
+        # continue
+
+        # Get offset between studio reference tpose and new bone rotation
+        # rot_offset_new = bone_tpose_rot_glob.inverted() @ bone_target_pose_rot
+        # rot_offset_new_2 = bone_tpose_rot_glob.inverted() @ rot_to_blender(bone_new_pose_raw)
+        # rot_offset_new = rot_to_blender(bone_reference_raw).inverted() @ rot_to_blender(bone_new_pose_raw)
+        # rot_offset_new = rot_to_blender(bone_reference_raw.inverted() @ bone_new_pose_raw)
+
+        rot_offset_ref = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_reference_raw)
+        # rot_offset_ref = bone_tpose_rot_glob.inverted() @ bone_reference_imported
+        rot_offset_target = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_new_pose_raw)
+
+        rot_ref = bone_tpose_rot @ rot_offset_ref
+        rot_target = bone_tpose_rot @ rot_offset_target
+
+        rot_offset_new = rot_ref.inverted() @ rot_target
+
+        # if bone_name in ['leftUpperArm']:
+        #     print()
+        #     print(bone_name, rot_ref, rot_target, rot_offset_new)
+        #     print(bone_name, bone.rotation_quaternion, bone_tpose_rot @ rot_offset_new)
+        #     # print(bone_name, rot_ref, rot_target, rot_offset_new, rot_ref.axis, rot_target.axis)
+
+        q = Quaternion((0, 1, 0), math.radians(90))
+
+        # bone.rotation_quaternion = rot_ref
+        bone.rotation_quaternion = rot_target
+        # bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
+        # bone.rotation_quaternion = bone_tpose_rot  @ rot_offset_new.inverted()@ q
+        # bone.rotation_quaternion @= rot_offset_new.inverted()
+        # bone.rotation_quaternion = bone_tpose_rot @ rot_to_blender_after(rot_offset_new)
+        # bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new_2
+
+
+
+
+        # # Calculate rotation on the reference armature to get from the its tpose to its new pose
+        # offset_to_new_pose = reference_tpose.inverted() @ reference_new_pose
+        #
+        # # Add this rotation to the target tpose
+        # bone.rotation_quaternion = target_tpose @ offset_to_new_pose
+
+        continue
+
+        ###### This is the best I currently have
+        def rot_to_blender_best(rota):
+            return Quaternion((
+                rota.w,
+                rota.x,
+                rota.y,
+                -rota.z,
+            )) @ Quaternion((0, 0, 0, 1))
+
+        rot_offset_ref = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_reference_raw)
+        rot_offset_target = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_new_pose_raw)
+
+        rot_ref = bone_tpose_rot @ rot_offset_ref
+        rot_target = bone_tpose_rot @ rot_offset_target
+
+        rot_offset_new = rot_ref.inverted() @ rot_target
+        bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
+
+        continue
+
+        # Get offset between studio reference tpose and new bone rotation
+
+        rot_offset_new = bone_tpose_rot_glob.inverted() @ bone_target_pose_rot
+        # rot_offset_new = bone_tpose_rot_glob.inverted() @ bone_current_pose
+        # rot_offset_new = bone_tpose_rot_glob.inverted() @ rot_to_blender(bone_new_pose_raw)
+        # rot_offset_new = rot_to_blender(bone_reference_raw).inverted() @ rot_to_blender(bone_new_pose_raw)
+        # rot_offset_new = (bone_reference_raw @ Quaternion((0, 1, 0, 0))).inverted() @ rot_to_blender(bone_new_pose_raw)
+        # rot_offset_new = bone_reference_raw.inverted() @ bone_new_pose_raw
+
+        # print(rot_offset_new, rot_to_blender(bone_reference_raw), rot_to_blender2(bone_reference_raw), converter.convert_rotation(bone_reference_raw))
 
         # Add this offset to the global tpose to get the new global rotation of the bone
-        rot_tpose_new = bone_tpose_rot @ rot_to_blender(rot_offset_new)
+        rot_tpose_new = bone_tpose_rot @ rot_offset_new
+        rot_tpose_new_glob = bone_tpose_rot_glob @ rot_offset_new
+        # rot_tpose_new = bone_tpose_rot @ rot_to_blender2(rot_offset_new)
+
+
+        rot_offset_to_new = bone_current_pose.inverted() @ rot_tpose_new_glob
+
+        bone.rotation_quaternion = bone.rotation_quaternion @ rot_offset_to_new  #  @ Quaternion((0, 0, 0, 1))
+
+        if bone_name in ['hip']:
+            print(bone_name, rot_offset_new, rot_tpose_new, rot_offset_to_new)
+
+        def get_parent_offset(bone, rot_tpose):
+            if not bone.parent:
+                return rot_tpose
+
+            parent_current_rot = Quaternion(bone.parent.matrix.to_euler().to_quaternion())
+
+            # offset_from_parent = parent_current_rot.inverted() @ rot_tpose
+            offset_from_parent = bone.parent.rotation_quaternion.inverted() @ rot_tpose
+
+            tpose_new = bone_tpose_rot @ offset_from_parent
+
+            return get_parent_offset(bone.parent, tpose_new)
+
+        continue
+
+
+        offset_from_parent = Quaternion((1, 0, 0, 0))
+        if bone.parent:
+            parent_current_rot = Quaternion(bone.parent.matrix.to_euler().to_quaternion())
+
+            offset_from_parent = parent_current_rot.inverted() @ rot_tpose_new
+
+            # rot_tpose_new = bone_tpose_rot @ offset_from_parent
+
+        # Add this offset to the current local bone rotation
+        bone.rotation_quaternion = bone.rotation_quaternion @ offset_from_parent
+
+        continue
+
+        rot_offset_to_new = bone_current_pose.inverted() @ rot_offset_new
+
+        # Add this offset to the current local bone rotation
+        bone.rotation_quaternion = bone.rotation_quaternion @ rot_offset_to_new
+
+        continue
+
+        # Inverse kinematics
+        rot_tpose_new_2 = get_parent_offset(bone, rot_tpose_new)
 
         # Get offset between current local bone rotation and new global bone rotation
-        rot_offset_from_current = bone.rotation_quaternion.inverted() @ rot_tpose_new
+        rot_offset_from_current = bone.rotation_quaternion.inverted() @ rot_tpose_new_2
+        if bone_name in ['leftHand']:
+            print(bone_name, rot_offset_new, rot_tpose_new, rot_tpose_new_2, rot_offset_from_current)
+
+        # if bone_name == 'hips':
+        #     rot_offset_from_current = rot_offset_from_current @ Quaternion((0, 0, 0, 1))
 
         # Add this offset to the current local bone rotation
         bone.rotation_quaternion = bone.rotation_quaternion @ rot_offset_from_current
-
-
-
-
-
-
-
-
-
-        '''
-            Below are calculation tests
-        '''
 
         continue
 
@@ -242,6 +447,38 @@ def animate_actors(obj):
 
         # Add this offset to the current local bone rotation
         bone.rotation_quaternion = bone.rotation_quaternion @ rot_offset_from_current
+
+        continue
+
+        # rot_parent_current = Quaternion((1, 0, 0, 0))
+        # if pose.bones[bonename].parent:
+        #
+        #     # the matrix from file
+        #     matrix = frames[frame][bonenumber]
+        #
+        #     # Calculate bone vector(armature space).
+        #     pos = matrix.to_translation()
+        #     vector = matrix.to_3x3().col[1]
+        #
+        #     # Calculate rotation from parent bone vector to bone vector
+        #     parent_vector = mathutils.Vector((0.0, 0.0, 1.0))
+        #     rotation = parent_vector.rotation_difference(vector)
+        #
+        #     # Calculate bone head(armature space)
+        #     head = pos
+        #
+        #     # Assign rotation and location to your Posebone.matrix.
+        #     newmatrix = rotation.to_matrix()
+        #     newmatrix.resize_4x4()
+        #     newmatrix[0][3] = head.x
+        #     newmatrix[1][3] = head.y
+        #     newmatrix[2][3] = head.z
+        #
+        #     bs_mat = mathutils.Quaternion(mathutils.Vector((1.0, 0.0, 0.0)), .5 * 3.14159).normalized().to_matrix().to_4x4()
+        #
+        #     newmatrix = newmatrix * bs_mat
+        #
+        #     pose.bones[bonename].matrix = newmatrix
 
         continue
 

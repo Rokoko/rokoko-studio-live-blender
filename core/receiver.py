@@ -1,14 +1,19 @@
 import json
 import socket
-from . import animations
+from . import animations, utils
 import datetime
 import time
+import bpy
 
 
 # Starts UPD server and handles data received from Rokoko Studio
 class Receiver:
 
     sock = None
+
+    # Redraw counters
+    i = -1
+    i_np = 0
 
     def run(self):
         # start_time = time.clock()
@@ -27,6 +32,17 @@ class Receiver:
 
         if received:
             self.process_data(json.loads(data_raw))
+
+            self.i += 1
+            self.i_np = 0
+            if self.i % (bpy.context.scene.rsl_receiver_fps * 5) == 0:
+                utils.ui_refresh_properties()
+                pass
+        else:
+            self.i_np += 1
+            if self.i_np == bpy.context.scene.rsl_receiver_fps:
+                self.i = -1
+
 
         # end_time = time.clock()
         # delta = end_time - start_time
@@ -55,6 +71,9 @@ class Receiver:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
         self.sock.bind(("127.0.0.1", port))
+
+        self.i = -1
+        self.i_np = 0
 
         print("Rokoko Studio Live started listening on port " + str(port))
 
