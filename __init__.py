@@ -34,6 +34,8 @@ classes = [
     panels.objects.ObjectsPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
+    operators.recorder.RecorderStart,
+    operators.recorder.RecorderStop,
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
     operators.actor.InitTPose,

@@ -78,6 +78,10 @@ def animate_trackers_props(obj):
                     tracker[0]['rotation']['z'],
                 )
 
+        if bpy.context.scene.rsl_recording:
+            obj.keyframe_insert(data_path='location', group=obj.name)
+            obj.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
+
 
 def animate_faces(obj):
     if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
@@ -90,9 +94,13 @@ def animate_faces(obj):
         return
 
     for shape in animation_lists.face_shapes:
-        if obj.data.shape_keys.key_blocks.get(getattr(obj, 'rsl_face_' + shape)):
-            obj.data.shape_keys.key_blocks[getattr(obj, 'rsl_face_' + shape)].slider_min = -1
-            obj.data.shape_keys.key_blocks[getattr(obj, 'rsl_face_' + shape)].value = face[0][shape] / 100
+        shapekey = obj.data.shape_keys.key_blocks.get(getattr(obj, 'rsl_face_' + shape))
+        if shapekey:
+            shapekey.slider_min = -1
+            shapekey.value = face[0][shape] / 100
+
+            if bpy.context.scene.rsl_recording:
+                shapekey.keyframe_insert(data_path='value', group=obj.name)
 
 
 def animate_actors(obj):
@@ -140,6 +148,7 @@ def animate_actors(obj):
         '''
             Animation starts here
         '''
+
 
         # # If bone is top parent, set its position
         # if bone_name == 'hip':
@@ -273,9 +282,10 @@ def animate_actors(obj):
         rot_offset_new = rot_ref.inverted() @ rot_target
         bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
 
-
-
-
+        # Record animation
+        if bpy.context.scene.rsl_recording:
+            bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
+            # TODO: Add recording of hip position
 
         '''
             Below are previous calculation tests

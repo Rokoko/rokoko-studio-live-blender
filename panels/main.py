@@ -1,7 +1,6 @@
 import bpy
 from ..core import animations
-from ..operators import receiver
-from ..operators.receiver import ReceiverStart, ReceiverStop
+from ..operators import receiver, recorder
 
 
 # Initializes the Rokoko panel in the toolbar
@@ -39,9 +38,16 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.3
         if receiver.receiver_enabled:
-            row.operator(ReceiverStop.bl_idname, icon='PAUSE')
+            row.operator(receiver.ReceiverStop.bl_idname, icon='PAUSE', depress=True)
         else:
-            row.operator(ReceiverStart.bl_idname, icon='PLAY')
+            row.operator(receiver.ReceiverStart.bl_idname, icon='PLAY')
+
+        row = layout.row(align=True)
+        row.scale_y = 1.3
+        if context.scene.rsl_recording:
+            row.operator(recorder.RecorderStop.bl_idname, icon='RADIOBUT_ON', depress=True)
+        else:
+            row.operator(recorder.RecorderStart.bl_idname, icon='RADIOBUT_ON')
 
         inputs = []
 

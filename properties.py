@@ -1,5 +1,6 @@
 from bpy.types import Scene, Object, Mesh
 from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
+
 from .core import animation_lists
 
 
@@ -20,7 +21,11 @@ def register():
         max=100
     )
 
-    Scene.rsl_ui_refresher = BoolProperty()
+    Scene.rsl_recording = BoolProperty(
+        name='Toggle Recording',
+        description='Start and stop recording of the data from Rokoko Studio',
+        default=False
+    )
 
     # Objects
     Object.rsl_animations_props_trackers = EnumProperty(

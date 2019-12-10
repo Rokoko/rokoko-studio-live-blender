@@ -31,8 +31,14 @@ class Receiver:
             print('Packet error:', e.strerror)
 
         if received:
+            # Process animation data
             self.process_data(json.loads(data_raw))
 
+            # Advance animation frame
+            if bpy.context.scene.rsl_recording:
+                bpy.context.scene.frame_current += 1
+
+            # Update UI if neccessary
             self.i += 1
             self.i_np = 0
             if self.i % (bpy.context.scene.rsl_receiver_fps * 5) == 0:
