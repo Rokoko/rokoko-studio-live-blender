@@ -34,19 +34,20 @@ class ReceiverStart(bpy.types.Operator):
             self.report({'ERROR'}, 'Receiver is already enabled.')
             return {'CANCELLED'}
 
+        # If animation is currently playing, stop it
         if context.screen.is_animation_playing:
-            # bpy.ops.screen.animation_play()
-            self.report({'ERROR'}, 'Animation is currently playing. Please stop it before starting the receiver.')
-            return {'CANCELLED'}
+            bpy.ops.screen.animation_play()
 
         receiver_enabled = True
 
+        # Clear current live data
         clear_animations()
 
+        # Set up and start the receiver
         receiver = Receiver()
         receiver.start(context.scene.rsl_receiver_port)
 
-        # Add this operator a model operator
+        # Register this classes modal operator in Blenders event handling system and execute it at the specified fps
         context.window_manager.modal_handler_add(self)
         timer = context.window_manager.event_timer_add(1 / context.scene.rsl_receiver_fps, window=bpy.context.window)
         return {'RUNNING_MODAL'}

@@ -8,6 +8,7 @@ class ToolPanel(object):
     bl_label = 'Rokoko'
     bl_idname = 'VIEW3D_TS_rokoko'
     bl_category = 'Rokoko'
+    # bl_category = 'Rokoko  Studio  Live'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 
@@ -44,6 +45,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.scale_y = 1.3
+        row.enabled = receiver.receiver_enabled
         if context.scene.rsl_recording:
             row.operator(recorder.RecorderStop.bl_idname, icon='RADIOBUT_ON', depress=True)
         else:
