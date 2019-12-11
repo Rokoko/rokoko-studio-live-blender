@@ -1,5 +1,6 @@
 import bpy
 from ..core import animation_lists
+from ..core.auto_detect_lists.bones import bone_list
 
 
 class DetectFaceShapes(bpy.types.Operator):
@@ -16,9 +17,14 @@ class DetectFaceShapes(bpy.types.Operator):
             return {'CANCELLED'}
 
         for shape_name in animation_lists.face_shapes:
+            shortest_detected_shape = None
             for shapekey in obj.data.shape_keys.key_blocks:
                 if shape_name.lower() in shapekey.name.lower():
-                    setattr(obj, 'rsl_face_' + shape_name, shapekey.name)
+                    if not shortest_detected_shape or len(shortest_detected_shape) > len(shapekey.name):
+                        shortest_detected_shape = shapekey.name
+
+            if shortest_detected_shape:
+                setattr(obj, 'rsl_face_' + shape_name, shortest_detected_shape)
 
         return {'FINISHED'}
 
@@ -32,24 +38,128 @@ class DetectActorBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
 
-        # TODO: Remove this
-        # bpy.ops.object.mode_set(mode='EDIT', toggle=False)
-        #
-        # for bone in obj.data.edit_bones:
-        #     if len(bone.children) == 1:
-        #         p1 = bone.head
-        #         p2 = bone.children[0].head
-        #         dist = ((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2) ** (1 / 2)
-        #
-        #         # Only connect them if the other bone is a certain distance away, otherwise blender will delete them
-        #         if dist > 0.005:
-        #             bone.tail = bone.children[0].head
-        #
-        # bpy.ops.object.mode_set(mode='POSE', toggle=False)
-
-        for bone_name in animation_lists.actor_bones.keys():
+        for bone_name_key, bone_names in get_bone_list().items():
             for bone in obj.pose.bones:
-                if bone_name.lower() in bone.name.lower():
-                    setattr(obj, 'rsl_actor_' + bone_name, bone.name)
+                bone_name = standardize_bone_name(bone.name)
+                if bone_name.lower() in bone_names:
+                    setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
+                    if bone_name_key != 'chest':
+                        break
 
         return {'FINISHED'}
+
+
+def standardize_bone_name(name):
+    # List of chars to replace if they are at the start of a bone name
+    starts_with = [
+        ('_', ''),
+        ('ValveBiped_', ''),
+        ('Valvebiped_', ''),
+        ('Bip1_', 'Bip_'),
+        ('Bip01_', 'Bip_'),
+        ('Bip001_', 'Bip_'),
+        ('Character1_', ''),
+        ('HLP_', ''),
+        ('JD_', ''),
+        ('JU_', ''),
+        ('Armature|', ''),
+        ('Bone_', ''),
+        ('C_', ''),
+        ('Cf_S_', ''),
+        ('Cf_J_', ''),
+        ('G_', ''),
+        ('Joint_', ''),
+        ('DEF_', ''),
+    ]
+
+    # Standardize names
+    # Make all the underscores!
+    name = name.replace(' ', '_') \
+        .replace('-', '_') \
+        .replace('.', '_') \
+        .replace('____', '_') \
+        .replace('___', '_') \
+        .replace('__', '_') \
+
+    # Replace if name starts with specified chars
+    for replacement in starts_with:
+        if name.startswith(replacement[0]):
+            name = replacement[1] + name[len(replacement[0]):]
+
+    # Remove digits from the start
+    name_split = name.split('_')
+    if len(name_split) > 1 and name_split[0].isdigit():
+        name = name_split[1]
+
+    # Specific condition
+    name_split = name.split('"')
+    if len(name_split) > 3:
+        name = name_split[1]
+
+    # Another specific condition
+    if ':' in name:
+        for i, split in enumerate(name.split(':')):
+            if i == 0:
+                name = ''
+            else:
+                name += split
+
+    # Remove S0 from the end
+    if name[-2:] == 'S0':
+        name = name[:-2]
+
+    if name[-4:] == '_Jnt':
+        name = name[:-4]
+
+    return name
+
+
+def get_bone_list():
+    new_bone_list = {}
+
+    for bone_key, bone_values in bone_list.items():
+        if 'left' not in bone_key:
+            new_bone_list[bone_key] = [bone_value.lower() for bone_value in bone_values]
+            if bone_key == 'spine':
+                new_bone_list['chest'] = [bone_value.lower() for bone_value in bone_values]
+            continue
+
+        bone_values_left = []
+        bone_values_right = []
+
+        for bone_name in bone_values:
+            bone_name = bone_name.lower()
+
+            if '\l' in bone_name:
+                bone_name_l = bone_name.replace('\l', 'l')
+                bone_name_left = bone_name.replace('\l', 'left')
+                bone_name_r = bone_name.replace('\l', 'r')
+                bone_name_right = bone_name.replace('\l', 'right')
+
+                if bone_name_l in bone_values_left:
+                    # print(bone_name, bone_name_l)
+                    continue
+                bone_values_left.append(bone_name_l)
+
+                if bone_name_left in bone_values_left:
+                    # print(bone_name, bone_name_left)
+                    continue
+                bone_values_left.append(bone_name_left)
+
+                if bone_name_r in bone_values_right:
+                    # print(bone_name, bone_name_r)
+                    continue
+                bone_values_right.append(bone_name_r)
+
+                if bone_name_right in bone_values_right:
+                    # print(bone_name, bone_name_right)
+                    continue
+                bone_values_right.append(bone_name_right)
+
+        bone_key_left = bone_key
+        bone_key_right = bone_key.replace('left', 'right')
+
+        new_bone_list[bone_key_left] = bone_values_left
+        new_bone_list[bone_key_right] = bone_values_right
+
+    return new_bone_list
