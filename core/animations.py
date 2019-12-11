@@ -285,6 +285,7 @@ def animate_actors(obj):
         # Record animation
         if bpy.context.scene.rsl_recording:
             bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
+            # obj.keyframe_insert(data_path='pose.bones["' + bone.name + '"].rotation_quaternion', group=obj.name)
             # TODO: Add recording of hip position
 
         '''

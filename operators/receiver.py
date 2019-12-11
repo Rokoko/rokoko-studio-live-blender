@@ -21,6 +21,9 @@ class ReceiverStart(bpy.types.Operator):
 
         # This gets run every frame
         if event.type == 'TIMER':
+            if bpy.context.screen.is_animation_playing:
+                return self.cancel(context)
+
             receiver.run()
 
         return {'PASS_THROUGH'}
@@ -29,6 +32,11 @@ class ReceiverStart(bpy.types.Operator):
         global receiver_enabled, receiver, timer
         if receiver_enabled:
             self.report({'ERROR'}, 'Receiver is already enabled.')
+            return {'CANCELLED'}
+
+        if context.screen.is_animation_playing:
+            # bpy.ops.screen.animation_play()
+            self.report({'ERROR'}, 'Animation is currently playing. Please stop it before starting the receiver.')
             return {'CANCELLED'}
 
         receiver_enabled = True
@@ -50,7 +58,9 @@ class ReceiverStart(bpy.types.Operator):
         receiver.stop()
 
         context.window_manager.event_timer_remove(timer)
+
         ui_refresh_all()
+        context.scene.rsl_recording = False
 
         return {'CANCELLED'}
 
@@ -67,6 +77,7 @@ class ReceiverStart(bpy.types.Operator):
         receiver.stop()
 
         bpy.context.window_manager.event_timer_remove(timer)
+        bpy.context.scene.rsl_recording = False
 
 
 class ReceiverStop(bpy.types.Operator):

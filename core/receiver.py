@@ -16,11 +16,10 @@ class Receiver:
     i_np = 0
 
     def run(self):
-        # start_time = time.clock()
-
         data_raw = None
         received = True
 
+        # Try to recieve a packet
         try:
             data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
@@ -38,7 +37,7 @@ class Receiver:
             if bpy.context.scene.rsl_recording:
                 bpy.context.scene.frame_current += 1
 
-            # Update UI if neccessary
+            # Update UI if necessary
             self.i += 1
             self.i_np = 0
             if self.i % (bpy.context.scene.rsl_receiver_fps * 5) == 0:
@@ -49,26 +48,20 @@ class Receiver:
             if self.i_np == bpy.context.scene.rsl_receiver_fps:
                 self.i = -1
 
-
-        # end_time = time.clock()
-        # delta = end_time - start_time
-        # print()
-        # print(start_time)
-        # print(end_time)
-        # print(time.clock(), delta, 60 / delta)
-
     @staticmethod
     def process_data(data):
         if not data:
             return
 
-        # animations.version = self.json_data['version']
-        # animations.timestamp = self.json_data['timestamp']
-        # animations.playbacktimestamp = self.json_data['playbackTimestamp']
+        # animations.version = data['version']
+        # animations.timestamp = data['timestamp']
+        # animations.playbacktimestamp = data['playbackTimestamp']
         animations.props = data['props']
         animations.trackers = data['trackers']
         animations.faces = data['faces']
         animations.actors = data['actors']
+
+        # print(data['timestamp'], data['playbackTimestamp'])
 
         animations.animate()
 
