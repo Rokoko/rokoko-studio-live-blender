@@ -1,35 +1,35 @@
 import bpy
 
-recording = False
-
 
 class RecorderStart(bpy.types.Operator):
     bl_idname = "rsl.recorder_start"
-    bl_label = "Start Recorder"
-    bl_description = "Start recording data from Rokoko Studio"
+    bl_label = "Start Recording"
+    bl_description = "Start recording data from Rokoko Studio" \
+                     "\nWarning: Data currently on this track will be overwritten. Choose another track to record to or set the start frame at the position you want to start recording"
     bl_options = {'REGISTER'}
 
     def execute(self, context):
-        global recording
-        if recording:
+        if context.scene.rsl_recording:
             self.report({'ERROR'}, 'Already recording')
             return {'CANCELLED'}
 
-        recording = True
+        context.scene.rsl_recording = True
+
+        context.scene.frame_current = context.scene.frame_start
+        context.scene.render.fps = context.scene.rsl_receiver_fps
         return {'FINISHED'}
 
 
 class RecorderStop(bpy.types.Operator):
     bl_idname = "rsl.recorder_stop"
-    bl_label = "Stop Recorder"
+    bl_label = "Stop Recording"
     bl_description = "Stop recording data from Rokoko Studio"
     bl_options = {'REGISTER'}
 
     def execute(self, context):
-        global recording
-        if not recording:
+        if not context.scene.rsl_recording:
             self.report({'ERROR'}, 'Not recording')
             return {'CANCELLED'}
 
-        recording = False
+        context.scene.rsl_recording = False
         return {'FINISHED'}

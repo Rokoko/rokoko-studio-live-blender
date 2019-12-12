@@ -1,7 +1,6 @@
 import bpy
 from ..core import animations
-from ..operators import receiver
-from ..operators.receiver import ReceiverStart, ReceiverStop
+from ..operators import receiver, recorder
 
 
 # Initializes the Rokoko panel in the toolbar
@@ -9,6 +8,7 @@ class ToolPanel(object):
     bl_label = 'Rokoko'
     bl_idname = 'VIEW3D_TS_rokoko'
     bl_category = 'Rokoko'
+    # bl_category = 'Rokoko  Studio  Live'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 
@@ -39,9 +39,17 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.3
         if receiver.receiver_enabled:
-            row.operator(ReceiverStop.bl_idname, icon='PAUSE')
+            row.operator(receiver.ReceiverStop.bl_idname, icon='PAUSE', depress=True)
         else:
-            row.operator(ReceiverStart.bl_idname, icon='PLAY')
+            row.operator(receiver.ReceiverStart.bl_idname, icon='PLAY')
+
+        row = layout.row(align=True)
+        row.scale_y = 1.3
+        row.enabled = receiver.receiver_enabled
+        if context.scene.rsl_recording:
+            row.operator(recorder.RecorderStop.bl_idname, icon='RADIOBUT_ON', depress=True)
+        else:
+            row.operator(recorder.RecorderStart.bl_idname, icon='RADIOBUT_ON')
 
         inputs = []
 
@@ -56,9 +64,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                         # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
                         inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
             if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
-                inputs.append('Face: ' + obj.name + ' - ' + obj.rsl_animations_faces)
+                inputs.append('Face: ' + obj.rsl_animations_faces + ' --> ' + obj.name)
             if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-                inputs.append('Actor: ' + obj.name + ' - ' + obj.rsl_animations_actors)
+                inputs.append('Actor: ' + obj.rsl_animations_actors + ' --> ' + obj.name)
 
         if inputs:
             layout.separator()

@@ -16,6 +16,10 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 ### Usage
  - In the 3D View press 'N' and a toolbar will appear
  - Select Rokoko in that toolbar
- - Press 'Start Receiver' to start receiving data from Rokoko Studio
+ - Select the streaming port and start streaming data from Rokoko Studio
+ - Press 'Start Receiver' to start receiving data
  - Select an object in the hierarchy, open the object category, open the "Rokoko Studio Live" panel
- - Assign a prop to this object
+ - Assign a prop, tracker, face or actor to this object
+ - Done!
+ 
+![](https://i.imgur.com/pg82AR8.png)

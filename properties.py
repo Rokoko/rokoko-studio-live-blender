@@ -1,5 +1,6 @@
 from bpy.types import Scene, Object, Mesh
-from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
+
 from .core import animation_lists
 
 
@@ -20,7 +21,11 @@ def register():
         max=100
     )
 
-    Scene.rsl_ui_refresher = BoolProperty()
+    Scene.rsl_recording = BoolProperty(
+        name='Toggle Recording',
+        description='Start and stop recording of the data from Rokoko Studio',
+        default=False
+    )
 
     # Objects
     Object.rsl_animations_props_trackers = EnumProperty(
@@ -39,6 +44,38 @@ def register():
         items=animation_lists.get_actors
     )
 
+    Object.rsl_euler_0 = FloatProperty(
+        name='Euler W',
+        description='testing',
+        default=0,
+        min=-1,
+        max=1
+    )
+
+    Object.rsl_euler_1 = FloatProperty(
+        name='Euler X',
+        description='testing',
+        default=0,
+        min=-1,
+        max=1
+    )
+
+    Object.rsl_euler_2 = FloatProperty(
+        name='Euler Y',
+        description='testing',
+        default=0,
+        min=-1,
+        max=1
+    )
+
+    Object.rsl_euler_3 = FloatProperty(
+        name='Euler Z',
+        description='testing',
+        default=0,
+        min=-1,
+        max=1
+    )
+
     # Face shapekeys
     for shape in animation_lists.face_shapes:
         setattr(Object, 'rsl_face_' + shape, StringProperty(
@@ -47,7 +84,7 @@ def register():
         ))
 
     # Actor bones
-    for bone in animation_lists.actor_bones:
+    for bone in animation_lists.actor_bones.keys():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'

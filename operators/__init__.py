@@ -3,8 +3,10 @@ if "bpy" not in locals():
     from . import receiver
     from . import detector
     from . import recorder
+    from . import actor
 else:
     import importlib
     importlib.reload(receiver)
     importlib.reload(detector)
     importlib.reload(recorder)
+    importlib.reload(actor)
