@@ -43,6 +43,8 @@ class DetectActorBones(bpy.types.Operator):
                 bone_name = standardize_bone_name(bone.name)
                 if bone_name.lower() in bone_names:
                     setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
+
+                    # If looking for the chest bone, use the last found entry instead of the first one
                     if bone_name_key != 'chest':
                         break
 
@@ -136,24 +138,14 @@ def get_bone_list():
                 bone_name_r = bone_name.replace('\l', 'r')
                 bone_name_right = bone_name.replace('\l', 'right')
 
+                # Debug if duplicates are found
                 if bone_name_l in bone_values_left:
-                    # print(bone_name, bone_name_l)
+                    print(bone_name, bone_name_l)
                     continue
+
                 bone_values_left.append(bone_name_l)
-
-                if bone_name_left in bone_values_left:
-                    # print(bone_name, bone_name_left)
-                    continue
                 bone_values_left.append(bone_name_left)
-
-                if bone_name_r in bone_values_right:
-                    # print(bone_name, bone_name_r)
-                    continue
                 bone_values_right.append(bone_name_r)
-
-                if bone_name_right in bone_values_right:
-                    # print(bone_name, bone_name_right)
-                    continue
                 bone_values_right.append(bone_name_right)
 
         bone_key_left = bone_key
