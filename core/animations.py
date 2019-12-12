@@ -50,9 +50,9 @@ def animate_trackers_props(obj):
             if prop:
                 obj.rotation_mode = 'QUATERNION'
                 obj.location = pos_studio_to_blender(
-                    prop[0]['position']['x'],
-                    prop[0]['position']['y'],
-                    prop[0]['position']['z'],
+                    prop[0]['position']['x'] * 10,
+                    prop[0]['position']['y'] * 10,
+                    prop[0]['position']['z'] * 10,
                 )
                 obj.rotation_quaternion = rot_studio_to_blender(
                     prop[0]['rotation']['w'],
@@ -67,9 +67,9 @@ def animate_trackers_props(obj):
             if tracker:
                 obj.rotation_mode = 'QUATERNION'
                 obj.location = pos_studio_to_blender(
-                    tracker[0]['position']['x'],
-                    tracker[0]['position']['y'],
-                    tracker[0]['position']['z'],
+                    tracker[0]['position']['x'] * 10,
+                    tracker[0]['position']['y'] * 10,
+                    tracker[0]['position']['z'] * 10,
                 )
                 obj.rotation_quaternion = rot_studio_to_blender(
                     tracker[0]['rotation']['w'],
