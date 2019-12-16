@@ -6,7 +6,7 @@ from mathutils import Euler, Quaternion, Vector
 
 
 def ui_refresh_properties():
-    # Refreshes the panel
+    # Refreshes the properties panel
     for windowManager in bpy.data.window_managers:
         for window in windowManager.windows:
             for area in window.screen.areas:
@@ -14,11 +14,21 @@ def ui_refresh_properties():
                     area.tag_redraw()
 
 
-def ui_refresh_all():
-    # Refreshes the panel
+def ui_refresh_view_3d():
+    # Refreshes the view 3D panel
     for windowManager in bpy.data.window_managers:
         for window in windowManager.windows:
             for area in window.screen.areas:
+                if area.type == 'VIEW_3D':
+                    area.tag_redraw()
+
+
+def ui_refresh_all():
+    # Refreshes all panels
+    for windowManager in bpy.data.window_managers:
+        for window in windowManager.windows:
+            for area in window.screen.areas:
+                print(area.type)
                 area.tag_redraw()
 
 

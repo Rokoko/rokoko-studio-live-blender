@@ -1,5 +1,6 @@
 import bpy
 from ..core import animations
+from ..core import receiver as receiver_cls
 from ..operators import receiver, recorder
 
 
@@ -51,17 +52,25 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         else:
             row.operator(recorder.RecorderStart.bl_idname, icon='RADIOBUT_ON')
 
+        if receiver.receiver_enabled and receiver_cls.show_error:
+            for i, error in enumerate(receiver_cls.show_error):
+                if i == 0:
+                    row = layout.row(align=True)
+                    row.label(text=error, icon='ERROR')
+                else:
+                    row = layout.row(align=True)
+                    row.scale_y = 0.3
+                    row.label(text=error, icon='BLANK1')
+
         inputs = []
 
-        # Show a list of all assigned objects, not yet working correctly
+        # Show a list of all assigned objects
         for obj in bpy.data.objects:
             if animations.props or animations.trackers:
                 if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
                     if obj.rsl_animations_props_trackers.startswith('PR|'):
-                        # inputs.append('Prop: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[2])
                         inputs.append('Prop: ' + obj.rsl_animations_props_trackers.split('|')[2] + ' --> ' + obj.name)
                     elif obj.rsl_animations_props_trackers.startswith('TR|'):
-                        # inputs.append('Tracker: ' + obj.name + ' - ' + obj.rsl_animations_props_trackers.split('|')[1])
                         inputs.append('Tracker: ' + obj.rsl_animations_props_trackers.split('|')[1] + ' --> ' + obj.name)
             if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
                 inputs.append('Face: ' + obj.rsl_animations_faces + ' --> ' + obj.name)
