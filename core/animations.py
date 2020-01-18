@@ -123,8 +123,9 @@ def animate_actors(obj):
     # Get tpose data from custom data
     tpose_rot = custom_data.get('rsl_tpose_rotation')
     tpose_rot_glob = custom_data.get('rsl_tpose_rotation_global')
-    target_pose_rot = custom_data.get('rsl_target_pose_rotation')
-    if not tpose_rot or not tpose_rot_glob or not target_pose_rot:
+    # target_pose_rot = custom_data.get('rsl_target_pose_rotation')
+    # if not tpose_rot or not tpose_rot_glob or not target_pose_rot:
+    if not tpose_rot or not tpose_rot_glob:
         print('NO TPOSE DATA')
         return
 
@@ -140,15 +141,15 @@ def animate_actors(obj):
         bone_data = obj.data.bones.get(bone_name_assigned)
         rot = tpose_rot.get(bone_name_assigned)
         rot_glob = tpose_rot_glob.get(bone_name_assigned)
-        target_glob = target_pose_rot.get(bone_name_assigned)
+        # target_glob = target_pose_rot.get(bone_name_assigned)
 
-        if not bone or not rot or not rot_glob or not target_glob:
+        # if not bone or not rot or not rot_glob or not target_glob:
+        if not bone or not rot or not rot_glob:
             continue
 
         '''
             Animation starts here
         '''
-
 
         # # If bone is top parent, set its position
         # if bone_name == 'hip':
@@ -165,7 +166,7 @@ def animate_actors(obj):
         # The local and global rotation of the models t-pose, which was set by the user
         bone_tpose_rot = Quaternion(rot)
         bone_tpose_rot_glob = Quaternion(rot_glob)
-        bone_target_pose_rot = Quaternion(target_glob)
+        # bone_target_pose_rot = Quaternion(target_glob)
 
         # The current global rotation of this bone
         # INFO: Find a way to calculate the offset without using this to eliminate weird jiggling!
@@ -213,14 +214,6 @@ def animate_actors(obj):
                 -rota.z,
             )) @ Quaternion((0, 0, 0, 1))
 
-        def rot_to_blender_after(rota):
-            return Quaternion((
-                rota.w,
-                rota.x,
-                -rota.y,
-                rota.z,
-            )) # @ Quaternion((0, 0, 0, 1))
-
         def rot_to_blender2(rota):
             m = axis_conversion(from_forward='Z',
                                 from_up='Y',
@@ -240,24 +233,6 @@ def animate_actors(obj):
             rot = Quaternion((rota.w, rota.x, rota.y, rota.z))
             rot = Quaternion((__mat @ rot.axis) * -1, rot.angle)
             return (__mat_rot @ rot.to_matrix()).to_quaternion()
-
-        def rot_to_blender0(rota):
-            return Quaternion((
-                rota.w,
-                -rota.z,
-                -rota.y,
-                rota.x,
-            ))  # @ Quaternion((0, 0, 0, 1))
-
-        def rot_to_blender2(rota):
-            m = axis_conversion(from_forward='Z',
-                                from_up='Y',
-                                to_forward='-Y',
-                                to_up='Z').to_4x4()
-
-            rot = m.to_euler().to_quaternion()
-
-            return rota @ rot
 
         def rotate_around_center(mat_rot, center):
             return (Matrix.Translation(center) *
@@ -282,17 +257,69 @@ def animate_actors(obj):
         rot_offset_new = rot_ref.inverted() @ rot_target
         bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
 
+
         # Record animation
         if bpy.context.scene.rsl_recording:
             bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
-            # obj.keyframe_insert(data_path='pose.bones["' + bone.name + '"].rotation_quaternion', group=obj.name)
             # TODO: Add recording of hip position
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         '''
             Below are previous calculation tests
         '''
 
         continue
+
+        def rot_to_blender0(rota):
+            return Quaternion((
+                rota.w,
+                -rota.z,
+                -rota.y,
+                rota.x,
+            ))  # @ Quaternion((0, 0, 0, 1))
+
+        def rot_to_blender_after(rota):
+            return Quaternion((
+                rota.w,
+                rota.x,
+                -rota.y,
+                rota.z,
+            )) # @ Quaternion((0, 0, 0, 1))
 
         # bone.rotation_quaternion = bone_reference_raw
 
