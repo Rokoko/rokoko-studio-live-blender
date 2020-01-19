@@ -25,7 +25,7 @@ class InitTPose(bpy.types.Operator):
         for bone in obj.pose.bones:
             bone.rotation_mode = 'QUATERNION'
             tpose_rotation[bone.name] = bone.rotation_quaternion
-            tpose_rotation_global[bone.name] = bone.matrix.to_euler().to_quaternion().copy()
+            tpose_rotation_global[bone.name] = bone.matrix.to_quaternion()
             i = 6
             print('actor_bones[\'' + bone.name + '\'] = Quaternion(('
                   + str(round(tpose_rotation_global[bone.name][0], i)) + ', '
