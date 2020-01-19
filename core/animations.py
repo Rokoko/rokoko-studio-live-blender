@@ -201,16 +201,8 @@ def animate_actors(obj):
         def rot_to_blender_best(rota):
             return Quaternion((
                 rota.w,
-                -rota.x,
+                rota.x,
                 -rota.y,
-                rota.z,
-            )) @ Quaternion((0, 0, 0, 1))
-
-        def rot_to_blender_best_hip(rota):
-            return Quaternion((
-                rota.w,
-                -rota.x,
-                rota.y,
                 -rota.z,
             )) @ Quaternion((0, 0, 0, 1))
 
@@ -218,28 +210,16 @@ def animate_actors(obj):
             Offset and pose calculations start here
         '''
 
-        if bone_name in ['hip']:
-            rot_offset_ref = bone_tpose_rot_glob.inverted() @ rot_to_blender_best_hip(bone_reference_raw)
-            rot_offset_target = bone_tpose_rot_glob.inverted() @ rot_to_blender_best_hip(bone_new_pose_raw)
+        rot_offset_ref =  rot_to_blender_best(bone_reference_raw).inverted() @ bone_tpose_rot_glob
+        final_rot = rot_to_blender_best(bone_new_pose_raw) @ rot_offset_ref
 
-            rot_ref = bone_tpose_rot @ rot_offset_ref
-            rot_target = bone_tpose_rot @ rot_offset_target
+        orig_loc, orig_rot, orig_scale = bone.matrix.decompose()
+        orig_loc_mat = Matrix.Translation(orig_loc)
+        rotation_mat = final_rot.to_matrix().to_4x4()
+        orig_scale_mat = Matrix.Scale(orig_scale[0],4,(1,0,0)) @ Matrix.Scale(orig_scale[1],4,(0,1,0)) @ Matrix.Scale(orig_scale[2],4,(0,0,1))
+        
+        bone.matrix = orig_loc_mat @ rotation_mat# @ orig_scale_mat
 
-            rot_offset_new = rot_ref.inverted() @ rot_target
-            bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
-
-        else:
-            rot_offset_ref = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_reference_raw)
-            rot_offset_target = bone_tpose_rot_glob.inverted() @ rot_to_blender_best(bone_new_pose_raw)
-
-            rot_ref = bone_tpose_rot @ rot_offset_ref
-            rot_target = bone_tpose_rot @ rot_offset_target
-
-            rot_offset_new = rot_ref.inverted() @ rot_target
-            bone.rotation_quaternion = bone_tpose_rot @ rot_offset_new
-        # print(bone_name)
-
-        # Record animation
         if bpy.context.scene.rsl_recording:
             bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
             # TODO: Add recording of hip position
