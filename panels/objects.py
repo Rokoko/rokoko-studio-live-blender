@@ -1,7 +1,7 @@
 import bpy
 from ..core import animations, animation_lists
 from ..operators.detector import DetectFaceShapes, DetectActorBones
-from ..operators.actor import InitTPose, ResetTPose, PrintCurrentPose, SaveTargetPose
+from ..operators.actor import InitTPose, ResetTPose
 
 
 # Create a panel in the Object category of all objects

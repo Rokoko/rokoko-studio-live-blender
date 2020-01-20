@@ -140,7 +140,7 @@ def get_bone_list():
 
                 # Debug if duplicates are found
                 if bone_name_l in bone_values_left:
-                    print(bone_name, bone_name_l)
+                    print('Duplicate autodetect bone entry:', bone_name, bone_name_l)
                     continue
 
                 bone_values_left.append(bone_name_l)

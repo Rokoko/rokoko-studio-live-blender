@@ -41,7 +41,6 @@ classes = [
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
-    operators.actor.SaveTargetPose,
 ]
 
 
@@ -56,21 +55,6 @@ def register():
     properties.register()
 
     print("### Loaded Rokoko Studio Live successfully!\n")
-
-    # test_from1 = Quaternion((-0.707, 0.707, 0, 0))
-    # test_to1   = Quaternion((0.707, 0, 0, 0.707))
-    #
-    # test_from = Quaternion((0.7038, -0.7022, 0.0276, 0.1046))
-    # test_to   = Quaternion((0.7038, 0.1046, 0.0276, 0.7022))
-    #
-    # result = test_from @ Quaternion((0, 0, 0, -1))
-    #
-    # diff = test_from.inverted() @ test_to
-    #
-    # print(result)
-    # print(diff)
-    # print(Quaternion((-1, 1, 0, 0)) @ diff)
-    # print(test_from @ Quaternion((0.5, 0.5, -0.5, 0.5)))
 
 
 def unregister():

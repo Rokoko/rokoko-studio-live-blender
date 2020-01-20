@@ -1,12 +1,7 @@
-import time
-
 import bpy
-from bpy_extras.io_utils import axis_conversion
-from mathutils import Quaternion, Euler, Vector, Matrix
-import math
+from mathutils import Quaternion, Matrix
 
 from . import animation_lists
-from . import utils
 
 # version = None
 # timestamp = None
@@ -50,9 +45,9 @@ def animate_trackers_props(obj):
             if prop:
                 obj.rotation_mode = 'QUATERNION'
                 obj.location = pos_studio_to_blender(
-                    prop[0]['position']['x'] * 10,
-                    prop[0]['position']['y'] * 10,
-                    prop[0]['position']['z'] * 10,
+                    prop[0]['position']['x'] * 1,
+                    prop[0]['position']['y'] * 1,
+                    prop[0]['position']['z'] * 1,
                 )
                 obj.rotation_quaternion = rot_studio_to_blender(
                     prop[0]['rotation']['w'],
@@ -67,9 +62,9 @@ def animate_trackers_props(obj):
             if tracker:
                 obj.rotation_mode = 'QUATERNION'
                 obj.location = pos_studio_to_blender(
-                    tracker[0]['position']['x'] * 10,
-                    tracker[0]['position']['y'] * 10,
-                    tracker[0]['position']['z'] * 10,
+                    tracker[0]['position']['x'] * 1,
+                    tracker[0]['position']['y'] * 1,
+                    tracker[0]['position']['z'] * 1,
                 )
                 obj.rotation_quaternion = rot_studio_to_blender(
                     tracker[0]['rotation']['w'],
@@ -121,15 +116,13 @@ def animate_actors(obj):
         return
 
     # Get tpose data from custom data
+    tpose_loc = custom_data.get('rsl_tpose_location_object')
     tpose_rot = custom_data.get('rsl_tpose_rotation')
     tpose_rot_glob = custom_data.get('rsl_tpose_rotation_global')
-    # target_pose_rot = custom_data.get('rsl_target_pose_rotation')
-    # if not tpose_rot or not tpose_rot_glob or not target_pose_rot:
     if not tpose_rot or not tpose_rot_glob:
         print('NO TPOSE DATA')
         return
 
-    # print()
     # Go over every mapped bone and animate it
     for bone_name, ref_rot in animation_lists.actor_bones.items():
 
@@ -141,7 +134,6 @@ def animate_actors(obj):
         bone_data = obj.data.bones.get(bone_name_assigned)
         rot = tpose_rot.get(bone_name_assigned)
         rot_glob = tpose_rot_glob.get(bone_name_assigned)
-        # target_glob = target_pose_rot.get(bone_name_assigned)
 
         # if not bone or not rot or not rot_glob or not target_glob:
         if not bone or not rot or not rot_glob:
@@ -151,14 +143,6 @@ def animate_actors(obj):
             Animation starts here
         '''
 
-        # # If bone is top parent, set its position
-        # if bone_name == 'hip':
-        #     bone.location = pos_actor_studio_to_blender(
-        #         actor[0][bone_name]['position']['x'],
-        #         actor[0][bone_name]['position']['y'],
-        #         actor[0][bone_name]['position']['z'],
-        #     )
-
         # Set the bones quaternion mode
         bone.rotation_mode = 'QUATERNION'
         bone_data.use_inherit_rotation = False
@@ -166,7 +150,6 @@ def animate_actors(obj):
         # The local and global rotation of the models t-pose, which was set by the user
         bone_tpose_rot = Quaternion(rot)
         bone_tpose_rot_glob = Quaternion(rot_glob)
-        # bone_target_pose_rot = Quaternion(target_glob)
 
         # The current global rotation of this bone
         # INFO: Find a way to calculate the offset without using this to eliminate weird jiggling!
@@ -190,11 +173,6 @@ def animate_actors(obj):
             ref_rot.z,
         ))
 
-        # Studios reference t-pose rotation imported into blender
-        bone_reference_imported = animation_lists.actor_bones_ref[bone_name]
-
-        converter = utils.BoneConverterPoseMode(bone)
-
         # Function to convert from Studio to Blender space
         # This does not work and has to be figured out
         # Converting from (w,x,y,z) to (w,z,y,-x) almost works
@@ -210,24 +188,44 @@ def animate_actors(obj):
             Offset and pose calculations start here
         '''
 
-        rot_offset_ref =  rot_to_blender_best(bone_reference_raw).inverted() @ bone_tpose_rot_glob
+        rot_offset_ref = rot_to_blender_best(bone_reference_raw).inverted() @ bone_tpose_rot_glob
         final_rot = rot_to_blender_best(bone_new_pose_raw) @ rot_offset_ref
 
         orig_loc, orig_rot, orig_scale = bone.matrix.decompose()
         orig_loc_mat = Matrix.Translation(orig_loc)
         rotation_mat = final_rot.to_matrix().to_4x4()
-        orig_scale_mat = Matrix.Scale(orig_scale[0],4,(1,0,0)) @ Matrix.Scale(orig_scale[1],4,(0,1,0)) @ Matrix.Scale(orig_scale[2],4,(0,0,1))
         
-        bone.matrix = orig_loc_mat @ rotation_mat# @ orig_scale_mat
+        bone.matrix = orig_loc_mat @ rotation_mat
 
+        # If hips bone, set its position
+        if bone_name == 'hip':
+            if tpose_loc:
+                tpose_hip_location_y = tpose_loc.get(bone_name_assigned)[1]
+
+                location_new = pos_hips_studio_to_blender(
+                    actor[0][bone_name]['position']['x'] * tpose_hip_location_y,
+                    actor[0][bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y,
+                    actor[0][bone_name]['position']['z'] * tpose_hip_location_y,
+                )
+
+                bone.location = location_new
+            else:
+                print('Location missing from tpose data, please set tpose of this armature again!')
+
+        # Record the data
         if bpy.context.scene.rsl_recording:
             bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
-            # TODO: Add recording of hip position
+            if bone_name == 'hip':
+                bone.keyframe_insert(data_path='location', group=obj.name)
 
 
 '''
     Some Studio to Blender conversation test functions
 '''
+
+
+def pos_hips_studio_to_blender(x, y, z):
+    return -x, y, z
 
 
 def pos_studio_to_blender(x, y, z):
