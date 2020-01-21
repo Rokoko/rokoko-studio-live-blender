@@ -38,7 +38,8 @@ class DetectActorBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
 
-        for bone_name_key, bone_names in get_bone_list().items():
+        for bone_name_key in animation_lists.actor_bones.keys():
+            bone_names = get_bone_list()[bone_name_key]
             for bone in obj.pose.bones:
                 bone_name = standardize_bone_name(bone.name)
                 if bone_name.lower() in bone_names:

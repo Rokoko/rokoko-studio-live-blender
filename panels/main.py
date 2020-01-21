@@ -35,7 +35,13 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row.label(text='FPS:')
         row.prop(context.scene, 'rsl_receiver_fps', text='')
 
-        layout.separator()
+        col.separator()
+
+        row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_reset_scene_on_stop')
+
+        row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_hide_mesh_during_play')
 
         row = layout.row(align=True)
         row.scale_y = 1.3

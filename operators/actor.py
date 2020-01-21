@@ -90,7 +90,7 @@ class ResetTPose(bpy.types.Operator):
             if bone:
                 bone.rotation_mode = 'QUATERNION'
                 bone.rotation_quaternion = rot
-                if tpose_location_local[bone_name]:
+                if tpose_location_local and tpose_location_local[bone_name]:
                     bone.location = tpose_location_local[bone_name]
 
         return {'FINISHED'}

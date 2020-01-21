@@ -83,13 +83,6 @@ class ObjectsPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_actors')
 
-        # layout.separator()
-        # row = layout.row(align=True)
-        # row.prop(obj, 'rsl_euler_0')
-        # row.prop(obj, 'rsl_euler_1')
-        # row.prop(obj, 'rsl_euler_2')
-        # row.prop(obj, 'rsl_euler_3')
-
         layout.separator()
         row = layout.row(align=True)
         row.label(text='Select Bones:')
@@ -100,7 +93,6 @@ class ObjectsPanel(bpy.types.Panel):
         # row = layout.row(align=True)
         # row.label(text='Debug:')
         # row.operator(PrintCurrentPose.bl_idname)
-        # row.operator(SaveTargetPose.bl_idname)
 
         if not animations.actors:
             row = layout.row(align=True)
