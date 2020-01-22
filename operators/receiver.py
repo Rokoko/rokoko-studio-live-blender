@@ -2,6 +2,7 @@ import bpy
 from ..core.receiver import Receiver
 from ..core.animations import clear_animations
 from ..core.utils import ui_refresh_all
+from ..core import state_manager
 
 timer = None
 receiver = None
@@ -45,22 +46,17 @@ class ReceiverStart(bpy.types.Operator):
             receiver = Receiver()
         receiver.start(context.scene.rsl_receiver_port)
 
+        # Save the scene
+        state_manager.save_scene()
+
         # Register this classes modal operator in Blenders event handling system and execute it at the specified fps
         context.window_manager.modal_handler_add(self)
         timer = context.window_manager.event_timer_add(1 / context.scene.rsl_receiver_fps, window=bpy.context.window)
         return {'RUNNING_MODAL'}
 
     def cancel(self, context):
-        global receiver_enabled, receiver, timer
-
-        receiver_enabled = False
-        receiver.stop()
-
-        context.window_manager.event_timer_remove(timer)
-
+        ReceiverStart.force_disable()
         ui_refresh_all()
-        context.scene.rsl_recording = False
-
         return {'CANCELLED'}
 
     @classmethod
@@ -70,13 +66,16 @@ class ReceiverStart(bpy.types.Operator):
 
     @classmethod
     def force_disable(cls):
-        global receiver_enabled, receiver
+        global receiver_enabled, receiver, timer
 
         receiver_enabled = False
         receiver.stop()
 
         bpy.context.window_manager.event_timer_remove(timer)
         bpy.context.scene.rsl_recording = False
+
+        # Load the scene
+        state_manager.load_scene()
 
 
 class ReceiverStop(bpy.types.Operator):

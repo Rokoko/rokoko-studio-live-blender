@@ -1,5 +1,4 @@
 import bpy
-import time
 
 import numpy as np
 from mathutils import Euler, Quaternion, Vector
@@ -28,7 +27,6 @@ def ui_refresh_all():
     for windowManager in bpy.data.window_managers:
         for window in windowManager.windows:
             for area in window.screen.areas:
-                print(area.type)
                 area.tag_redraw()
 
 
