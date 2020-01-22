@@ -44,7 +44,7 @@ class CommandPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.scale_y = 1.5
-        row.scale_x = 1.7
+        row.scale_x = 3
         row.operator(command_api.StartCalibration.bl_idname, text='', icon_value=get_icon('SUIT'))
         row.operator(command_api.Restart.bl_idname, text='', icon='FILE_REFRESH')
         row.operator(command_api.StartRecording.bl_idname, text='', icon='PLAY')
