@@ -31,17 +31,21 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         col = layout.column()
 
-        col.enabled = not receiver.receiver_enabled
-
         row = col.row(align=True)
         row.label(text='Port:')
+        row.enabled = not receiver.receiver_enabled
         row.prop(context.scene, 'rsl_receiver_port', text='')
 
         row = col.row(align=True)
         row.label(text='FPS:')
+        row.enabled = not receiver.receiver_enabled
         row.prop(context.scene, 'rsl_receiver_fps', text='')
 
-        col.separator()
+        row = col.row(align=True)
+        row.label(text='Scene Scale:')
+        row.prop(context.scene, 'rsl_scene_scaling', text='')
+
+        layout.separator()
 
         row = layout.row(align=True)
         row.prop(context.scene, 'rsl_reset_scene_on_stop')
@@ -73,6 +77,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     row = layout.row(align=True)
                     row.scale_y = 0.3
                     row.label(text=error, icon='BLANK1')
+            return
 
         # Show all inputs
         global paired_inputs
@@ -107,7 +112,12 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 else:
                     paired.append(obj.name)
 
-        layout.separator()
+        # This is used as a small spacer
+        row = layout.row(align=True)
+        row.scale_y = 0.01
+        row.label(text=' ')
+
+        # Display all paired and unpaired inputs
         for actor in animations.actors:
             if actor['profileName']:
                 row = layout.row(align=True)

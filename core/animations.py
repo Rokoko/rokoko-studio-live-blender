@@ -47,9 +47,9 @@ def animate_tracker_prop(obj):
     def set_obj_data(data):
         obj.rotation_mode = 'QUATERNION'
         obj.location = pos_studio_to_blender(
-            data['position']['x'] * 1,
-            data['position']['y'] * 1,
-            data['position']['z'] * 1,
+            data['position']['x'] * bpy.context.scene.rsl_scene_scaling,
+            data['position']['y'] * bpy.context.scene.rsl_scene_scaling,
+            data['position']['z'] * bpy.context.scene.rsl_scene_scaling,
         )
         obj.rotation_quaternion = rot_studio_to_blender(
             data['rotation']['w'],

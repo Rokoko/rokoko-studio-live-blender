@@ -20,10 +20,13 @@ def register():
         min=1,
         max=100
     )
-    Scene.rsl_recording = BoolProperty(
-        name='Toggle Recording',
-        description='Start and stop recording of the data from Rokoko Studio',
-        default=False
+    Scene.rsl_scene_scaling = FloatProperty(
+        name='Scene Scaling',
+        description="This defines how much the scene get's scaled."
+                    "\nThis only effects props and trackers",
+        default=1,
+        precision=3,
+        step=1
     )
     Scene.rsl_reset_scene_on_stop = BoolProperty(
         name='Reset Scene on Stop',
@@ -32,9 +35,16 @@ def register():
     )
     Scene.rsl_hide_mesh_during_play = BoolProperty(
         name='Hide Meshes during Play',
-        description='This will hide all meshes that are animated by armatures during their animation to greatly reduce lag and increase performance',
+        description='This will hide all meshes that are animated by armatures during their animation '
+                    '\nto greatly reduce lag and increase performance.'
+                    '\nThis will not hide animated faces',
         default=False,
         update=state_manager.update_hidden_meshes
+    )
+    Scene.rsl_recording = BoolProperty(
+        name='Toggle Recording',
+        description='Start and stop recording of the data from Rokoko Studio',
+        default=False
     )
     Scene.rsl_command_ip_address = StringProperty(
         name='IP Address',

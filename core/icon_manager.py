@@ -1,6 +1,6 @@
 import os
-import bpy
 import pathlib
+from bpy.utils import previews
 
 icons = None
 
@@ -12,9 +12,7 @@ icons_dir = os.path.join(resources_dir, "icons")
 
 
 def load_icons():
-    # Note that preview collections returned by bpy.utils.previews
-    # are regular py objects - you can use them to store custom data.
-    pcoll = bpy.utils.previews.new()
+    pcoll = previews.new()
 
     # Load a preview thumbnail of a file and store in the previews collection
     pcoll.load('FACE', os.path.join(icons_dir, 'icon-row-face-32.png'), 'IMAGE')
@@ -28,7 +26,7 @@ def load_icons():
 
 def unload_icons():
     global icons
-    bpy.utils.previews.remove(icons)
+    previews.remove(icons)
 
 
 def get_icon(icon_id):

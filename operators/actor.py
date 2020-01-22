@@ -25,18 +25,12 @@ class InitTPose(bpy.types.Operator):
         tpose_rotation = {}
         tpose_rotation_global = {}
         for bone in obj.pose.bones:
+            # Save local and global space rotations
             bone.rotation_mode = 'QUATERNION'
             tpose_rotation[bone.name] = bone.rotation_quaternion
             tpose_rotation_global[bone.name] = bone.matrix.to_quaternion()
 
-            i = 6
-            print('actor_bones[\'' + bone.name + '\'] = Quaternion(('
-                  + str(round(tpose_rotation_global[bone.name][0], i)) + ', '
-                  + str(round(tpose_rotation_global[bone.name][1], i)) + ', '
-                  + str(round(tpose_rotation_global[bone.name][2], i)) + ', '
-                  + str(round(tpose_rotation_global[bone.name][3], i))
-                  + '))')
-
+            # Save local and object space locations
             object_space_location = bone.matrix @ bone.location
             tpose_location_local[bone.name] = bone.location
             tpose_location_object[bone.name] = object_space_location
@@ -50,6 +44,7 @@ class InitTPose(bpy.types.Operator):
         # Save custom data in object
         obj['CUSTOM'] = custom_data
 
+        self.report({'INFO'}, 'T-Pose successfully saved!')
         return {'FINISHED'}
 
 

@@ -28,7 +28,7 @@ class CommandTest(bpy.types.Operator):
 class StartCalibration(bpy.types.Operator):
     bl_idname = 'rsl.command_start_calibration'
     bl_label = 'Start Calibration'
-    bl_description = 'Starts calibration of a specific Smartsuit Pro.'
+    bl_description = 'Starts calibration of a Smartsuit Pro.'
     bl_options = {'REGISTER'}
 
     def execute(self, context):
@@ -51,7 +51,7 @@ class StartCalibration(bpy.types.Operator):
 class Restart(bpy.types.Operator):
     bl_idname = 'rsl.command_restart'
     bl_label = 'Restart Smartsuit(s)'
-    bl_description = 'Restarts one or all Smartsuit Pro\'s'
+    bl_description = 'Restarts all Smartsuit Pro\'s'
     bl_options = {'REGISTER'}
 
     def execute(self, context):
