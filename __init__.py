@@ -32,6 +32,7 @@ else:
 classes = [
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
+    panels.command_api.CommandPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -41,6 +42,11 @@ classes = [
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
+    operators.command_api.CommandTest,
+    operators.command_api.StartCalibration,
+    operators.command_api.Restart,
+    operators.command_api.StartRecording,
+    operators.command_api.StopRecording,
 ]
 
 
@@ -52,7 +58,11 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    # Register all custom properties
     properties.register()
+
+    # Load custom icons
+    core.icon_manager.load_icons()
 
     print("### Loaded Rokoko Studio Live successfully!\n")
 
@@ -67,6 +77,9 @@ def unregister():
     # Unregister all classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
+    # Unload all custom icons
+    core.icon_manager.unload_icons()
 
     print("### Unloaded Rokoko Studio Live successfully!\n")
 

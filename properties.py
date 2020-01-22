@@ -31,10 +31,29 @@ def register():
         default=True
     )
     Scene.rsl_hide_mesh_during_play = BoolProperty(
-        name='Hide Armature Meshes during Play',
-        description='This will hide all meshes on armatures during their animation to greatly reduce lag and increase performance',
+        name='Hide Meshes during Play',
+        description='This will hide all meshes that are animated by armatures during their animation to greatly reduce lag and increase performance',
         default=False,
         update=state_manager.update_hidden_meshes
+    )
+    Scene.rsl_command_ip_address = StringProperty(
+        name='IP Address',
+        description='Input the IP address of Rokoko Studio',
+        default='127.0.0.1',
+        maxlen=15
+    )
+    Scene.rsl_command_ip_port = IntProperty(
+        name='Command API Port',
+        description="The port defined in Rokoko Studio",
+        default=14053,
+        min=1,
+        max=65535
+    )
+    Scene.rsl_command_api_key = StringProperty(
+        name='API Key',
+        description='Input the API key displayed in Rokoko Studio',
+        default='1234',
+        maxlen=15
     )
 
     # Objects
