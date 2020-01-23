@@ -30,23 +30,10 @@ class CommandPanel(ToolPanel, bpy.types.Panel):
         row.label(text='Key:')
         row.prop(context.scene, 'rsl_command_api_key', text='')
 
-        col = layout.column()
-        col.scale_y = 1.1
-        row = col.row(align=True)
-        row.operator(command_api.StartCalibration.bl_idname, icon_value=get_icon('SUIT'))
-        row = col.row(align=True)
-        row.operator(command_api.Restart.bl_idname, icon='FILE_REFRESH')
-        row = col.row(align=True)
-        row.operator(command_api.StartRecording.bl_idname, icon='PLAY')
-        row = col.row(align=True)
-        row.operator(command_api.StopRecording.bl_idname, icon='PAUSE')
-
-        layout.separator()
-
         row = layout.row(align=True)
         row.scale_y = 1.5
         row.scale_x = 3
         row.operator(command_api.StartCalibration.bl_idname, text='', icon_value=get_icon('SUIT'))
         row.operator(command_api.Restart.bl_idname, text='', icon='FILE_REFRESH')
         row.operator(command_api.StartRecording.bl_idname, text='', icon='PLAY')
-        row.operator(command_api.StopRecording.bl_idname, text='', icon='PAUSE')
+        row.operator(command_api.StopRecording.bl_idname, text='', icon='SNAP_FACE')
