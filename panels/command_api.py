@@ -8,7 +8,8 @@ from ..core.icon_manager import get_icon
 # Main panel of the Rokoko panel
 class CommandPanel(ToolPanel, bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_rsl_command_api'
-    bl_label = 'Command API'
+    bl_label = 'Studio Command API'
+    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout

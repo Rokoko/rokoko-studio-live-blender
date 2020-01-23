@@ -1,5 +1,5 @@
 import bpy
-from collections import OrderedDict
+from .. import updater, updater_ops
 from ..core import animations
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import get_icon
@@ -15,7 +15,6 @@ class ToolPanel(object):
     bl_label = 'Rokoko'
     bl_idname = 'VIEW3D_TS_rokoko'
     bl_category = 'Rokoko'
-    # bl_category = 'Rokoko  Studio  Live'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 
@@ -26,8 +25,13 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
     bl_label = 'Rokoko Studio Live'
 
     def draw(self, context):
+
         layout = self.layout
         layout.use_property_split = False
+
+        # box = layout.box()
+        updater.check_for_update_background(check_on_startup=True)
+        updater_ops.draw_update_notification_panel(layout)
 
         col = layout.column()
 

@@ -6,3 +6,5 @@ tmp
 *.blend
 *.blend1
 .coverage
+resources/ignore_version.txt
+resources/no_auto_ver_check.txt

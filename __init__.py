@@ -11,6 +11,8 @@ bl_info = {
     'blender': (2, 80, 0),
 }
 
+dev_branch = True
+
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
@@ -20,12 +22,16 @@ if "bpy" not in locals():
     from . import panels
     from . import operators
     from . import properties
+    from . import updater_ops
+    from . import updater
 else:
     import importlib
     importlib.reload(core)
     importlib.reload(panels)
     importlib.reload(operators)
     importlib.reload(properties)
+    importlib.reload(updater_ops)
+    importlib.reload(updater)
 
 
 # List of all buttons and panels
@@ -33,6 +39,7 @@ classes = [
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
+    panels.updater.UpdaterPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -54,6 +61,9 @@ classes = [
 def register():
     print("\n### Loading Rokoko Studio Live...")
 
+    # Register updater and check for Rokoko Studio Live updates
+    updater_ops.register(bl_info, dev_branch)
+
     # Register all classes
     for cls in classes:
         bpy.utils.register_class(cls)
@@ -69,6 +79,9 @@ def register():
 
 def unregister():
     print("### Unloading Rokoko Studio Live...")
+
+    # Unregister updater
+    updater_ops.unregister()
 
     # Shut down receiver if the plugin is disabled while it is running
     if operators.receiver.receiver_enabled:
