@@ -7,7 +7,7 @@ objects = {}
 faces = {}
 armatures = {}
 
-hidden_meshes = []
+hidden_meshes = {}
 
 
 def save_scene():
@@ -81,9 +81,8 @@ def save_face(obj):
 
     faces[obj.name] = copy.deepcopy(shapekeys)
 
-    if obj in hidden_meshes:
-        hidden_meshes.remove(obj)
-        obj.hide_set(False)
+    if obj.name in hidden_meshes.keys():
+        unhide_mesh(obj)
 
 
 def load_face(obj):
@@ -111,8 +110,7 @@ def load_face(obj):
             if mod.type == 'ARMATURE':
                 armature = mod.object
                 if armatures.get(armature.name):
-                    obj.hide_set(True)
-                    hidden_meshes.append(obj)
+                    hide_mesh(obj, armature)
 
 
 # Armature handler
@@ -226,21 +224,15 @@ def hide_meshes_on_play(armature):
         if mesh.type != 'MESH':
             continue
 
-        if faces.get(mesh.name):
-            continue
-
-        for mod in mesh.modifiers:
-            if mod.type == 'ARMATURE' and mod.object == armature:
-                if not mesh.hide_get():
-                    mesh.hide_set(True)
-                    hidden_meshes.append(mesh)
+        hide_mesh(mesh, armature)
 
 
 def unhide_meshes_on_stop(armature):
-    for mesh in hidden_meshes:
-        for mod in mesh.modifiers:
-            if mod.type == 'ARMATURE' and mod.object == armature:
-                mesh.hide_set(False)
+    for mesh_name in copy.copy(hidden_meshes).keys():
+        mesh = bpy.context.scene.objects.get(mesh_name)
+        if not mesh:
+            continue
+        unhide_mesh(mesh, armature)
 
 
 def update_hidden_meshes(self, context):
@@ -258,3 +250,24 @@ def update_hidden_meshes(self, context):
             hide_meshes_on_play(armature)
         else:
             unhide_meshes_on_stop(armature)
+
+
+def hide_mesh(mesh, armature):
+    if faces.get(mesh.name):
+        return
+
+    for mod in mesh.modifiers:
+        if mod.type == 'ARMATURE' and mod.object == armature:
+            mesh.hide_set(True)
+            mod.object = None
+            hidden_meshes[mesh.name] = armature
+
+
+def unhide_mesh(mesh, armature):
+    mesh.hide_set(False)
+
+    for mod in mesh.modifiers:
+        if mod.type == 'ARMATURE' and hidden_meshes[mesh.name] == armature:
+            mod.object = hidden_meshes[mesh.name]
+
+    hidden_meshes.pop(mesh.name)
