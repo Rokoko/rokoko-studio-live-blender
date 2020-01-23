@@ -11,10 +11,11 @@ from threading import Thread
 from bpy.app.handlers import persistent
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
+GITHUB_URL_DEV = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/development.zip'
 # GITHUB_URL = 'https://api.github.com/repos/michaeldegroot/cats-blender-plugin/releases'
 
-no_ver_check = True
-fake_update = True
+no_ver_check = False
+fake_update = False
 
 is_checking_for_update = False
 checked_on_startup = False
@@ -104,6 +105,10 @@ def check_for_update():
                                      '\ntry again later.')
         return
 
+    if not version_list:
+        finish_update_checking(error='No plugin versions available.')
+        return
+
     # Check if an update is needed
     global update_needed, is_ignored_version
     update_needed = check_for_update_available()
@@ -153,6 +158,8 @@ def get_github_releases():
         print('URL ERROR')
         return False
     if not data:
+        if type(data) == list:
+            return True
         return False
 
     for version_data in data:
@@ -242,7 +249,7 @@ def update_now(version=None, latest=False, dev=False):
         return
     if dev:
         print('UPDATE TO DEVELOPMENT')
-        update_link = 'https://github.com/michaeldegroot/cats-blender-plugin/archive/development.zip'
+        update_link = GITHUB_URL_DEV
     elif latest or not version:
         print('UPDATE TO ' + latest_version_str)
         update_link = get_latest_version().download_link
@@ -255,6 +262,10 @@ def update_now(version=None, latest=False, dev=False):
 
 
 def download_file(update_url):
+    if not update_url:
+        finish_update()
+        return
+
     # Load all the directories and files
     update_zip_file = os.path.join(downloads_dir, "rokoko-update.zip")
 
@@ -273,7 +284,7 @@ def download_file(update_url):
     except urllib.error.URLError:
         print("FILE COULD NOT BE DOWNLOADED")
         shutil.rmtree(downloads_dir)
-        finish_update(error='Could not connect to Github.')
+        finish_update(error='Could not download update.')
         return
     print('DOWNLOAD FINISHED')
 
