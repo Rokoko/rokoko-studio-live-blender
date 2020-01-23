@@ -85,6 +85,7 @@ class ObjectsPanel(bpy.types.Panel):
 
         layout.separator()
         row = layout.row(align=True)
+        row.scale_y = 1.1
         row.label(text='Select Bones:')
         row.operator(DetectActorBones.bl_idname)
         row.operator(InitTPose.bl_idname)

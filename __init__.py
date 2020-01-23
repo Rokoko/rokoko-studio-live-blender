@@ -11,6 +11,8 @@ bl_info = {
     'blender': (2, 80, 0),
 }
 
+dev_branch = True
+
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
@@ -20,18 +22,24 @@ if "bpy" not in locals():
     from . import panels
     from . import operators
     from . import properties
+    from . import updater_ops
+    from . import updater
 else:
     import importlib
     importlib.reload(core)
     importlib.reload(panels)
     importlib.reload(operators)
     importlib.reload(properties)
+    importlib.reload(updater_ops)
+    importlib.reload(updater)
 
 
 # List of all buttons and panels
 classes = [
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
+    panels.command_api.CommandPanel,
+    panels.updater.UpdaterPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -41,6 +49,11 @@ classes = [
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
+    operators.command_api.CommandTest,
+    operators.command_api.StartCalibration,
+    operators.command_api.Restart,
+    operators.command_api.StartRecording,
+    operators.command_api.StopRecording,
 ]
 
 
@@ -48,17 +61,27 @@ classes = [
 def register():
     print("\n### Loading Rokoko Studio Live...")
 
+    # Register updater and check for Rokoko Studio Live updates
+    updater_ops.register(bl_info, dev_branch)
+
     # Register all classes
     for cls in classes:
         bpy.utils.register_class(cls)
 
+    # Register all custom properties
     properties.register()
+
+    # Load custom icons
+    core.icon_manager.load_icons()
 
     print("### Loaded Rokoko Studio Live successfully!\n")
 
 
 def unregister():
     print("### Unloading Rokoko Studio Live...")
+
+    # Unregister updater
+    updater_ops.unregister()
 
     # Shut down receiver if the plugin is disabled while it is running
     if operators.receiver.receiver_enabled:
@@ -67,6 +90,9 @@ def unregister():
     # Unregister all classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
+    # Unload all custom icons
+    core.icon_manager.unload_icons()
 
     print("### Unloaded Rokoko Studio Live successfully!\n")
 
