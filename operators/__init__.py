@@ -5,6 +5,7 @@ if "bpy" not in locals():
     from . import recorder
     from . import actor
     from . import command_api
+    from . import info
 else:
     import importlib
     importlib.reload(receiver)
@@ -12,3 +13,4 @@ else:
     importlib.reload(recorder)
     importlib.reload(actor)
     importlib.reload(command_api)
+    importlib.reload(info)

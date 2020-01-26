@@ -19,6 +19,7 @@ def load_icons():
     pcoll.load('SUIT', os.path.join(icons_dir, 'icon-row-suit-32.png'), 'IMAGE')
     pcoll.load('VP', os.path.join(icons_dir, 'icon-vp-32.png'), 'IMAGE')
     pcoll.load('PAIRED', os.path.join(icons_dir, 'icon-paired-32.png'), 'IMAGE')
+    pcoll.load('ROKOKO', os.path.join(icons_dir, 'icon-rokoko-32.png'), 'IMAGE')
 
     global icons
     icons = pcoll

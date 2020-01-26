@@ -40,10 +40,10 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row.enabled = not receiver.receiver_enabled
         row.prop(context.scene, 'rsl_receiver_port', text='')
 
-        row = col.row(align=True)
-        row.label(text='FPS:')
-        row.enabled = not receiver.receiver_enabled
-        row.prop(context.scene, 'rsl_receiver_fps', text='')
+        # row = col.row(align=True)
+        # row.label(text='FPS:')
+        # row.enabled = not receiver.receiver_enabled
+        # row.prop(context.scene, 'rsl_receiver_fps', text='')
 
         row = col.row(align=True)
         row.label(text='Scene Scale:')

@@ -119,9 +119,8 @@ def animate_actor(obj):
         return
 
     # Get tpose data from custom data
-    tpose_loc = custom_data.get('rsl_tpose_location_object')
-    tpose_rot_glob = custom_data.get('rsl_tpose_rotation_global')
-    if not tpose_rot_glob:
+    tpose_bones = custom_data.get('rsl_tpose_bones')
+    if not tpose_bones:
         print('NO TPOSE DATA')
         return
 
@@ -133,13 +132,13 @@ def animate_actor(obj):
         # Gets the name of the bone assigned to this bone live data
         bone_name_assigned = getattr(obj, 'rsl_actor_' + bone_name)
 
-        # Gets the assigned pose bone and it's global t-pose rotations
+        # Gets the assigned pose bone and it's tpose data set by the user
         bone = obj.pose.bones.get(bone_name_assigned)
         bone_data = obj.data.bones.get(bone_name_assigned)
-        rot_global = tpose_rot_glob.get(bone_name_assigned)
+        bone_tpose_data = tpose_bones.get(bone_name_assigned)
 
         # Skip if there is no bone assigned to this live data or if there is no tpose data for this bone
-        if not bone or not rot_global:
+        if not bone or not bone_tpose_data:
             continue
 
         # Set the bones quaternion mode and disable inherit rotation
@@ -147,7 +146,7 @@ def animate_actor(obj):
         bone_data.use_inherit_rotation = False
 
         # The global rotation of the models t-pose, which was set by the user
-        bone_tpose_rot_global = Quaternion(rot_global)
+        bone_tpose_rot_global = Quaternion(bone_tpose_data['rotation_global'])
 
         # The new pose in which the bone should be (still in Studio space)
         studio_new_pose = Quaternion((
@@ -179,22 +178,20 @@ def animate_actor(obj):
 
         # If hips bone, set its position
         if bone_name == 'hip':
-            if tpose_loc:
-                tpose_hip_location_y = tpose_loc.get(bone_name_assigned)[1]
+            tpose_hip_location_y = bone_tpose_data['location_object'][1]
 
-                location_new = pos_hips_studio_to_blender(
-                    actor[bone_name]['position']['x'] * tpose_hip_location_y,
-                    actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y,
-                    actor[bone_name]['position']['z'] * tpose_hip_location_y)
+            location_new = pos_hips_studio_to_blender(
+                actor[bone_name]['position']['x'] * tpose_hip_location_y,
+                actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y,
+                actor[bone_name]['position']['z'] * tpose_hip_location_y)
 
-                bone.location = location_new
-                # print(bone.location, obj.matrix_world @ bone.matrix @ bone.location)
-            else:
-                print('Location missing from tpose data, please set tpose of this armature again!')
+            bone.location = location_new
+            # print(bone.location, obj.matrix_world @ bone.matrix @ bone.location)
 
         # Record the data
         if bpy.context.scene.rsl_recording:
             bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
+            bone_data.keyframe_insert(data_path='use_inherit_rotation', group=obj.name)
             if bone_name == 'hip':
                 bone.keyframe_insert(data_path='location', group=obj.name)
 

@@ -3,12 +3,13 @@ from mathutils import Quaternion
 
 bl_info = {
     'name': 'Rokoko Studio Live for Blender',
-    'author': 'Rokoko',
+    'author': 'Rokoko Electronics',
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
     'version': (0, 1),
     'blender': (2, 80, 0),
+    # 'wiki_url': 'https://github.com/RokokoElectronics/rokoko-studio-live-blender',
 }
 
 dev_branch = True
@@ -16,6 +17,7 @@ dev_branch = True
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
+import sys
 if "bpy" not in locals():
     import bpy
     from . import core
@@ -40,6 +42,7 @@ classes = [
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
     panels.updater.UpdaterPanel,
+    # panels.info.InfoPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -54,12 +57,35 @@ classes = [
     operators.command_api.Restart,
     operators.command_api.StartRecording,
     operators.command_api.StopRecording,
+    operators.info.ForumButton,
+
 ]
+
+
+def check_unsupported_blender_versions():
+    # Don't allow Blender versions older than 2.80
+    if bpy.app.version < (2, 80):
+        unregister()
+        sys.tracebacklimit = 0
+        raise ImportError('\n\nBlender versions older than 2.80 are not supported by Rokoko Studio Live. '
+                          '\nPlease use Blender 2.80 or later.'
+                          '\n')
+
+    # Versions 2.80.0 to 2.80.74 are beta versions, stable is 2.80.75
+    if (2, 80, 0) <= bpy.app.version < (2, 80, 75):
+        unregister()
+        sys.tracebacklimit = 0
+        raise ImportError('\n\nYou are still on the beta version of Blender 2.80!'
+                          '\nPlease update to the release version of Blender 2.80.'
+                          '\n')
 
 
 # register and unregister all classes
 def register():
     print("\n### Loading Rokoko Studio Live...")
+
+    # Check for unsupported Blender versions
+    check_unsupported_blender_versions()
 
     # Register updater and check for Rokoko Studio Live updates
     updater_ops.register(bl_info, dev_branch)
