@@ -1,7 +1,7 @@
 from bpy.types import Scene, Object, Mesh
 from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
 
-from .core import animation_lists, state_manager
+from .core import animation_lists, state_manager, recorder
 
 
 def register():
@@ -44,7 +44,8 @@ def register():
     Scene.rsl_recording = BoolProperty(
         name='Toggle Recording',
         description='Start and stop recording of the data from Rokoko Studio',
-        default=False
+        default=False,
+        update=recorder.toggle_recording
     )
     Scene.rsl_command_ip_address = StringProperty(
         name='IP Address',

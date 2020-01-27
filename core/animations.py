@@ -1,11 +1,11 @@
 import bpy
 from mathutils import Quaternion, Matrix
 
-from . import animation_lists
+from . import animation_lists, recorder
 
 # version = None
-# timestamp = None
 # playbacktimestamp = None
+timestamp = None
 props = []
 trackers = []
 faces = []
@@ -72,8 +72,7 @@ def animate_tracker_prop(obj):
 
     # Record data
     if bpy.context.scene.rsl_recording:
-        obj.keyframe_insert(data_path='location', group=obj.name)
-        obj.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
+        recorder.record_object(timestamp, obj.name, obj.rotation_quaternion, obj.location)
 
 
 def animate_face(obj):
@@ -89,15 +88,16 @@ def animate_face(obj):
     face = face[0]
 
     # Set each assigned shapekey to the value of it's according live data value
-    for shape in animation_lists.face_shapes:
+    for shapekey_name in animation_lists.face_shapes:
         # Get assigned shapekey
-        shapekey = obj.data.shape_keys.key_blocks.get(getattr(obj, 'rsl_face_' + shape))
+        shapekey = obj.data.shape_keys.key_blocks.get(getattr(obj, 'rsl_face_' + shapekey_name))
         if shapekey:
             shapekey.slider_min = -1
-            shapekey.value = face[shape] / 100
+            shapekey.value = face[shapekey_name] / 100
 
             if bpy.context.scene.rsl_recording:
-                shapekey.keyframe_insert(data_path='value', group=obj.name)
+                # shapekey.keyframe_insert(data_path='value', group=obj.name)
+                recorder.record_face(timestamp, obj.name, shapekey_name, shapekey.value)
 
 
 def animate_actor(obj):
@@ -190,10 +190,7 @@ def animate_actor(obj):
 
         # Record the data
         if bpy.context.scene.rsl_recording:
-            bone.keyframe_insert(data_path='rotation_quaternion', group=obj.name)
-            bone_data.keyframe_insert(data_path='use_inherit_rotation', group=obj.name)
-            if bone_name == 'hip':
-                bone.keyframe_insert(data_path='location', group=obj.name)
+            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_quaternion, location=bone.location if bone_name == 'hip' else None)
 
 
 def pos_hips_studio_to_blender(x, y, z):

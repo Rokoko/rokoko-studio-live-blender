@@ -165,7 +165,10 @@ def get_github_releases():
     for version_data in data:
         if 'yanked' in version_data.get('name').lower():
             continue
-        version_list.append(Version(version_data))
+        # print(version_data)
+        version = Version(version_data)
+        # print(version.version_tag, version.release_date, version.download_link, version.patch_notes)
+        version_list.append(version)
 
     return True
 

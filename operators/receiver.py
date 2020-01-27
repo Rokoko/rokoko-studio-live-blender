@@ -1,3 +1,6 @@
+import time
+from threading import Thread
+
 import bpy
 from ..core.receiver import Receiver
 from ..core.animations import clear_animations
@@ -72,10 +75,19 @@ class ReceiverStart(bpy.types.Operator):
         receiver.stop()
 
         bpy.context.window_manager.event_timer_remove(timer)
-        bpy.context.scene.rsl_recording = False
 
-        # Load the scene
-        state_manager.load_scene()
+        # If the recording is still running, let it load the scene afterwards with a delay
+        if bpy.context.scene.rsl_recording:
+            bpy.context.scene.rsl_recording = False
+            thread = Thread(target=load_scene_later, args=[])
+            thread.start()
+        else:
+            state_manager.load_scene()
+
+
+def load_scene_later():
+    time.sleep(0.04)
+    state_manager.load_scene()
 
 
 class ReceiverStop(bpy.types.Operator):
