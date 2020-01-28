@@ -82,6 +82,7 @@ class Receiver:
             self.i_np = 0
             if self.i % (bpy.context.scene.rsl_receiver_fps * 5) == 0:
                 utils.ui_refresh_properties()
+                utils.ui_refresh_view_3d()
             return
 
         # If receiving a packet after one second of no packets, update UI with next packet

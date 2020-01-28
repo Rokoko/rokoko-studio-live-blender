@@ -2,7 +2,7 @@ import bpy
 from .. import updater, updater_ops
 from ..core import animations
 from ..core import receiver as receiver_cls
-from ..core.icon_manager import get_icon
+from ..core.icon_manager import Icons
 from ..operators import receiver, recorder
 
 
@@ -68,9 +68,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 1.3
         row.enabled = receiver.receiver_enabled
         if context.scene.rsl_recording:
-            row.operator(recorder.RecorderStop.bl_idname, icon='RADIOBUT_ON', depress=True)
+            row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
         else:
-            row.operator(recorder.RecorderStart.bl_idname, icon='RADIOBUT_ON')
+            row.operator(recorder.RecorderStart.bl_idname,icon_value=Icons.START_RECORDING.get_icon())
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
@@ -153,7 +153,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 # split = layout.row(align=True)
                 # add_indent(split)
                 # row = split.row(align=True)
-                # row.label(text='faceId', icon_value=get_icon('FACE'))
+                # row.label(text='faceId', icon_value=Icons.FACE.get_icon())
 
         for prop in animations.props:
             show_prop(layout, prop, scale=True)
@@ -171,14 +171,14 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 show_tracker(layout, tracker, scale=True)
 
         # row = layout.row(align=True)
-        # row.label(text='5', icon_value=get_icon('VP'))
+        # row.label(text='5', icon_value=Icons.VP.get_icon())
 
         for face in animations.faces:
             if face['faceId'] not in used_faces:
                 show_face(layout, face, scale=True)
 
         # row = layout.row(align=True)
-        # row.label(text='faceId2', icon_value=get_icon('FACE'))
+        # row.label(text='faceId2', icon_value=Icons.FACE.get_icon())
 
 
 def add_indent(split, empty=False):
@@ -187,7 +187,7 @@ def add_indent(split, empty=False):
     if empty:
         row.label(text="", icon='BLANK1')
     else:
-        row.label(text="", icon_value=get_icon('PAIRED'))
+        row.label(text="", icon_value=Icons.PAIRED.get_icon())
 
 
 def show_actor(layout, actor, scale=False):
@@ -196,10 +196,10 @@ def show_actor(layout, actor, scale=False):
         row.scale_y = row_scale
 
     if paired_inputs.get(actor['id']):
-        row.label(text=actor['id'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=get_icon('SUIT'))
+        row.label(text=actor['id'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
     else:
         row.enabled = False
-        row.label(text=actor['id'], icon_value=get_icon('SUIT'))
+        row.label(text=actor['id'], icon_value=Icons.SUIT.get_icon())
 
 
 def show_face(layout, face, scale=False):
@@ -208,10 +208,10 @@ def show_face(layout, face, scale=False):
         row.scale_y = row_scale
 
     if paired_inputs.get(face['faceId']):
-        row.label(text=face['faceId'] + '  --> ' + ', '.join(paired_inputs.get(face['faceId'])), icon_value=get_icon('FACE'))
+        row.label(text=face['faceId'] + '  --> ' + ', '.join(paired_inputs.get(face['faceId'])), icon_value=Icons.FACE.get_icon())
     else:
         row.enabled = False
-        row.label(text=face['faceId'], icon_value=get_icon('FACE'))
+        row.label(text=face['faceId'], icon_value=Icons.FACE.get_icon())
 
 
 def show_tracker(layout, tracker, scale=False):
@@ -220,10 +220,10 @@ def show_tracker(layout, tracker, scale=False):
         row.scale_y = row_scale
 
     if paired_inputs.get(tracker['name']):
-        row.label(text=tracker['name'] + '  --> ' + ', '.join(paired_inputs.get(tracker['name'])), icon_value=get_icon('VP'))
+        row.label(text=tracker['name'] + '  --> ' + ', '.join(paired_inputs.get(tracker['name'])), icon_value=Icons.VP.get_icon())
     else:
         row.enabled = False
-        row.label(text=tracker['name'], icon_value=get_icon('VP'))
+        row.label(text=tracker['name'], icon_value=Icons.VP.get_icon())
 
 
 def show_prop(layout, prop, scale=False):

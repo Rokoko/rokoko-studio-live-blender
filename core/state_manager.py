@@ -82,7 +82,7 @@ def save_face(obj):
     faces[obj.name] = copy.deepcopy(shapekeys)
 
     if obj.name in hidden_meshes.keys():
-        unhide_mesh(obj)
+        unhide_mesh(obj, hidden_meshes[obj.name])
 
 
 def load_face(obj):
@@ -155,7 +155,6 @@ def load_armature(obj):
     for bone_name, bone_data in bone_data.items():
         bone = obj.pose.bones.get(bone_name)
         if not bone:
-            print('Not a bone:', bone_name)
             continue
 
         location = bone_data['location']
@@ -269,5 +268,4 @@ def unhide_mesh(mesh, armature):
     for mod in mesh.modifiers:
         if mod.type == 'ARMATURE' and hidden_meshes[mesh.name] == armature:
             mod.object = hidden_meshes[mesh.name]
-
-    hidden_meshes.pop(mesh.name)
+            hidden_meshes.pop(mesh.name)

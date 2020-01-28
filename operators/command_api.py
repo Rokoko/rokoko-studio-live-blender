@@ -50,7 +50,7 @@ class StartCalibration(bpy.types.Operator):
 
 class Restart(bpy.types.Operator):
     bl_idname = 'rsl.command_restart'
-    bl_label = 'Restart Smartsuit(s)'
+    bl_label = 'Restart Smartsuits'
     bl_description = 'Restarts all Smartsuit Pro\'s'
     bl_options = {'REGISTER'}
 

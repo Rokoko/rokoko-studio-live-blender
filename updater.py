@@ -12,7 +12,6 @@ from bpy.app.handlers import persistent
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
 GITHUB_URL_DEV = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/development.zip'
-# GITHUB_URL = 'https://api.github.com/repos/michaeldegroot/cats-blender-plugin/releases'
 
 no_ver_check = False
 fake_update = False

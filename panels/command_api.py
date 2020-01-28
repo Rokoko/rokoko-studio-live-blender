@@ -2,14 +2,13 @@ import bpy
 
 from .main import ToolPanel
 from ..operators import command_api
-from ..core.icon_manager import get_icon
+from ..core.icon_manager import Icons
 
 
 # Main panel of the Rokoko panel
 class CommandPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_command_api'
+    bl_idname = 'VIEW3D_PT_rsl_command_api_v1'
     bl_label = 'Studio Command API'
-    bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
@@ -33,7 +32,7 @@ class CommandPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.5
         row.scale_x = 3
-        row.operator(command_api.StartCalibration.bl_idname, text='', icon_value=get_icon('SUIT'))
-        row.operator(command_api.Restart.bl_idname, text='', icon='FILE_REFRESH')
-        row.operator(command_api.StartRecording.bl_idname, text='', icon='PLAY')
+        row.operator(command_api.StartCalibration.bl_idname, text='', icon_value=Icons.CALIBRATE.get_icon())
+        row.operator(command_api.Restart.bl_idname, text='', icon_value=Icons.RESTART.get_icon())
+        row.operator(command_api.StartRecording.bl_idname, text='', icon_value=Icons.START_RECORDING.get_icon())
         row.operator(command_api.StopRecording.bl_idname, text='', icon='SNAP_FACE')
