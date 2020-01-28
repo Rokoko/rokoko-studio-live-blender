@@ -16,9 +16,9 @@ GITHUB_URL_DEV = 'https://github.com/RokokoElectronics/rokoko-studio-live-blende
 no_ver_check = False
 fake_update = False
 
+version_list = []
 is_checking_for_update = False
 checked_on_startup = False
-version_list = []
 current_version = []
 current_version_str = ''
 update_needed = False
@@ -48,25 +48,40 @@ for mod in addon_utils.modules():
 
 class Version:
     def __init__(self, data):
-        version_tag = data.get('tag_name').replace('-', '.')
-        if version_tag.startswith('v.'):
-            version_tag = version_tag[2:]
-        if version_tag.startswith('v'):
-            version_tag = version_tag[1:]
+        # Set version string
+        version_string = data.get('tag_name').lower().replace('-', '.').replace('_', '.')
+        if version_string.startswith('v.'):
+            version_string = version_string[2:]
+        if version_string.startswith('v'):
+            version_string = version_string[1:]
 
-        self.version_tag = version_tag
+        # Set version number
+        version_number = []
+        for i in version_string.split('.'):
+            if i.isdigit():
+                version_number.append(int(i))
+
+        # Set version data
+        self.version_string = version_string
+        self.version_number = version_number
+        self.name = data.get('name')
         self.download_link = data.get('zipball_url')
         self.patch_notes = data.get('body')
+        self.release_date = data.get('published_at')
 
         if 'T' in data.get('published_at')[1:]:
             self.release_date = data.get('published_at').split('T')[0]
-        else:
-            self.release_date = data.get('published_at')
+
+        # If the name of the release contains "yanked", ignore it
+        if 'yanked' in self.name.lower():
+            return
+
+        version_list.append(self)
 
 
-def get_version_by_tag(version_tag) -> Version:
+def get_version_by_string(version_string) -> Version:
     for version in version_list:
-        if version.version_tag == version_tag:
+        if version.version_string == version_string:
             return version
 
 
@@ -132,22 +147,21 @@ def get_github_releases():
     if fake_update:
         print('FAKE INSTALL!')
 
-        fake_version_1 = Version({
+        Version({
             'tag_name': 'v-99-99',
+            'name': 'v-99-99',
             'zipball_url': '',
-            'body': 'Put exiting new stuff here',
+            'body': 'Put exiting new stuff here\nOr maybe there is?',
             'published_at': 'Today'
         })
 
-        fake_version_2 = Version({
+        Version({
             'tag_name': '12.34.56',
+            'name': '12.34.56 Test Release',
             'zipball_url': '',
             'body': 'Nothing new to see',
             'published_at': 'A week ago probably'
         })
-
-        version_list.append(fake_version_1)
-        version_list.append(fake_version_2)
         return True
 
     try:
@@ -162,12 +176,7 @@ def get_github_releases():
         return False
 
     for version_data in data:
-        if 'yanked' in version_data.get('name').lower():
-            continue
-        # print(version_data)
-        version = Version(version_data)
-        # print(version.version_tag, version.release_date, version.download_link, version.patch_notes)
-        version_list.append(version)
+        Version(version_data)
 
     return True
 
@@ -177,13 +186,9 @@ def check_for_update_available():
         return False
 
     global latest_version, latest_version_str
-    latest_version = []
-    latest_version_str = get_latest_version().version_tag
-    for i in latest_version_str.split('.'):
-        if i.isdigit():
-            latest_version.append(int(i))
+    latest_version = get_latest_version().version_number
+    latest_version_str = get_latest_version().version_string
 
-    # print(latest_version, '>', current_version)
     if latest_version > current_version:
         return True
 
@@ -258,7 +263,7 @@ def update_now(version=None, latest=False, dev=False):
         bpy.context.scene.rsl_updater_version_list = latest_version_str
     else:
         print('UPDATE TO ' + version)
-        update_link = get_version_by_tag(version).download_link
+        update_link = get_version_by_string(version).download_link
 
     download_file(update_link)
 
@@ -472,7 +477,7 @@ def check_ignored_version():
 def get_version_list(self, context):
     choices = []
     for version in version_list:
-        choices.append((version.version_tag, version.version_tag, version.version_tag))
+        choices.append((version.version_string, version.version_string, version.version_string))
 
     bpy.types.Object.Enum = choices
     return bpy.types.Object.Enum

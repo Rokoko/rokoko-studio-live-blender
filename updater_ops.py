@@ -130,17 +130,21 @@ class ShowPatchnotesPanel(bpy.types.Operator):
         row.prop(context.scene, 'rsl_updater_version_list')
 
         if context.scene.rsl_updater_version_list:
-            version = updater.get_version_by_tag(context.scene.rsl_updater_version_list)
+            version = updater.get_version_by_string(context.scene.rsl_updater_version_list)
 
             col.separator()
             row = col.row(align=True)
-            row.label(text='Released: ' + version.release_date)
+            row.label(text=version.name, icon='SOLO_ON')
 
             col.separator()
             for line in version.patch_notes.replace('**', '').split('\r\n'):
                 row = col.row(align=True)
                 row.scale_y = 0.75
                 row.label(text=line)
+
+            col.separator()
+            row = col.row(align=True)
+            row.label(text='Released: ' + version.release_date)
 
         col.separator()
 
