@@ -14,9 +14,6 @@ class RecorderStart(bpy.types.Operator):
             return {'CANCELLED'}
 
         context.scene.rsl_recording = True
-
-        context.scene.frame_current = context.scene.frame_start
-        context.scene.render.fps = context.scene.rsl_receiver_fps
         return {'FINISHED'}
 
 

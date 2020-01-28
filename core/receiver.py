@@ -46,10 +46,6 @@ class Receiver:
             # Process animation data
             error, force_error = self.process_data()
 
-            # Advance animation frame
-            if bpy.context.scene.rsl_recording:
-                bpy.context.scene.frame_current += 1
-
         self.handle_ui_updates(received)
         self.handle_error(error, force_error)
 
@@ -68,7 +64,7 @@ class Receiver:
             print('Old json data version! Please use v2 or higher')
             return ['Old data format!', 'Use JSON v2 or higher!'], True
 
-        # animations.timestamp = data['timestamp']
+        animations.timestamp = data['timestamp']
         # animations.playbacktimestamp = data['playbackTimestamp']
         animations.props = data['props']
         animations.trackers = data['trackers']

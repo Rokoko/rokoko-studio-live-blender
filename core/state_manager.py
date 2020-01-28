@@ -59,7 +59,7 @@ def load_object(obj):
     obj.rotation_mode = 'QUATERNION'
     obj.location = obj_data['location']
     obj.rotation_quaternion = obj_data['rotation']
-    obj.rotation_mode = obj_data['rotation_mode']
+    # obj.rotation_mode = obj_data['rotation_mode']
     # obj.hide_set(obj_data['hidden'])
 
     # Remove element from dictionary

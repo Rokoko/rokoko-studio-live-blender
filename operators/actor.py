@@ -1,4 +1,5 @@
 import bpy
+import copy
 from . import receiver
 
 
@@ -19,30 +20,21 @@ class InitTPose(bpy.types.Operator):
         if not custom_data:
             custom_data = {}
 
-        # Create tpose data
-        tpose_location_local = {}
-        tpose_location_object = {}
-        tpose_rotation = {}
-        tpose_rotation_global = {}
+        bones = {}
+
+        # Save local and global space rotations and local and object space locations for each bone
         for bone in obj.pose.bones:
-            # Save local and global space rotations
             bone.rotation_mode = 'QUATERNION'
-            tpose_rotation[bone.name] = bone.rotation_quaternion
-            tpose_rotation_global[bone.name] = bone.matrix.to_quaternion()
+            bones[bone.name] = {
+                'location_local': bone.location,
+                'location_object': bone.matrix @ bone.location,
+                'rotation_local': bone.rotation_quaternion,
+                'rotation_global': bone.matrix.to_quaternion(),
+                'inherit_rotation': obj.data.bones.get(bone.name).use_inherit_rotation,
+            }
 
-            # Save local and object space locations
-            object_space_location = bone.matrix @ bone.location
-            tpose_location_local[bone.name] = bone.location
-            tpose_location_object[bone.name] = object_space_location
-
-        # Save data to custom data
-        custom_data['rsl_tpose_location_local'] = tpose_location_local
-        custom_data['rsl_tpose_location_object'] = tpose_location_object
-        custom_data['rsl_tpose_rotation'] = tpose_rotation
-        custom_data['rsl_tpose_rotation_global'] = tpose_rotation_global
-
-        # Save custom data in object
-        obj['CUSTOM'] = custom_data
+        # Save tpose data to custom data
+        custom_data['rsl_tpose_bones'] = copy.deepcopy(bones)
 
         self.report({'INFO'}, 'T-Pose successfully saved!')
         return {'FINISHED'}
@@ -71,22 +63,19 @@ class ResetTPose(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Get tpose data from custom data
-        tpose_rotation = custom_data.get('rsl_tpose_rotation')
-        if not tpose_rotation:
+        tpose_bones = custom_data.get('rsl_tpose_bones')
+        if not tpose_bones:
             self.report({'ERROR'}, 'Please set the T-Pose first.')
             return {'CANCELLED'}
 
-        # Get tpose data from custom data
-        tpose_location_local = custom_data.get('rsl_tpose_location_local')
-
-        # Apply rotations to armature
-        for bone_name, rot in tpose_rotation.items():
+        # Apply locations and rotations to bones
+        for bone_name, data in tpose_bones.items():
             bone = obj.pose.bones.get(bone_name)
             if bone:
                 bone.rotation_mode = 'QUATERNION'
-                bone.rotation_quaternion = rot
-                if tpose_location_local and tpose_location_local[bone_name]:
-                    bone.location = tpose_location_local[bone_name]
+                bone.rotation_quaternion = data['rotation_local']
+                bone.location = data['location_local']
+                obj.data.bones.get(bone_name).use_inherit_rotation = data['inherit_rotation']
 
         return {'FINISHED'}
 
