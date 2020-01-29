@@ -3,6 +3,7 @@ from mathutils import Quaternion, Matrix
 
 from . import animation_lists, recorder
 
+
 # version = None
 # playbacktimestamp = None
 timestamp = None

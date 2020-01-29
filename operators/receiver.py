@@ -1,11 +1,11 @@
+import bpy
 import time
 from threading import Thread
 
-import bpy
-from ..core.receiver import Receiver
-from ..core.animations import clear_animations
-from ..core.utils import ui_refresh_all
 from ..core import state_manager
+from ..core.receiver import Receiver
+from ..core.utils import ui_refresh_all
+from ..core.animations import clear_animations
 
 timer = None
 receiver = None

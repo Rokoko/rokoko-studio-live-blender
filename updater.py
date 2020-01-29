@@ -316,7 +316,7 @@ def download_file(update_url):
     # Detect the extracted folders and files
     print('SEARCHING FOR INIT 1')
 
-    def searchInit(path):
+    def search_init(path):
         print('SEARCHING IN ' + path)
         files = os.listdir(path)
         if "__init__.py" in files:
@@ -327,10 +327,10 @@ def download_file(update_url):
             print(len(folders), 'FOLDERS DETECTED')
             return None
         print('GOING DEEPER')
-        return searchInit(os.path.join(path, folders[0]))
+        return search_init(os.path.join(path, folders[0]))
 
     print('SEARCHING FOR INIT 2')
-    extracted_zip_dir = searchInit(downloads_dir)
+    extracted_zip_dir = search_init(downloads_dir)
     if not extracted_zip_dir:
         print("INIT NOT FOUND!")
         shutil.rmtree(downloads_dir)

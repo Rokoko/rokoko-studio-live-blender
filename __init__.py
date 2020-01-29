@@ -1,6 +1,4 @@
 # Important plugin info for Blender
-from mathutils import Quaternion
-
 bl_info = {
     'name': 'Rokoko Studio Live for Blender',
     'author': 'Rokoko Electronics',

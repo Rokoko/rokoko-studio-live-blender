@@ -1,7 +1,7 @@
 import os
 import pathlib
-from bpy.utils import previews
 from enum import Enum
+from bpy.utils import previews
 
 icons = None
 

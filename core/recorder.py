@@ -46,42 +46,42 @@ def stop_recorder(context):
     def get_frame(frame_number):
         return int(round((timestamps[frame_number] - timestamps[0]) * context.scene.rsl_receiver_fps, 0))
 
-    def get_fixed_frame_number(i):
+    def get_corrected_frame_number(frame_index):
         # Fix frames numbers that are incorrect because of rounding errors
-        curr_frame = get_frame(i)
-        if 0 < i < len(timestamps) - 1:
-            prev_frame = get_frame(i - 1)
-            next_frame = get_frame(i + 1)
+        curr_frame = get_frame(frame_index)
+        if 0 < frame_index < len(timestamps) - 1:
+            prev_frame = get_frame(frame_index - 1)
+            next_frame = get_frame(frame_index + 1)
             if prev_frame == curr_frame and next == curr_frame + 2:
                 curr_frame += 1
             if next_frame == curr_frame and prev_frame == curr_frame - 2:
                 curr_frame -= 1
-        if i == len(timestamps) - 1:
-            prev_frame = get_frame(i - 1)
+        if frame_index == len(timestamps) - 1:
+            prev_frame = get_frame(frame_index - 1)
             if prev_frame == curr_frame:
                 curr_frame += 1
         return curr_frame
 
-    def add_keyframe(action_tmp, data_path, i, group_name, value):
+    def add_keyframe(action_tmp, data_path, data_index, group_name, frame_value):
         if not action_tmp:
             print('NO ACTION!')
             return
-        fc = action_tmp.fcurves.find(data_path=data_path, index=i)
+        fc = action_tmp.fcurves.find(data_path=data_path, index=data_index)
         if not fc:
-            fc = action_tmp.fcurves.new(data_path=data_path, index=i, action_group=group_name)
+            fc = action_tmp.fcurves.new(data_path=data_path, index=data_index, action_group=group_name)
             if index != 0:
                 fc.keyframe_points.add(1)
                 fc.keyframe_points[-1].interpolation = 'LINEAR'
-                fc.keyframe_points[-1].co = (0, value)
+                fc.keyframe_points[-1].co = (0, frame_value)
         fc.keyframe_points.add(1)
         fc.keyframe_points[-1].interpolation = 'LINEAR'
-        fc.keyframe_points[-1].co = (frame, value)
+        fc.keyframe_points[-1].co = (frame, frame_value)
 
     index = -1
     timestamps = list(recorded_data.keys())
     for data in recorded_data.values():
         index += 1
-        frame = get_fixed_frame_number(index)
+        frame = get_corrected_frame_number(index)
         # print('Frame', frame, get_frame(index), (timestamp - timestamps[0]) * context.scene.rsl_receiver_fps)
 
         objects = data.get('objects')

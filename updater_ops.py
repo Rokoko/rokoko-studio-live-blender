@@ -1,9 +1,6 @@
 import bpy
+
 from . import updater
-
-
-def layout_split(layout, factor=0.0, align=False):
-    return layout.split(factor=factor, align=align)
 
 
 class CheckForUpdateButton(bpy.types.Operator):
@@ -294,7 +291,7 @@ class UpdateNotificationPopup(bpy.types.Operator):
         layout = self.layout
         col = layout.column(align=True)
 
-        row = layout_split(col, factor=0.55, align=True)
+        row = col.split(factor=0.55, align=True)
         row.scale_y = 1.05
         row.label(text='Rokoko Studio Live v' + updater.latest_version_str + ' available!', icon='SOLO_ON')
         row.operator(ShowPatchnotesPanel.bl_idname, text='Show Patchnotes')
@@ -333,6 +330,7 @@ def draw_update_notification_panel(layout):
     row.operator(RemindMeLaterButton.bl_idname, text='Defer')
     row.operator(IgnoreThisVersionButton.bl_idname, text='Ignore')
 
+    col.separator()
     col.separator()
     col.separator()
 
@@ -411,7 +409,7 @@ def draw_updater_panel(context, layout, user_preferences=False):
     col.separator()
     col.separator()
     split = col.row(align=True)
-    row = layout_split(split, factor=0.4, align=True)
+    row = split.split(factor=0.4, align=True)
     row.scale_y = scale_small
     row.active = True if not updater.is_checking_for_update and updater.version_list else False
     row.label(text='Version:')

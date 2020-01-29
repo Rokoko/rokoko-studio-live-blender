@@ -1,4 +1,5 @@
 import bpy
+
 from ..core import animation_lists
 from ..core.auto_detect_lists.bones import bone_list
 

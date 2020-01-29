@@ -1,10 +1,10 @@
 import bpy
+
 from .. import updater, updater_ops
 from ..core import animations
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import Icons
 from ..operators import receiver, recorder
-
 
 row_scale = 0.75
 paired_inputs = {}
@@ -70,7 +70,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         if context.scene.rsl_recording:
             row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
         else:
-            row.operator(recorder.RecorderStart.bl_idname,icon_value=Icons.START_RECORDING.get_icon())
+            row.operator(recorder.RecorderStart.bl_idname, icon_value=Icons.START_RECORDING.get_icon())
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
@@ -236,5 +236,3 @@ def show_prop(layout, prop, scale=False):
     else:
         row.enabled = False
         row.label(text=prop['name'], icon='FILE_3D')
-
-

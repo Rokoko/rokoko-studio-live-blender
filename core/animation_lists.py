@@ -1,8 +1,8 @@
+from mathutils import Quaternion
 from collections import OrderedDict
 
-from mathutils import Quaternion
-
 from . import animations
+
 
 # Face shapekeys
 face_shapes = [
