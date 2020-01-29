@@ -1,13 +1,13 @@
 # Important plugin info for Blender
 bl_info = {
     'name': 'Rokoko Studio Live for Blender',
-    'author': 'Rokoko Electronics',
+    'author': 'Rokoko Electronics ApS',
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
     'version': (1, 0),
     'blender': (2, 80, 0),
-    # 'wiki_url': 'https://github.com/RokokoElectronics/rokoko-studio-live-blender',
+    'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
 dev_branch = False
@@ -40,7 +40,7 @@ classes = [
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
     panels.updater.UpdaterPanel,
-    # panels.info.InfoPanel,
+    panels.info.InfoPanel,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -55,6 +55,9 @@ classes = [
     operators.command_api.Restart,
     operators.command_api.StartRecording,
     operators.command_api.StopRecording,
+    operators.info.LicenseButton,
+    operators.info.RokokoButton,
+    operators.info.DocumentationButton,
     operators.info.ForumButton,
 
 ]
