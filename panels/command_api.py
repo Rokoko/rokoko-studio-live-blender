@@ -16,7 +16,6 @@ class CommandPanel(ToolPanel, bpy.types.Panel):
 
         col = layout.column()
 
-        # Command API
         row = col.row(align=True)
         row.label(text='Address:')
         row.prop(context.scene, 'rsl_command_ip_address', text='')
