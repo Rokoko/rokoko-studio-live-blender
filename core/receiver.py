@@ -1,9 +1,8 @@
+import bpy
 import json
 import socket
+
 from . import animations, utils
-import datetime
-import time
-import bpy
 
 error_temp = ''
 show_error = []
@@ -28,9 +27,9 @@ class Receiver:
         error = []
         force_error = False
 
-        # Try to recieve a packet
+        # Try to receive a packet
         try:
-            data_raw2, address = self.sock.recvfrom(32768)  # Maybe up to 65536
+            data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
             received = False
             print('No packet')
@@ -42,7 +41,7 @@ class Receiver:
             force_error = True
 
         if received:
-            self.data_raw = data_raw2
+            self.data_raw = data_raw
             # Process animation data
             error, force_error = self.process_data()
 
@@ -82,6 +81,7 @@ class Receiver:
             self.i_np = 0
             if self.i % (bpy.context.scene.rsl_receiver_fps * 5) == 0:
                 utils.ui_refresh_properties()
+                utils.ui_refresh_view_3d()
             return
 
         # If receiving a packet after one second of no packets, update UI with next packet

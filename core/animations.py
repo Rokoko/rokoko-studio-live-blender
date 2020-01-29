@@ -3,6 +3,7 @@ from mathutils import Quaternion, Matrix
 
 from . import animation_lists, recorder
 
+
 # version = None
 # playbacktimestamp = None
 timestamp = None
@@ -157,28 +158,60 @@ def animate_actor(obj):
         ))
 
         # Function to convert from Studio to Blender space
-        def rot_to_blender(rota):
+        def rot_to_blender(rot):
             return Quaternion((
-                rota.w,
-                rota.x,
-                -rota.y,
-                -rota.z,
+                rot.w,
+                rot.x,
+                -rot.y,
+                -rot.z,
             )) @ Quaternion((0, 0, 0, 1))
+
+        mat_obj = obj.matrix_local.decompose()[1].to_matrix().to_4x4()
+        mat_default = Matrix((
+            (1, 0, 0, 0),
+            (0, 0, -1, 0),
+            (0, 1, 0, 0),
+            (0, 0, 0, 1)
+        ))
+        rot_transform = (mat_default.inverted() @ mat_obj).to_quaternion()
+
+        def transform(rot):
+            return rot_transform @ rot
+
+        def transform_back(rot):
+            return rot_transform.inverted() @ rot
+
+        # Transform rotation matrix of tpose to target space
+        bone_tpose_rot_global = transform(bone_tpose_rot_global)
 
         # Calculate bone offset from tpose and add it to live data rotation
         rot_offset_ref = rot_to_blender(studio_reference_tpose_rot).inverted() @ bone_tpose_rot_global
         final_rot = rot_to_blender(studio_new_pose) @ rot_offset_ref
+
+        # Transform rotation matrix back from target space
+        final_rot = transform_back(final_rot)
 
         # Set new bone rotation
         orig_loc, _, _ = bone.matrix.decompose()
         orig_loc_mat = Matrix.Translation(orig_loc)
         rotation_mat = final_rot.to_matrix().to_4x4()
 
+        # Set final bone matrix
         bone.matrix = orig_loc_mat @ rotation_mat
+
+        # Get correct space of hips location
+        axis = 0
+        multiplier = 1
+        if round(mat_obj[2][0], 0) == round(mat_obj[2][2], 0) == 0:
+            axis = 1
+            multiplier = mat_obj[2][1]
+        if round(mat_obj[2][0], 0) == round(mat_obj[2][1], 0) == 0:
+            axis = 2
+            multiplier = mat_obj[2][2]
 
         # If hips bone, set its position
         if bone_name == 'hip':
-            tpose_hip_location_y = bone_tpose_data['location_object'][1]
+            tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
 
             location_new = pos_hips_studio_to_blender(
                 actor[bone_name]['position']['x'] * tpose_hip_location_y,
@@ -186,7 +219,6 @@ def animate_actor(obj):
                 actor[bone_name]['position']['z'] * tpose_hip_location_y)
 
             bone.location = location_new
-            # print(bone.location, obj.matrix_world @ bone.matrix @ bone.location)
 
         # Record the data
         if bpy.context.scene.rsl_recording:

@@ -3,7 +3,7 @@ import bpy
 from .main import ToolPanel
 from .. import updater
 from ..operators import info
-from ..core.icon_manager import get_icon
+from ..core.icon_manager import Icons
 
 
 class InfoPanel(ToolPanel, bpy.types.Panel):
@@ -15,7 +15,7 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         layout = self.layout
 
         row = layout.row(align=True)
-        row.label(text='Rokoko Studio Live (' + updater.current_version_str + ')', icon_value=get_icon('ROKOKO'))
+        row.label(text='Rokoko Studio Live (' + updater.current_version_str + ')', icon_value=Icons.ROKOKO.get_icon())
 
         # Separator
         row = layout.row(align=True)

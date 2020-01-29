@@ -1,4 +1,4 @@
-from bpy.types import Scene, Object, Mesh
+from bpy.types import Scene, Object
 from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
 
 from .core import animation_lists, state_manager, recorder

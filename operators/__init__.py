@@ -8,6 +8,7 @@ if "bpy" not in locals():
     from . import info
 else:
     import importlib
+
     importlib.reload(receiver)
     importlib.reload(detector)
     importlib.reload(recorder)

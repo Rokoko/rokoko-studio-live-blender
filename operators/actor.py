@@ -1,5 +1,6 @@
 import bpy
 import copy
+
 from . import receiver
 
 
@@ -35,6 +36,7 @@ class InitTPose(bpy.types.Operator):
 
         # Save tpose data to custom data
         custom_data['rsl_tpose_bones'] = copy.deepcopy(bones)
+        obj['CUSTOM'] = custom_data
 
         self.report({'INFO'}, 'T-Pose successfully saved!')
         return {'FINISHED'}
