@@ -9,7 +9,6 @@ from ..core.icon_manager import Icons
 class InfoPanel(ToolPanel, bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_rsl_info'
     bl_label = 'Info'
-    # bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
