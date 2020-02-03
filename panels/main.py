@@ -1,7 +1,9 @@
 import bpy
+import datetime
 
 from .. import updater, updater_ops
 from ..core import animations
+from ..core import recorder as recorder_manager
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import Icons
 from ..operators import receiver, recorder
@@ -67,10 +69,17 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.3
         row.enabled = receiver.receiver_enabled
-        if context.scene.rsl_recording:
-            row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
-        else:
+        if not context.scene.rsl_recording:
             row.operator(recorder.RecorderStart.bl_idname, icon_value=Icons.START_RECORDING.get_icon())
+        else:
+            row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
+            timestamps = list(recorder_manager.recorded_data.keys())
+            if not timestamps:
+                return
+
+            time_recorded = int(timestamps[-1] - timestamps[0])
+            row = layout.row(align=True)
+            row.label(text='Recording: ' + str(datetime.timedelta(seconds=time_recorded)))
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
