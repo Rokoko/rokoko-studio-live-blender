@@ -79,7 +79,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
             time_recorded = int(timestamps[-1] - timestamps[0])
             row = layout.row(align=True)
-            row.label(text='Recording: ' + str(datetime.timedelta(seconds=time_recorded)))
+            row.label(text='Recording time: ' + str(datetime.timedelta(seconds=time_recorded)))
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
