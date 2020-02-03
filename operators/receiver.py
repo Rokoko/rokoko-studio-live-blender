@@ -16,7 +16,7 @@ class ReceiverStart(bpy.types.Operator):
     bl_idname = "rsl.receiver_start"
     bl_label = "Start Receiver"
     bl_description = "Start receiving data from Rokoko Studio"
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def modal(self, context, event):
         # If ECS or F8 is pressed, cancel
@@ -94,7 +94,7 @@ class ReceiverStop(bpy.types.Operator):
     bl_idname = "rsl.receiver_stop"
     bl_label = "Stop Receiver"
     bl_description = "Stop receiving data from Rokoko Studio"
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         ReceiverStart.disable()

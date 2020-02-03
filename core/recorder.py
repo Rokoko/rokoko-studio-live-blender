@@ -74,7 +74,7 @@ def stop_recorder(context):
                 fc.keyframe_points[-1].interpolation = 'LINEAR'
                 fc.keyframe_points[-1].co = (0, frame_value)
         fc.keyframe_points.add(1)
-        fc.keyframe_points[-1].interpolation = 'LINEAR'
+        fc.keyframe_points[-1].interpolation = 'CONSTANT'
         fc.keyframe_points[-1].co = (frame, frame_value)
 
     index = -1
@@ -98,6 +98,7 @@ def stop_recorder(context):
                 action = bpy.data.actions.get(action_name_prefix + 'Armature ' + arm_name)
                 if not action:
                     action = bpy.data.actions.new(name=action_name_prefix + 'Armature ' + arm_name)
+                    action.use_fake_user = True
                     armature.animation_data_create().action = action
 
                 for bone_name, bone_data in bones.items():

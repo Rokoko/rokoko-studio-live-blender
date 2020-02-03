@@ -6,7 +6,7 @@ class CommandTest(bpy.types.Operator):
     bl_idname = 'rsl.command_test'
     bl_label = 'Test Command API'
     bl_description = 'Testing'
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         try:
@@ -29,7 +29,7 @@ class StartCalibration(bpy.types.Operator):
     bl_idname = 'rsl.command_start_calibration'
     bl_label = 'Start Calibration'
     bl_description = 'Starts calibration of a Smartsuit Pro'
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         try:
@@ -52,7 +52,7 @@ class Restart(bpy.types.Operator):
     bl_idname = 'rsl.command_restart'
     bl_label = 'Restart Smartsuits'
     bl_description = 'Restarts all Smartsuit Pro\'s'
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         try:
@@ -75,7 +75,7 @@ class StartRecording(bpy.types.Operator):
     bl_idname = 'rsl.command_start_recording'
     bl_label = 'Start Recording'
     bl_description = 'Starts recording all connected Smartsuit Pro\'s'
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         try:
@@ -98,7 +98,7 @@ class StopRecording(bpy.types.Operator):
     bl_idname = 'rsl.command_stop_recording'
     bl_label = 'Stop Recording'
     bl_description = 'Stops recording all connected Smartsuit Pro\'s'
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         try:

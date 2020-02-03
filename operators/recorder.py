@@ -6,7 +6,7 @@ class RecorderStart(bpy.types.Operator):
     bl_label = "Start Recording"
     bl_description = "Start recording data from Rokoko Studio" \
                      "\nWarning: Data currently on this track will be overwritten. Choose another track to record to or set the start frame at the position you want to start recording"
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         if context.scene.rsl_recording:
@@ -21,7 +21,7 @@ class RecorderStop(bpy.types.Operator):
     bl_idname = "rsl.recorder_stop"
     bl_label = "Stop Recording"
     bl_description = "Stop recording data from Rokoko Studio"
-    bl_options = {'REGISTER'}
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         if not context.scene.rsl_recording:
