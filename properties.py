@@ -22,8 +22,8 @@ def register():
     )
     Scene.rsl_scene_scaling = FloatProperty(
         name='Scene Scaling',
-        description="This defines how much the scene get's scaled."
-                    "\nThis only effects props and trackers",
+        description="This allows you to scale the position of props and trackers."
+                    "\nUseful to match their positions with armatures",
         default=1,
         precision=3,
         step=1
@@ -35,7 +35,7 @@ def register():
     )
     Scene.rsl_hide_mesh_during_play = BoolProperty(
         name='Hide Meshes during Play',
-        description='This will hide all meshes that are animated by armatures during their animation '
+        description='This will hide all meshes that are animated by armatures'
                     '\nto greatly reduce lag and increase performance.'
                     '\nThis will not hide animated faces',
         default=False,

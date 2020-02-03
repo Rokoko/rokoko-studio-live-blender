@@ -1,5 +1,6 @@
 import bpy
 import copy
+from .utils import reprint
 
 recorded_data = {}
 
@@ -19,6 +20,21 @@ def start_recorder(context):
     pass
 
 
+def get_animation_counter(prefix, counter):
+    found = False
+    while not found:
+        is_new_number = True
+        for a in bpy.data.actions:
+            if a.name.startswith(prefix + str(counter)):
+                is_new_number = False
+                break
+        if is_new_number:
+            found = True
+        else:
+            counter += 1
+    return counter
+
+
 def stop_recorder(context):
     if not recorded_data:
         return
@@ -26,28 +42,19 @@ def stop_recorder(context):
     # Set animation settings
     context.scene.render.fps = context.scene.rsl_receiver_fps
 
-    found = False
     animation_counter = 1
-    action_name_prefix = 'Rokoko Anim '
+    action_name_prefix_prefix = 'Anim '
+    action_part = 1
+    action_suffix = ''
 
-    while not found:
-        is_new_number = True
-        for a in bpy.data.actions:
-            if a.name.startswith(action_name_prefix + str(animation_counter)):
-                is_new_number = False
-                break
-        if is_new_number:
-            found = True
-        else:
-            animation_counter += 1
-
-    action_name_prefix = 'Rokoko Anim ' + str(animation_counter) + ': '
+    animation_counter = get_animation_counter(action_name_prefix_prefix, animation_counter)
+    action_name_prefix = action_name_prefix_prefix + str(animation_counter) + ': '
 
     def get_frame(frame_number):
         return int(round((timestamps[frame_number] - timestamps[0]) * context.scene.rsl_receiver_fps, 0))
 
     def get_corrected_frame_number(frame_index):
-        # Fix frames numbers that are incorrect because of rounding errors
+        # Fix frame numbers that are incorrect because of rounding errors
         curr_frame = get_frame(frame_index)
         if 0 < frame_index < len(timestamps) - 1:
             prev_frame = get_frame(frame_index - 1)
@@ -63,6 +70,7 @@ def stop_recorder(context):
         return curr_frame
 
     def add_keyframe(action_tmp, data_path, data_index, group_name, frame_value):
+        # global frame_counter
         if not action_tmp:
             print('NO ACTION!')
             return
@@ -71,7 +79,7 @@ def stop_recorder(context):
             fc = action_tmp.fcurves.new(data_path=data_path, index=data_index, action_group=group_name)
             if index != 0:
                 fc.keyframe_points.add(1)
-                fc.keyframe_points[-1].interpolation = 'LINEAR'
+                fc.keyframe_points[-1].interpolation = 'CONSTANT'
                 fc.keyframe_points[-1].co = (0, frame_value)
         fc.keyframe_points.add(1)
         fc.keyframe_points[-1].interpolation = 'CONSTANT'
@@ -80,9 +88,15 @@ def stop_recorder(context):
     index = -1
     timestamps = list(recorded_data.keys())
     for data in recorded_data.values():
+        reprint('Processing {}/{} ({}%)'.format(index + 2, len(timestamps), int(((index + 2) / len(timestamps)) * 100)))
         index += 1
         frame = get_corrected_frame_number(index)
-        # print('Frame', frame, get_frame(index), (timestamp - timestamps[0]) * context.scene.rsl_receiver_fps)
+
+        # Set the suffix to something new every 5000 frames to split the actions and greatly reduce processing time
+        if index % 5000 == 0 and index > 0 and (len(timestamps) - index) > 2500:
+            action_part += 1
+            action_suffix = ' Part ' + str(action_part)
+            # print('\nprint new action:', action_suffix)
 
         objects = data.get('objects')
         faces = data.get('faces')
@@ -95,9 +109,9 @@ def stop_recorder(context):
                     continue
 
                 # Create new action in which the recorded animation will be stored and assign the action to the armature
-                action = bpy.data.actions.get(action_name_prefix + 'Armature ' + arm_name)
+                action = bpy.data.actions.get(action_name_prefix + 'Arm ' + arm_name + action_suffix)
                 if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Armature ' + arm_name)
+                    action = bpy.data.actions.new(name=action_name_prefix + 'Arm ' + arm_name + action_suffix)
                     action.use_fake_user = True
                     armature.animation_data_create().action = action
 
@@ -115,14 +129,14 @@ def stop_recorder(context):
                     # Add location
                     if location:
                         for i in range(3):
-                            add_keyframe(action, location_path, i, arm_name, location[i])
+                            add_keyframe(action, location_path, i, bone_name, location[i])
 
                     # Add rotation
                     for i in range(4):
-                        add_keyframe(action, rotation_path, i, arm_name, rotation[i])
+                        add_keyframe(action, rotation_path, i, bone_name, rotation[i])
 
                     # Add inherit rotation
-                    add_keyframe(action, inherit_rotation_path, 0, arm_name, False)
+                    add_keyframe(action, inherit_rotation_path, 0, bone_name, False)
 
         if faces:
             for mesh_name, shapekeys in faces.items():
@@ -131,9 +145,9 @@ def stop_recorder(context):
                     continue
 
                 # Create new action in which the recorded animation will be stored and assign the action to the mesh
-                action = bpy.data.actions.get(action_name_prefix + 'Mesh ' + mesh_name)
+                action = bpy.data.actions.get(action_name_prefix + 'Mesh ' + mesh_name + action_suffix)
                 if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Mesh ' + mesh_name)
+                    action = bpy.data.actions.new(name=action_name_prefix + 'Mesh ' + mesh_name + action_suffix)
                     mesh.animation_data_create().action = action
 
                 for shapekey_name, value in shapekeys.items():
@@ -153,9 +167,9 @@ def stop_recorder(context):
                     continue
 
                 # Create new action in which the recorded animation will be stored and assign the action to the object
-                action = bpy.data.actions.get(action_name_prefix + 'Obj ' + obj_name)
+                action = bpy.data.actions.get(action_name_prefix + 'Obj ' + obj_name + action_suffix)
                 if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Obj ' + obj_name)
+                    action = bpy.data.actions.new(name=action_name_prefix + 'Obj ' + obj_name + action_suffix)
                     obj.animation_data_create().action = action
 
                 location = obj_data['location']
@@ -173,6 +187,8 @@ def stop_recorder(context):
 
     # Clear recorded data
     recorded_data.clear()
+
+    print('\nSuccessfully saved the recording!')
 
 
 def record_bone(timestamp, arm_name, bone_name, rotation, location=None):
