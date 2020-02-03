@@ -23,7 +23,7 @@ def register():
     Scene.rsl_scene_scaling = FloatProperty(
         name='Scene Scaling',
         description="This allows you to scale the position of props and trackers."
-                    "\nUseful to match their positions with armatures",
+                    "\nUseful to align their positions with armatures",
         default=1,
         precision=3,
         step=1

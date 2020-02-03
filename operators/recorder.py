@@ -4,8 +4,7 @@ import bpy
 class RecorderStart(bpy.types.Operator):
     bl_idname = "rsl.recorder_start"
     bl_label = "Start Recording"
-    bl_description = "Start recording data from Rokoko Studio" \
-                     "\nWarning: Data currently on this track will be overwritten. Choose another track to record to or set the start frame at the position you want to start recording"
+    bl_description = "Start recording data from Rokoko Studio"
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
@@ -20,7 +19,8 @@ class RecorderStart(bpy.types.Operator):
 class RecorderStop(bpy.types.Operator):
     bl_idname = "rsl.recorder_stop"
     bl_label = "Stop Recording"
-    bl_description = "Stop recording data from Rokoko Studio"
+    bl_description = "Stop recording data from Rokoko Studio" \
+                     "\nThe processing of the recording can take a couple minutes, depending on the length of the recording"
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
