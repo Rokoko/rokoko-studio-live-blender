@@ -1,3 +1,4 @@
+import sys
 import bpy
 
 
@@ -25,3 +26,9 @@ def ui_refresh_all():
         for window in windowManager.windows:
             for area in window.screen.areas:
                 area.tag_redraw()
+
+
+def reprint(*x):
+    # This prints a message in the same console line continuously
+    sys.stdout.write("\r" + " ".join(x))
+    sys.stdout.flush()

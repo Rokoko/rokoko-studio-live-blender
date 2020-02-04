@@ -32,7 +32,7 @@ class Receiver:
             data_raw, address = self.sock.recvfrom(32768)  # Maybe up to 65536
         except BlockingIOError:
             received = False
-            print('No packet')
+            # print('No packet')
             error = ['Receiving no data!']
         except OSError as e:
             received = False
