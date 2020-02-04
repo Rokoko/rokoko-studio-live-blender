@@ -8,7 +8,7 @@ from ..core.utils import ui_refresh_all
 from ..core.animations import clear_animations
 
 timer = None
-receiver = None
+receiver: Receiver = Receiver()
 receiver_enabled = False
 
 
@@ -35,19 +35,22 @@ class ReceiverStart(bpy.types.Operator):
     def execute(self, context):
         global receiver_enabled, receiver, timer
 
+        # Start the receiver
+        try:
+            receiver.start(context.scene.rsl_receiver_port)
+        except OSError as e:
+            print('Socket error:', e.strerror)
+            self.report({'ERROR'}, 'This port is already in use!')
+            return {'CANCELLED'}
+
+        receiver_enabled = True
+
         # If animation is currently playing, stop it
         if context.screen.is_animation_playing:
             bpy.ops.screen.animation_play()
 
-        receiver_enabled = True
-
         # Clear current live data
         clear_animations()
-
-        # Set up and start the receiver
-        if not receiver:
-            receiver = Receiver()
-        receiver.start(context.scene.rsl_receiver_port)
 
         # Save the scene
         state_manager.save_scene()
@@ -61,11 +64,6 @@ class ReceiverStart(bpy.types.Operator):
         ReceiverStart.force_disable()
         ui_refresh_all()
         return {'CANCELLED'}
-
-    @classmethod
-    def disable(cls):
-        global receiver_enabled
-        receiver_enabled = False
 
     @classmethod
     def force_disable(cls):
@@ -97,5 +95,6 @@ class ReceiverStop(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        ReceiverStart.disable()
+        global receiver_enabled
+        receiver_enabled = False
         return {'FINISHED'}

@@ -39,10 +39,15 @@ class Receiver:
             print('Packet error:', e.strerror)
             error = ['Packets too big!']
             force_error = True
+        except AttributeError as e:
+            received = False
+            print('Socket error:', e)
+            error = ['Socket not running!']
+            force_error = True
 
         if received:
-            self.data_raw = data_raw
             # Process animation data
+            self.data_raw = data_raw
             error, force_error = self.process_data()
 
         self.handle_ui_updates(received)
@@ -123,9 +128,9 @@ class Receiver:
 
     def start(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
-        self.sock.bind(("127.0.0.1", port))
+        self.sock.bind(("localhost", port))
 
         self.i = -1
         self.i_np = 0
