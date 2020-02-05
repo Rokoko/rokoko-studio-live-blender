@@ -27,6 +27,8 @@ class ObjectsPanel(bpy.types.Panel):
 
     @staticmethod
     def draw_tracker(context, layout):
+        obj = context.object
+
         row = layout.row(align=True)
         row.label(text='Attach to tracker or prop:')
 
@@ -37,6 +39,12 @@ class ObjectsPanel(bpy.types.Panel):
 
         row = layout.row(align=True)
         row.prop(context.object, 'rsl_animations_props_trackers')
+
+        if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+            row = layout.row(align=True)
+            row.prop(context.object, 'rsl_use_custom_scale')
+            if obj.rsl_use_custom_scale:
+                row.prop(context.object, 'rsl_custom_scene_scale', text='')
 
     @staticmethod
     def draw_face(context, layout):
@@ -89,6 +97,7 @@ class ObjectsPanel(bpy.types.Panel):
             row.prop(context.object, 'rsl_animations_actors')
 
         layout.separator()
+
         split = layout.row(align=True)
         row = split.split(factor=0.16, align=True)
         row.label(text='Bones:')

@@ -45,12 +45,17 @@ def animate_tracker_prop(obj):
     obj_type = obj_id[0]
     obj_name = obj_id[1]
 
+    # Get the scene scaling
+    scene_scale = bpy.context.scene.rsl_scene_scaling
+    if obj.rsl_use_custom_scale:
+        scene_scale = obj.rsl_custom_scene_scale
+
     def set_obj_data(data):
         obj.rotation_mode = 'QUATERNION'
         obj.location = pos_studio_to_blender(
-            data['position']['x'] * bpy.context.scene.rsl_scene_scaling,
-            data['position']['y'] * bpy.context.scene.rsl_scene_scaling,
-            data['position']['z'] * bpy.context.scene.rsl_scene_scaling,
+            data['position']['x'] * scene_scale,
+            data['position']['y'] * scene_scale,
+            data['position']['z'] * scene_scale,
         )
         obj.rotation_quaternion = rot_studio_to_blender(
             data['rotation']['w'],
@@ -199,24 +204,29 @@ def animate_actor(obj):
         # Set final bone matrix
         bone.matrix = orig_loc_mat @ rotation_mat
 
-        # Get correct space of hips location
-        axis = 0
-        multiplier = 1
-        if round(mat_obj[2][0], 0) == round(mat_obj[2][2], 0) == 0:
-            axis = 1
-            multiplier = mat_obj[2][1]
-        if round(mat_obj[2][0], 0) == round(mat_obj[2][1], 0) == 0:
-            axis = 2
-            multiplier = mat_obj[2][2]
-
         # If hips bone, set its position
         if bone_name == 'hip':
+            # Get correct space of hips location
+            axis = 0
+            multiplier = 1
+            if round(mat_obj[2][0], 0) == round(mat_obj[2][2], 0) == 0:
+                axis = 1
+                multiplier = mat_obj[2][1]
+            if round(mat_obj[2][0], 0) == round(mat_obj[2][1], 0) == 0:
+                axis = 2
+                multiplier = mat_obj[2][2]
+
+            # Get scale of studio model
+            studio_hip_height = actor.get('hipHeight')
+            if not studio_hip_height:
+                studio_hip_height = 1
+
             tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
 
             location_new = pos_hips_studio_to_blender(
-                actor[bone_name]['position']['x'] * tpose_hip_location_y,
-                actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y,
-                actor[bone_name]['position']['z'] * tpose_hip_location_y)
+                actor[bone_name]['position']['x'] * tpose_hip_location_y / studio_hip_height,
+                actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
+                actor[bone_name]['position']['z'] * tpose_hip_location_y / studio_hip_height)
 
             bone.location = location_new
 

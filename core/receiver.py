@@ -29,10 +29,9 @@ class Receiver:
 
         # Try to receive a packet
         try:
-            data_raw, address = self.sock.recvfrom(65536)  # Maybe up to 65536
+            data_raw, address = self.sock.recvfrom(65536)
         except BlockingIOError:
             received = False
-            # print('No packet')
             error = ['Receiving no data!']
         except OSError as e:
             received = False
@@ -128,9 +127,8 @@ class Receiver:
 
     def start(self, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        # self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setblocking(False)
-        self.sock.bind(("", port))
+        self.sock.bind(('', port))
 
         self.i = -1
         self.i_np = 0
@@ -144,7 +142,5 @@ class Receiver:
         print("Rokoko Studio Live started listening on port " + str(port))
 
     def stop(self):
-        # self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
-
         print("Rokoko Studio Live stopped listening")
