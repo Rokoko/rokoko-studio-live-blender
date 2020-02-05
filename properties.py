@@ -86,6 +86,18 @@ def register():
         items=animation_lists.get_actors,
         update=state_manager.update_armature
     )
+    Object.rsl_use_custom_scale = BoolProperty(
+        name='Use Custom Scale',
+        description='Select this if the objects scene scaling should be overwritten',
+        default=False,
+    )
+    Object.rsl_custom_scene_scale = FloatProperty(
+        name='Custom Scene Scaling',
+        description="This allows you to scale the position independently from the scene scale.",
+        default=1,
+        precision=3,
+        step=1
+    )
 
     # Face shapekeys
     for shape in animation_lists.face_shapes:
