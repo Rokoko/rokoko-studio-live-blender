@@ -224,9 +224,9 @@ def animate_actor(obj):
             tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
 
             location_new = pos_hips_studio_to_blender(
-                actor[bone_name]['position']['x'] * tpose_hip_location_y * studio_hip_height,
+                actor[bone_name]['position']['x'] * tpose_hip_location_y / studio_hip_height,
                 actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
-                actor[bone_name]['position']['z'] * tpose_hip_location_y * studio_hip_height)
+                actor[bone_name]['position']['z'] * tpose_hip_location_y / studio_hip_height)
 
             bone.location = location_new
 
