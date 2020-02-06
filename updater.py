@@ -1,5 +1,6 @@
 import os
 import bpy
+import ssl
 import time
 import json
 import urllib
@@ -165,11 +166,13 @@ def get_github_releases():
         return True
 
     try:
-        with urllib.request.urlopen(GITHUB_URL) as url:
+        context = ssl._create_unverified_context()
+        with urllib.request.urlopen(GITHUB_URL, context=context) as url:
             data = json.loads(url.read().decode())
-    except urllib.error.URLError:
-        print('URL ERROR')
+    except urllib.error.URLError as e:
+        print('URL ERROR:', e)
         return False
+
     if not data:
         if type(data) == list:
             return True
