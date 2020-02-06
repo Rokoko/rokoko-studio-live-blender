@@ -166,8 +166,8 @@ def get_github_releases():
         return True
 
     try:
-        context = ssl._create_unverified_context()
-        with urllib.request.urlopen(GITHUB_URL, context=context) as url:
+        ssl._create_default_https_context = ssl._create_unverified_context
+        with urllib.request.urlopen(GITHUB_URL) as url:
             data = json.loads(url.read().decode())
     except urllib.error.URLError as e:
         print('URL ERROR:', e)
@@ -290,8 +290,7 @@ def download_file(update_url):
     # Download zip
     print('DOWNLOAD FILE')
     try:
-        context = ssl._create_unverified_context()
-        urllib.request.urlretrieve(update_url, update_zip_file, context=context)
+        urllib.request.urlretrieve(update_url, update_zip_file)
     except urllib.error.URLError:
         print("FILE COULD NOT BE DOWNLOADED")
         shutil.rmtree(downloads_dir)
