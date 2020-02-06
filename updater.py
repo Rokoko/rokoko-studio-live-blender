@@ -290,7 +290,8 @@ def download_file(update_url):
     # Download zip
     print('DOWNLOAD FILE')
     try:
-        urllib.request.urlretrieve(update_url, update_zip_file)
+        context = ssl._create_unverified_context()
+        urllib.request.urlretrieve(update_url, update_zip_file, context=context)
     except urllib.error.URLError:
         print("FILE COULD NOT BE DOWNLOADED")
         shutil.rmtree(downloads_dir)
