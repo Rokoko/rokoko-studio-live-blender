@@ -10,7 +10,7 @@ bl_info = {
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-dev_branch = False
+beta_branch = False
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
@@ -89,7 +89,7 @@ def register():
     check_unsupported_blender_versions()
 
     # Register updater and check for Rokoko Studio Live updates
-    updater_ops.register(bl_info, dev_branch)
+    updater_ops.register(bl_info, beta_branch)
 
     # Register all classes
     for cls in classes:

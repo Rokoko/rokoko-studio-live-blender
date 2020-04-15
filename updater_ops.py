@@ -57,14 +57,14 @@ class UpdateToSelectedButton(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class UpdateToDevButton(bpy.types.Operator):
-    bl_idname = 'rsl_updater.update_dev'
-    bl_label = 'Update to Development version'
-    bl_description = 'Updates Rokoko Studio Live to the Development version'
+class UpdateToBetaButton(bpy.types.Operator):
+    bl_idname = 'rsl_updater.update_beta'
+    bl_label = 'Update to Beta version'
+    bl_description = 'Updates Rokoko Studio Live to the Beta version'
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        updater.confirm_update_to = 'dev'
+        updater.confirm_update_to = 'beta'
         updater.used_updater_panel = True
 
         bpy.ops.rsl_updater.confirm_update_panel('INVOKE_DEFAULT')
@@ -156,8 +156,8 @@ class ConfirmUpdatePanel(bpy.types.Operator):
 
     def execute(self, context):
         print('UPDATE TO ' + updater.confirm_update_to)
-        if updater.confirm_update_to == 'dev':
-            updater.update_now(dev=True)
+        if updater.confirm_update_to == 'beta':
+            updater.update_now(beta=True)
         elif updater.confirm_update_to == 'latest':
             updater.update_now(latest=True)
         else:
@@ -179,14 +179,14 @@ class ConfirmUpdatePanel(bpy.types.Operator):
         version_str = updater.confirm_update_to
         if updater.confirm_update_to == 'latest':
             version_str = updater.latest_version_str
-        elif updater.confirm_update_to == 'dev':
-            version_str = 'Development'
+        elif updater.confirm_update_to == 'beta':
+            version_str = 'Beta'
 
         col.separator()
         row = col.row(align=True)
         row.label(text='Version: ' + version_str)
 
-        if updater.confirm_update_to == 'dev':
+        if updater.confirm_update_to == 'beta':
             col.separator()
             col.separator()
             row = col.row(align=True)
@@ -194,13 +194,7 @@ class ConfirmUpdatePanel(bpy.types.Operator):
             row.label(text='Warning:')
             row = col.row(align=True)
             row.scale_y = 0.75
-            row.label(text=' The development version of Rokoko Studio Live is the place where')
-            row = col.row(align=True)
-            row.scale_y = 0.75
-            row.label(text=' we test new features and bug fixes.')
-            row = col.row(align=True)
-            row.scale_y = 0.75
-            row.label(text=' This version might be very unstable and some features')
+            row.label(text=' The beta version might be unstable and some features')
             row = col.row(align=True)
             row.scale_y = 0.75
             row.label(text=' might not work correctly.')
@@ -210,10 +204,8 @@ class ConfirmUpdatePanel(bpy.types.Operator):
 
         col.separator()
         col.separator()
-        # col.separator()
         row = col.row(align=True)
         row.scale_y = 0.65
-        # row.label(text='Update now to ' + version_str + ':', icon=ICON_URL)
         row.label(text='Update now:', icon='URL')
 
 
@@ -423,6 +415,10 @@ def draw_updater_panel(context, layout, user_preferences=False):
     row.active = True if not updater.is_checking_for_update and updater.version_list else False
     row.operator(UpdateToSelectedButton.bl_idname, text='Install Selected Version')
 
+    row = col.row(align=True)
+    row.scale_y = scale_small
+    row.operator(UpdateToBetaButton.bl_idname, text='Install Beta Version')
+
     col.separator()
     row = col.row(align=True)
     row.scale_y = 0.65
@@ -442,7 +438,7 @@ to_register = [
     CheckForUpdateButton,
     UpdateToLatestButton,
     UpdateToSelectedButton,
-    UpdateToDevButton,
+    UpdateToBetaButton,
     RemindMeLaterButton,
     IgnoreThisVersionButton,
     ShowPatchnotesPanel,
@@ -453,9 +449,9 @@ to_register = [
 ]
 
 
-def register(bl_info, dev_branch):
-    # If not dev branch, always disable fake updates and no version checks!
-    if not dev_branch:
+def register(bl_info, beta_branch):
+    # If not beta branch, always disable fake updates and no version checks!
+    if not beta_branch:
         updater.fake_update = False
         updater.no_ver_check = False
 

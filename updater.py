@@ -12,7 +12,7 @@ from threading import Thread
 from bpy.app.handlers import persistent
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
-GITHUB_URL_DEV = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/development.zip'
+GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/beta.zip'
 
 no_ver_check = False
 fake_update = False
@@ -253,13 +253,13 @@ def show_update_notification(scene):  # One argument in necessary for some reaso
     bpy.ops.rsl_updater.update_notification_popup('INVOKE_DEFAULT')
 
 
-def update_now(version=None, latest=False, dev=False):
+def update_now(version=None, latest=False, beta=False):
     if fake_update:
         finish_update()
         return
-    if dev:
-        print('UPDATE TO DEVELOPMENT')
-        update_link = GITHUB_URL_DEV
+    if beta:
+        print('UPDATE TO BETA')
+        update_link = GITHUB_URL_BETA
     elif latest or not version:
         print('UPDATE TO ' + latest_version_str)
         update_link = get_latest_version().download_link
