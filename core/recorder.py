@@ -3,6 +3,8 @@ import copy
 from .utils import reprint
 
 recorded_data = {}
+split_after_x_keyframes = 5000
+split_threshold = 2500  # This defines the amount of keyframes that have to be left in order to split the action. (e.g. it won't split at 7500 but at 8000)
 
 
 def toggle_recording(self, context):
@@ -93,7 +95,7 @@ def stop_recorder(context):
         frame = get_corrected_frame_number(index)
 
         # Set the suffix to something new every 5000 frames to split the actions and greatly reduce processing time
-        if index % 5000 == 0 and index > 0 and (len(timestamps) - index) > 2500:
+        if index % split_after_x_keyframes == 0 and index > 0 and (len(timestamps) - index) > split_threshold:
             action_part += 1
             action_suffix = ' Part ' + str(action_part)
             # print('\nprint new action:', action_suffix)

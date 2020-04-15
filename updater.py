@@ -290,6 +290,7 @@ def download_file(update_url):
     # Download zip
     print('DOWNLOAD FILE')
     try:
+        ssl._create_default_https_context = ssl._create_unverified_context
         urllib.request.urlretrieve(update_url, update_zip_file)
     except urllib.error.URLError:
         print("FILE COULD NOT BE DOWNLOADED")
@@ -337,7 +338,6 @@ def download_file(update_url):
     if not extracted_zip_dir:
         print("INIT NOT FOUND!")
         shutil.rmtree(downloads_dir)
-        # finish_reloading()
         finish_update(error='Could not find Rokoko Studio'
                             '\nLive in the downloaded zip.')
         return

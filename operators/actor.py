@@ -79,6 +79,7 @@ class ResetTPose(bpy.types.Operator):
                 bone.location = data['location_local']
                 obj.data.bones.get(bone_name).use_inherit_rotation = data['inherit_rotation']
 
+        self.report({'INFO'}, 'T-Pose successfully restored!')
         return {'FINISHED'}
 
 
