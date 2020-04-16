@@ -5,7 +5,7 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 0),
+    'version': (1, 0, 0),
     'blender': (2, 80, 0),
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
