@@ -1,7 +1,8 @@
 from bpy.types import Scene, Object
-from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty
 
-from .core import animation_lists, state_manager, recorder
+from .core import animation_lists, state_manager, recorder, retargeting
+from .panels import retargeting as retargeting_ui
 
 
 def register():
@@ -66,6 +67,26 @@ def register():
         default='1234',
         maxlen=15
     )
+    # Retargeting
+    Scene.rsl_retargeting_armature_source = EnumProperty(
+        name='Source',
+        description='Select the armature with the animation that you want to retarget',
+        items=retargeting.get_armatures_source,
+        update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_armature_target = EnumProperty(
+        name='Target',
+        description='Select the armature that should receive the animation',
+        items=retargeting.get_armatures_target,
+        update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_bone_list = CollectionProperty(
+        type=retargeting_ui.BoneListItem
+    )
+    Scene.rsl_retargeting_bone_list_index = IntProperty(
+        name="Index for the retargeting bone list",
+        default=0
+    )
 
     # Objects
     Object.rsl_animations_props_trackers = EnumProperty(
@@ -88,7 +109,7 @@ def register():
     )
     Object.rsl_use_custom_scale = BoolProperty(
         name='Use Custom Scale',
-        description='Select this if the objects scene scaling should be overwritten',
+        description='Select this if the objects scene scalidng should be overwritten',
         default=False,
     )
     Object.rsl_custom_scene_scale = FloatProperty(

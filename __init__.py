@@ -39,6 +39,9 @@ classes = [
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
+    panels.retargeting.RetargetingPanel,
+    panels.retargeting.BoneList,
+    panels.retargeting.BoneListItem,
     panels.updater.UpdaterPanel,
     panels.info.InfoPanel,
     operators.receiver.ReceiverStart,
@@ -59,6 +62,9 @@ classes = [
     operators.info.RokokoButton,
     operators.info.DocumentationButton,
     operators.info.ForumButton,
+    operators.retargeting.BuildBoneList,
+    operators.retargeting.ClearBoneList,
+    operators.retargeting.RetargetAnimation,
 
 ]
 
