@@ -43,7 +43,7 @@ class DetectActorBones(bpy.types.Operator):
             bone_names = get_bone_list()[bone_name_key]
             for bone in obj.pose.bones:
                 bone_name = standardize_bone_name(bone.name)
-                if bone_name.lower() in bone_names:
+                if bone_name in bone_names:
                     setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
 
                     # If looking for the chest bone, use the last found entry instead of the first one
@@ -115,7 +115,7 @@ def standardize_bone_name(name):
     if name[-4:] == '_Jnt':
         name = name[:-4]
 
-    return name
+    return name.lower()
 
 
 def get_bone_list():
