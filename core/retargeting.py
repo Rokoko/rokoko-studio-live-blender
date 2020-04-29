@@ -1,5 +1,7 @@
 import bpy
 
+from ..operators import retargeting
+
 
 # Creates the list of armatures for the retargeting panel
 def get_armatures_source(self, context):
@@ -35,5 +37,6 @@ def get_armatures_target(self, context):
 
 # If the retargeting armatures get changed, clear the bone list
 def clear_bone_list(self, context):
-    context.scene.rsl_retargeting_bone_list.clear()
+    if not retargeting.retargeting:
+        context.scene.rsl_retargeting_bone_list.clear()
 
