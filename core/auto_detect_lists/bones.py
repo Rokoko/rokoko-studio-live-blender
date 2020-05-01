@@ -1,5 +1,28 @@
 from collections import OrderedDict
 
+
+ignore_rokoko_retargeting_bones = [
+    'newton',
+    'HeadVertex',
+    'Props_LeftArm',
+    'Props_RightArm',
+    'LeftToeTip',
+    'RightToeTip',
+    'LeftFinger2Metacarpal',
+    'LeftFinger3Metacarpal',
+    'LeftFinger4Metacarpal',
+    'LeftFinger5Metacarpal',
+    'RightFinger1Tip',
+    'RightFinger2Metacarpal',
+    'RightFinger2Tip',
+    'RightFinger3Metacarpal',
+    'RightFinger3Tip',
+    'RightFinger4Metacarpal',
+    'RightFinger4Tip',
+    'RightFinger5Metacarpal',
+    'RightFinger5Tip',
+]
+
 ################################
 # Replace '-' with '_'
 # Replace ' ' with '_'
