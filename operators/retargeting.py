@@ -149,6 +149,12 @@ class RetargetAnimation(bpy.types.Operator):
                                    '\nCheck if the bones are mapped correctly or try rebuilding the bone list.')
             return {'CANCELLED'}
 
+        # Prepare armatures
+        utils.set_active(armature_target)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        utils.set_active(armature_source)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
         # Start the retargeting process
         armature_target.location = armature_source.location
 
@@ -156,12 +162,13 @@ class RetargetAnimation(bpy.types.Operator):
         utils.set_active(armature_target)
         bpy.ops.object.mode_set(mode='EDIT')
 
-        # Create a transformation dict of all bones of the target armature
+        # Create a transformation dict of all bones of the target armature and unselect all bones
         bone_transforms = {}
-        for edit_bone in context.object.data.edit_bones:
-            bone_transforms[edit_bone.name] = armature_source.matrix_world.inverted() @ edit_bone.head.copy(), \
-                                              armature_source.matrix_world.inverted() @ edit_bone.tail.copy(), \
-                                              utils.mat3_to_vec_roll(armature_source.matrix_world.inverted().to_3x3() @ edit_bone.matrix.to_3x3())  # Head loc, tail loc, bone roll
+        for bone in context.object.data.edit_bones:
+            bone.select = False
+            bone_transforms[bone.name] = armature_source.matrix_world.inverted() @ bone.head.copy(), \
+                                         armature_source.matrix_world.inverted() @ bone.tail.copy(), \
+                                         utils.mat3_to_vec_roll(armature_source.matrix_world.inverted().to_3x3() @ bone.matrix.to_3x3())  # Head loc, tail loc, bone roll
 
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
@@ -186,18 +193,20 @@ class RetargetAnimation(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
 
-        # Add constraints to target armature
+        # Add constraints to target armature and select the bones for animation
         for item in context.scene.rsl_retargeting_bone_list:
             if not item.bone_name_source or not item.bone_name_target:
                 continue
 
             bone_source = armature_source.pose.bones.get(item.bone_name_source)
             bone_target = armature_target.pose.bones.get(item.bone_name_target)
+            bone_target_data = armature_target.data.bones.get(item.bone_name_target)
 
-            if not bone_source or not bone_target:
+            if not bone_source or not bone_target or not bone_target_data:
                 print('Bone mapping not found:', item.bone_name_source, item.bone_name_target)
                 continue
 
+            # Add constraints
             constraint = bone_target.constraints.new('COPY_ROTATION')
             constraint.name += RETARGET_ID
             constraint.target = armature_source
@@ -209,13 +218,28 @@ class RetargetAnimation(bpy.types.Operator):
                 constraint.target = armature_source
                 constraint.subtarget = item.bone_name_source
 
-        # # Create animation data if none is found on the target armature
-        # if not armature_target.animation_data:
-        #     armature_target.animation_data_create()
+            # Select the bone for animation
+            armature_target.data.bones.get(item.bone_name_target).select = True
+
+        # Read the animation length from the animation
+        frame_start = None
+        frame_end = None
+        for fcurve in armature_source.animation_data.action.fcurves:
+            for key in fcurve.keyframe_points:
+                keyframe = key.co.x
+                if frame_start is None:
+                    frame_start = keyframe
+                if frame_end is None:
+                    frame_end = keyframe
+
+                if keyframe < frame_start:
+                    frame_start = keyframe
+                if keyframe > frame_end:
+                    frame_end = keyframe
 
         # Bake the animation to the target armature
         utils.set_active(armature_target)
-        bpy.ops.nla.bake(frame_start=0, frame_end=282, visual_keying=True, only_selected=True, bake_types={'POSE'})
+        bpy.ops.nla.bake(frame_start=frame_start, frame_end=frame_end, visual_keying=True, only_selected=True, bake_types={'POSE'})
 
         # Change action name
         armature_target.animation_data.action.name = armature_source.animation_data.action.name + ' Retarget'
