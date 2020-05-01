@@ -1,11 +1,12 @@
-from collections import OrderedDict
-
 import bpy
+import copy
 
 from . import detector
-from mathutils import Quaternion
+from ..core import utils
+from ..core.auto_detect_lists import bones
 
-retargeting = False
+currently_retargeting = False
+RETARGET_ID = '_RSL_RETARGET'
 
 
 class BuildBoneList(bpy.types.Operator):
@@ -26,11 +27,23 @@ class BuildBoneList(bpy.types.Operator):
             if len(bone_name) == 3 and bone_name[1] not in bone_list:
                 bone_list.append(bone_name[1])
 
+        # Check if this animation is from the Rokko Studio. Ignore certain bones in that case
+        is_rokoko_animation = False
+        if 'newton' in bone_list and 'RightFinger1Tip' in bone_list and 'HeadVertex' in bone_list and 'LeftFinger2Metacarpal' in bone_list:
+            is_rokoko_animation = True
+            # print('Rokoko animation detected')
+
         # Clear the bone retargeting list
         context.scene.rsl_retargeting_bone_list.clear()
 
+        spines_source = []
+        spines_target = []
+
         # Then add all the bones to the list
         for bone_name in bone_list:
+            if is_rokoko_animation and bone_name in bones.ignore_rokoko_retargeting_bones:
+                continue
+
             bone_item = context.scene.rsl_retargeting_bone_list.add()
             bone_item.bone_name_source = bone_name
 
@@ -43,10 +56,13 @@ class BuildBoneList(bpy.types.Operator):
                     main_bone_name = bone_main
                     break
 
-            # print(bone_name, standardized_bone_name_source, main_bone_name)
-
             # If no main bone name was found, continue
             if not main_bone_name:
+                continue
+
+            # If it's a spine bone, it to the list for later fixing
+            if main_bone_name == 'spine':
+                spines_source.append(bone_name)
                 continue
 
             # Go through the target armature and search for bones that fit the main source bone
@@ -56,6 +72,31 @@ class BuildBoneList(bpy.types.Operator):
                 if bone_name_standardized in bone_detection_list[main_bone_name]:
                     bone_item.bone_name_target = bone.name
                     break
+
+        # Add target spines to list for later fixing
+        for bone in armature_target.pose.bones:
+            bone_name_standardized = detector.standardize_bone_name(bone.name)
+            if bone_name_standardized in bone_detection_list['spine']:
+                spines_target.append(bone.name)
+
+        # Fix spine auto detection
+        if spines_target and spines_source:
+            spine_dict = {}
+
+            i = 0
+            for spine in reversed(spines_source):
+                i += 1
+                if i == len(spines_target):
+                    break
+                spine_dict[spine] = spines_target[-i]
+
+            spine_dict[spines_source[0]] = spines_target[0]
+
+            # Fill in fixed spines
+            for spine_source, spine_target in spine_dict.items():
+                for item in context.scene.rsl_retargeting_bone_list:
+                    if item.bone_name_source == spine_source:
+                        item.bone_name_target = spine_target
 
         return {'FINISHED'}
 
@@ -83,124 +124,126 @@ class RetargetAnimation(bpy.types.Operator):
         armature_target = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
         properties = [p.identifier for p in armature_source.animation_data.bl_rna.properties if not p.is_readonly and p.identifier != 'action']
 
-        # Get rotation matrix of both armatures
-        mat_source = armature_source.matrix_local.decompose()[1].to_matrix().to_4x4()
-        mat_target = armature_target.matrix_local.decompose()[1].to_matrix().to_4x4()
+        # Find root bones
+        root_bones = []
+        for bone in armature_target.pose.bones:
+            if not bone.parent:
+                root_bones.append(bone)
 
-        # Calculate the rotation from the source armature to the target armature
-        rot_transform = (mat_source.inverted() @ mat_target).to_quaternion()
+        # Find animated root bones
+        root_bones_animated = []
+        target_bones = [item.bone_name_target for item in context.scene.rsl_retargeting_bone_list if
+                        armature_target.pose.bones.get(item.bone_name_target) and armature_source.pose.bones.get(item.bone_name_source)]
+        while root_bones:
+            for bone in copy.copy(root_bones):
+                root_bones.remove(bone)
+                if bone.name in target_bones:
+                    root_bones_animated.append(bone.name)
+                else:
+                    for bone_child in bone.children:
+                        root_bones.append(bone_child)
 
-        print(mat_source)
-        print(mat_target)
-        print(rot_transform)
+        # Cancel if no root bones are found
+        if not root_bones_animated:
+            self.report({'ERROR'}, 'No root bone found!'
+                                   '\nCheck if the bones are mapped correctly or try rebuilding the bone list.')
+            return {'CANCELLED'}
 
-        # Create animation data if none is found on the target armature
-        if not armature_target.animation_data:
-            armature_target.animation_data_create()
+        # Start the retargeting process
+        armature_target.location = armature_source.location
 
-        # bpy.ops.nla.bake(frame_start=0, frame_end=282, visual_keying=True, only_selected=False, bake_types={'POSE'})
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature_target)
+        bpy.ops.object.mode_set(mode='EDIT')
 
-        # Create a duplicate of the animation
-        action_new = armature_source.animation_data.action.copy()
+        # Create a transformation dict of all bones of the target armature
+        bone_transforms = {}
+        for edit_bone in context.object.data.edit_bones:
+            bone_transforms[edit_bone.name] = armature_source.matrix_world.inverted() @ edit_bone.head.copy(), \
+                                              armature_source.matrix_world.inverted() @ edit_bone.tail.copy(), \
+                                              utils.mat3_to_vec_roll(armature_source.matrix_world.inverted().to_3x3() @ edit_bone.matrix.to_3x3())  # Head loc, tail loc, bone roll
 
-        # Set up dictionary to store all rotation fcurves
-        fc_dict = OrderedDict()
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature_source)
+        bpy.ops.object.mode_set(mode='EDIT')
 
-        # Put all rotation fcurves into the dictionary
-        for fc in action_new.fcurves:
-            data_path = fc.data_path
-            data_path_strings = fc.data_path.replace('\'', '"').split('"')
-            bone_name_new = ''
-
-            # Only process rotation curves (for now)
-            if len(data_path_strings) < 2 or data_path.endswith(('location', 'scale')):
-                # print('IGNORE', data_path)
-                action_new.fcurves.remove(fc)
+        # Recreate bones from target armature in source armature
+        for item in context.scene.rsl_retargeting_bone_list:
+            if not item.bone_name_source or not item.bone_name_target or item.bone_name_target not in bone_transforms:
                 continue
 
-            # Extract bone name from data_path
-            bone_name = data_path_strings[1]
-
-            # Get the target bone from corresponding the source bone from the bone list
-            for bone_item in context.scene.rsl_retargeting_bone_list:
-                if bone_item.bone_name_source == bone_name:
-                    bone_name_new = bone_item.bone_name_target
-
-            # If there is no corresponding bone, continue
-            if not bone_name_new:
-                # print('NO BONE', data_path)
-                action_new.fcurves.remove(fc)
+            bone_source = armature_source.data.edit_bones.get(item.bone_name_source)
+            if not bone_source:
+                print('Skipped:', item.bone_name_source, item.bone_name_target)
                 continue
 
-            # Replace source bone with target bone in data path and put it back together
-            data_path_strings[1] = bone_name_new
-            fc.data_path = '"'.join(data_path_strings)
+            # Recreate target bone
+            bone_new = armature_source.data.edit_bones.new(item.bone_name_target + RETARGET_ID)
+            bone_new.head, bone_new.tail, bone_new.roll = bone_transforms[item.bone_name_target]
+            bone_new.parent = bone_source
 
-            # Add fcurves to the dict to sort them by their bone name
-            if not fc_dict.get(bone_name):  # TODO: Change to bone_name_new? On next 2 lines as well.
-                fc_dict[bone_name] = []
-            fc_dict[bone_name].append(fc)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
 
-            # if i < 1:
-            #     print(bone_name, armature_source.pose.bones.get(bone_name).matrix)
-            #     print(bone_name, armature_source.pose.bones.get(bone_name).matrix.to_quaternion())
-            #     print(bone_name, armature_source.pose.bones.get(bone_name).rotation_quaternion)
-            #
-            #     print(bone_name, armature_target.pose.bones.get(bone_name_new).matrix)
-            #     print(bone_name, armature_target.pose.bones.get(bone_name_new).matrix.to_quaternion())
-            #     i += 1
+        # Add constraints to target armature
+        for item in context.scene.rsl_retargeting_bone_list:
+            if not item.bone_name_source or not item.bone_name_target:
+                continue
 
-        # Go over all fcurves and calculate the new rotation of the bones
-        for bone_name, fcurves in fc_dict.items():
-            if len(fcurves) != 4:
-                print(bone_name, 'Not enough fcurves! Maybe euler rotations?')
+            bone_source = armature_source.pose.bones.get(item.bone_name_source)
+            bone_target = armature_target.pose.bones.get(item.bone_name_target)
 
-            for key0, key1, key2, key3 in zip(fcurves[0].keyframe_points, fcurves[1].keyframe_points, fcurves[2].keyframe_points, fcurves[3].keyframe_points):
+            if not bone_source or not bone_target:
+                print('Bone mapping not found:', item.bone_name_source, item.bone_name_target)
+                continue
 
-                rotation = Quaternion((
-                    key0.co.y,
-                    key1.co.y,
-                    key2.co.y,
-                    key3.co.y))
-                # print(rotation)
+            constraint = bone_target.constraints.new('COPY_ROTATION')
+            constraint.name += RETARGET_ID
+            constraint.target = armature_source
+            constraint.subtarget = item.bone_name_target + RETARGET_ID
 
-                key0.co.y = rotation.w
-                key1.co.y = rotation.x
-                key2.co.y = rotation.y
-                key3.co.y = rotation.z
+            if bone_target.name in root_bones_animated:
+                constraint = bone_target.constraints.new('COPY_LOCATION')
+                constraint.name += RETARGET_ID
+                constraint.target = armature_source
+                constraint.subtarget = item.bone_name_source
 
-                # rotation_new = rot_transform @ rotation
-                #
-                # # print(rotation_new)
-                #
-                # key0.co.y = rotation_new.w
-                # key1.co.y = rotation_new.x
-                # key2.co.y = rotation_new.y
-                # key3.co.y = rotation_new.z
+        # # Create animation data if none is found on the target armature
+        # if not armature_target.animation_data:
+        #     armature_target.animation_data_create()
 
-                # if bone_name == 'Hips':
-                #     print(bone_name, key0.co)
-                #     print(bone_name, key1.co)
-                #     print(bone_name, key2.co)
-                #     print(bone_name, key3.co)
+        # Bake the animation to the target armature
+        utils.set_active(armature_target)
+        bpy.ops.nla.bake(frame_start=0, frame_end=282, visual_keying=True, only_selected=True, bake_types={'POSE'})
 
-        # Add the new animation to the target armature
-        armature_target.animation_data.action = action_new
+        # Change action name
+        armature_target.animation_data.action.name = armature_source.animation_data.action.name + ' Retarget'
 
-        # Transfer other animation settings over as well
-        for prop in properties:
-            print(prop)
-            try:
-                setattr(armature_target.animation_data, prop, getattr(armature_source.animation_data, prop).copy())
-            except AttributeError:
-                setattr(armature_target.animation_data, prop, getattr(armature_source.animation_data, prop))
+        # Remove constraints from target armature
+        for bone in armature_target.pose.bones:
+            for constraint in bone.constraints:
+                if RETARGET_ID in constraint.name:
+                    bone.constraints.remove(constraint)
+
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature_source)
+        bpy.ops.object.mode_set(mode='EDIT')
+
+        # Delete helper bones
+        for bone in armature_source.data.edit_bones:
+            if RETARGET_ID in bone.name:
+                armature_source.data.edit_bones.remove(bone)
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.select_all(action='DESELECT')
 
         # Fix source and target armatures being changed after this operation and stop the clearing of the bones list in that case
-        global retargeting
-        retargeting = True
+        global currently_retargeting
+        currently_retargeting = True
         context.scene.rsl_retargeting_armature_source = armature_source.name
         context.scene.rsl_retargeting_armature_target = armature_target.name
-        retargeting = False
+        currently_retargeting = False
 
         self.report({'INFO'}, 'Retargeted animation.')
         return {'FINISHED'}

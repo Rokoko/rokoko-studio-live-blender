@@ -37,6 +37,5 @@ def get_armatures_target(self, context):
 
 # If the retargeting armatures get changed, clear the bone list
 def clear_bone_list(self, context):
-    if not retargeting.retargeting:
+    if not retargeting.currently_retargeting:
         context.scene.rsl_retargeting_bone_list.clear()
-
