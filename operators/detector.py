@@ -53,6 +53,25 @@ class DetectActorBones(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class DetectGloveBones(bpy.types.Operator):
+    bl_idname = "rsl.detect_glove_bones"
+    bl_label = "Auto Detect"
+    bl_description = "Automatically detect glove bones for supported naming schemes"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.object
+
+        for bone_name_key in animation_lists.glove_bones.keys():
+            bone_names = get_bone_list()[bone_name_key]
+            for bone in obj.pose.bones:
+                bone_name = standardize_bone_name(bone.name)
+                if bone_name in bone_names:
+                    setattr(obj, 'rsl_glove_' + bone_name_key, bone.name)
+
+        return {'FINISHED'}
+
+
 def standardize_bone_name(name):
     # List of chars to replace if they are at the start of a bone name
     starts_with = [

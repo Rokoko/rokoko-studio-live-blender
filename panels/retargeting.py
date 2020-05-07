@@ -10,7 +10,7 @@ from bpy.props import StringProperty
 
 # Retargeting panel
 class RetargetingPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_retargeting_v0-0'
+    bl_idname = 'VIEW3D_PT_rsl_retargeting_v00'
     bl_label = 'Retargeting'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -53,7 +53,7 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         layout.separator()
 
         row = layout.row(align=True)
-        row.template_list("BoneList", "Bone List", context.scene, "rsl_retargeting_bone_list", context.scene, "rsl_retargeting_bone_list_index", rows=1, maxrows=10)
+        row.template_list("RSL_UL_BoneList", "Bone List", context.scene, "rsl_retargeting_bone_list", context.scene, "rsl_retargeting_bone_list_index", rows=1, maxrows=10)
 
         row = layout.row(align=True)
         row.scale_y = 1.4
@@ -73,7 +73,7 @@ class BoneListItem(PropertyGroup):
         default="")
 
 
-class BoneList(UIList):
+class RSL_UL_BoneList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         obj = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
 

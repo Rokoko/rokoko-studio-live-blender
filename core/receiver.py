@@ -67,12 +67,15 @@ class Receiver:
             print('Old json data version! Please use v2 or higher')
             return ['Old data format!', 'Use JSON v2 or higher!'], True
 
+        # print(data)
+
         animations.timestamp = data['timestamp']
         # animations.playbacktimestamp = data['playbackTimestamp']
         animations.props = data['props']
         animations.trackers = data['trackers']
         animations.faces = data['faces']
         animations.actors = data['actors']
+        animations.gloves = data['gloves']
 
         animations.animate()
 

@@ -11,14 +11,16 @@ props = []
 trackers = []
 faces = []
 actors = []
+gloves = []
 
 
 def clear_animations():
-    global props, trackers, faces, actors
+    global props, trackers, faces, actors, gloves
     props = []
     trackers = []
     faces = []
     actors = []
+    gloves = []
 
 
 def animate():
@@ -28,12 +30,15 @@ def animate():
             animate_tracker_prop(obj)
 
         # Animate all faces
-        if faces and obj.type == 'MESH':
+        if obj.type == 'MESH' and faces:
             animate_face(obj)
 
         # Animate all actors
-        elif actors and obj.type == 'ARMATURE':
-            animate_actor(obj)
+        elif obj.type == 'ARMATURE':
+            if actors:
+                animate_actor(obj)
+            if gloves:
+                animate_glove(obj)
 
 
 def animate_tracker_prop(obj):
@@ -233,6 +238,10 @@ def animate_actor(obj):
         # Record the data
         if bpy.context.scene.rsl_recording:
             recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_quaternion, location=bone.location if bone_name == 'hip' else None)
+
+
+def animate_glove(obj):
+    pass
 
 
 def pos_hips_studio_to_blender(x, y, z):

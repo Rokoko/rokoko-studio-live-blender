@@ -27,7 +27,7 @@ class BuildBoneList(bpy.types.Operator):
             if len(bone_name) == 3 and bone_name[1] not in bone_list:
                 bone_list.append(bone_name[1])
 
-        # Check if this animation is from the Rokko Studio. Ignore certain bones in that case
+        # Check if this animation is from Rokoko Studio. Ignore certain bones in that case
         is_rokoko_animation = False
         if 'newton' in bone_list and 'RightFinger1Tip' in bone_list and 'HeadVertex' in bone_list and 'LeftFinger2Metacarpal' in bone_list:
             is_rokoko_animation = True
@@ -122,7 +122,6 @@ class RetargetAnimation(bpy.types.Operator):
     def execute(self, context):
         armature_source = bpy.data.objects.get(context.scene.rsl_retargeting_armature_source)
         armature_target = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
-        properties = [p.identifier for p in armature_source.animation_data.bl_rna.properties if not p.is_readonly and p.identifier != 'action']
 
         # Find root bones
         root_bones = []

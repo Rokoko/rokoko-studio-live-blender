@@ -48,6 +48,8 @@ def register():
         default=False,
         update=recorder.toggle_recording
     )
+
+    # Command API
     Scene.rsl_command_ip_address = StringProperty(
         name='IP Address',
         description='Input the IP address of Rokoko Studio',
@@ -67,6 +69,7 @@ def register():
         default='1234',
         maxlen=15
     )
+
     # Retargeting
     Scene.rsl_retargeting_armature_source = EnumProperty(
         name='Source',
@@ -105,11 +108,17 @@ def register():
         name='Actor',
         description='Select the actor that you want to attach this armature to',
         items=animation_lists.get_actors,
-        update=state_manager.update_armature
+        update=state_manager.update_actor
+    )
+    Object.rsl_animations_gloves = EnumProperty(
+        name='Glove',
+        description='Select the glove that you want to attach this armature to',
+        items=animation_lists.get_gloves,
+        update=state_manager.update_glove
     )
     Object.rsl_use_custom_scale = BoolProperty(
         name='Use Custom Scale',
-        description='Select this if the objects scene scalidng should be overwritten',
+        description='Select this if the objects scene scaling should be overwritten',
         default=False,
     )
     Object.rsl_custom_scene_scale = FloatProperty(
@@ -132,4 +141,11 @@ def register():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'
+        ))
+
+    # Glove bones
+    for bone in animation_lists.glove_bones.keys():
+        setattr(Object, 'rsl_glove_' + bone, StringProperty(
+            name=bone,
+            description='Select the bone that corresponds to the gloves bone'
         ))

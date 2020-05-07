@@ -40,7 +40,7 @@ classes = [
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
     panels.retargeting.RetargetingPanel,
-    panels.retargeting.BoneList,
+    panels.retargeting.RSL_UL_BoneList,
     panels.retargeting.BoneListItem,
     panels.updater.UpdaterPanel,
     panels.info.InfoPanel,
@@ -50,6 +50,7 @@ classes = [
     operators.recorder.RecorderStop,
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
+    operators.detector.DetectGloveBones,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
@@ -89,7 +90,7 @@ def check_unsupported_blender_versions():
 
 # register and unregister all classes
 def register():
-    print("\n### Loading Rokoko Studio Live...")
+    print("\n### Loading Rokoko Studio Live for Blender...")
 
     # Check for unsupported Blender versions
     check_unsupported_blender_versions()
@@ -107,11 +108,11 @@ def register():
     # Load custom icons
     core.icon_manager.load_icons()
 
-    print("### Loaded Rokoko Studio Live successfully!\n")
+    print("### Loaded Rokoko Studio Live for Blender successfully!\n")
 
 
 def unregister():
-    print("### Unloading Rokoko Studio Live...")
+    print("### Unloading Rokoko Studio Live for Blender...")
 
     # Unregister updater
     updater_ops.unregister()
@@ -127,7 +128,7 @@ def unregister():
     # Unload all custom icons
     core.icon_manager.unload_icons()
 
-    print("### Unloaded Rokoko Studio Live successfully!\n")
+    print("### Unloaded Rokoko Studio Live for Blender successfully!\n")
 
 
 if __name__ == '__main__':
