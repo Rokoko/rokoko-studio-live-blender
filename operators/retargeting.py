@@ -4,8 +4,8 @@ import copy
 from . import detector
 from ..core import utils
 from ..core.auto_detect_lists import bones
+from ..core.retargeting import get_source_armature, get_target_armature
 
-currently_retargeting = False
 RETARGET_ID = '_RSL_RETARGET'
 
 
@@ -18,8 +18,18 @@ class BuildBoneList(bpy.types.Operator):
     def execute(self, context):
         bone_list = []
         bone_detection_list = detector.get_bone_list()
-        armature_source = bpy.data.objects.get(context.scene.rsl_retargeting_armature_source)
-        armature_target = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
+        armature_source = get_source_armature()
+        armature_target = get_target_armature()
+
+        if not armature_source.animation_data or not armature_source.animation_data.action:
+            self.report({'ERROR'}, 'No animation on the source armature found!'
+                                   '\nSelect an armature with an animation as source.')
+            return {'CANCELLED'}
+
+        if armature_source.name == armature_target.name:
+            self.report({'ERROR'}, 'Source and target armature are the same!'
+                                   '\nPlease select different armatures.')
+            return {'CANCELLED'}
 
         # Get all bones from the animation
         for fc in armature_source.animation_data.action.fcurves:
@@ -27,7 +37,7 @@ class BuildBoneList(bpy.types.Operator):
             if len(bone_name) == 3 and bone_name[1] not in bone_list:
                 bone_list.append(bone_name[1])
 
-        # Check if this animation is from the Rokko Studio. Ignore certain bones in that case
+        # Check if this animation is from Rokoko Studio. Ignore certain bones in that case
         is_rokoko_animation = False
         if 'newton' in bone_list and 'RightFinger1Tip' in bone_list and 'HeadVertex' in bone_list and 'LeftFinger2Metacarpal' in bone_list:
             is_rokoko_animation = True
@@ -120,9 +130,18 @@ class RetargetAnimation(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
     def execute(self, context):
-        armature_source = bpy.data.objects.get(context.scene.rsl_retargeting_armature_source)
-        armature_target = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
-        properties = [p.identifier for p in armature_source.animation_data.bl_rna.properties if not p.is_readonly and p.identifier != 'action']
+        armature_source = get_source_armature()
+        armature_target = get_target_armature()
+
+        if not armature_source.animation_data or not armature_source.animation_data.action:
+            self.report({'ERROR'}, 'No animation on the source armature found!'
+                                   '\nSelect an armature with an animation as source.')
+            return {'CANCELLED'}
+
+        if armature_source.name == armature_target.name:
+            self.report({'ERROR'}, 'Source and target armature are the same!'
+                                   '\nPlease select different armatures.')
+            return {'CANCELLED'}
 
         # Find root bones
         root_bones = []
@@ -155,11 +174,24 @@ class RetargetAnimation(bpy.types.Operator):
         utils.set_active(armature_source)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # Start the retargeting process
-        armature_target.location = armature_source.location
+        # Save transforms of target armature
+        rotation_mode = armature_target.rotation_mode
+        armature_target.rotation_mode = 'QUATERNION'
+        rotation = copy.deepcopy(armature_target.rotation_quaternion)
+        location = copy.deepcopy(armature_target.location)
 
+        # Apply transforms of the target armature
         bpy.ops.object.select_all(action='DESELECT')
         utils.set_active(armature_target)
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+        if context.scene.rsl_retargeting_auto_scaling:
+            # Clean source animation
+            self.clean_animation(armature_source)
+
+            # Scale the source armature to fit the target armature
+            self.scale_armature(context, armature_source, armature_target)
+
         bpy.ops.object.mode_set(mode='EDIT')
 
         # Create a transformation dict of all bones of the target armature and unselect all bones
@@ -261,13 +293,62 @@ class RetargetAnimation(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature_target)
 
-        # Fix source and target armatures being changed after this operation and stop the clearing of the bones list in that case
-        global currently_retargeting
-        currently_retargeting = True
-        context.scene.rsl_retargeting_armature_source = armature_source.name
-        context.scene.rsl_retargeting_armature_target = armature_target.name
-        currently_retargeting = False
+        # Reset target armature transforms to old state
+        armature_target.rotation_quaternion = rotation
+        armature_target.location = location
+
+        armature_target.rotation_quaternion.w = -armature_target.rotation_quaternion.w
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+        armature_target.rotation_quaternion = rotation
+        armature_target.rotation_mode = rotation_mode
+
+        bpy.ops.object.select_all(action='DESELECT')
 
         self.report({'INFO'}, 'Retargeted animation.')
         return {'FINISHED'}
+
+    def clean_animation(self, armature_source):
+        deletable_fcurves = ['location', 'rotation_euler', 'rotation_quaternion', 'scale']
+        for fcurve in armature_source.animation_data.action.fcurves:
+            if fcurve.data_path in deletable_fcurves:
+                armature_source.animation_data.action.fcurves.remove(fcurve)
+
+    def scale_armature(self, context, armature_source, armature_target):
+        source_max = None
+        source_min = None
+        target_max = None
+        target_min = None
+
+        for item in context.scene.rsl_retargeting_bone_list:
+            if not item.bone_name_source or not item.bone_name_target:
+                continue
+
+            bone_source = armature_source.pose.bones.get(item.bone_name_source)
+            bone_target = armature_target.pose.bones.get(item.bone_name_target)
+            if not bone_source or not bone_target:
+                continue
+
+            bone_source_z = (armature_source.matrix_world @ bone_source.head)[2]
+            bone_target_z = (armature_target.matrix_world @ bone_target.head)[2]
+
+            if source_max is None or source_max < bone_source_z:
+                source_max = bone_source_z
+            if source_min is None or source_min > bone_source_z:
+                source_min = bone_source_z
+
+            if target_max is None or target_max < bone_target_z:
+                target_max = bone_target_z
+            if target_min is None or target_min > bone_target_z:
+                target_min = bone_target_z#
+
+        source_height = source_max - source_min
+        target_height = target_max - target_min
+        scale_factor = target_height / source_height
+
+        armature_source.scale *= scale_factor
+
+
+
+

@@ -117,10 +117,10 @@ def load_face(obj):
 def save_armature(obj):
     global armatures
 
-    # Return if no actor is assigned to this armature
+    # Return if no actor and no glove is assigned to this armature
     # if not obj.rsl_animations_actors or obj.rsl_animations_actors == 'None':  # <-- This should work but for some reason it doesn't
-    if obj.rsl_animations_actors == 'None':
-        print('NO ASSIGNED DATA:', obj.rsl_animations_actors)
+    if obj.rsl_animations_actors == 'None' and obj.rsl_animations_gloves == 'None':
+        print('NO ASSIGNED DATA:', obj.rsl_animations_actors, obj.rsl_animations_gloves)
         return
 
     bones = {}
@@ -200,12 +200,26 @@ def update_face(self, context):
         load_face(obj)
 
 
-def update_armature(self, context):
+def update_actor(self, context):
     if not receiver.receiver_enabled:
         return
 
     obj = context.object
     new_state = obj.rsl_animations_actors
+
+    if new_state != 'None':
+        if not armatures.get(obj.name):
+            save_armature(obj)
+    else:
+        load_armature(obj)
+
+
+def update_glove(self, context):
+    if not receiver.receiver_enabled:
+        return
+
+    obj = context.object
+    new_state = obj.rsl_animations_gloves
 
     if new_state != 'None':
         if not armatures.get(obj.name):

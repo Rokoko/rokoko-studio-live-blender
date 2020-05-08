@@ -1,5 +1,5 @@
 from bpy.types import Scene, Object
-from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty, PointerProperty
 
 from .core import animation_lists, state_manager, recorder, retargeting
 from .panels import retargeting as retargeting_ui
@@ -48,6 +48,8 @@ def register():
         default=False,
         update=recorder.toggle_recording
     )
+
+    # Command API
     Scene.rsl_command_ip_address = StringProperty(
         name='IP Address',
         description='Input the IP address of Rokoko Studio',
@@ -67,18 +69,27 @@ def register():
         default='1234',
         maxlen=15
     )
+
     # Retargeting
-    Scene.rsl_retargeting_armature_source = EnumProperty(
+    Scene.rsl_retargeting_armature_source = PointerProperty(
         name='Source',
         description='Select the armature with the animation that you want to retarget',
-        items=retargeting.get_armatures_source,
+        type=Object,
+        poll=retargeting.poll_source_armatures,
         update=retargeting.clear_bone_list
     )
-    Scene.rsl_retargeting_armature_target = EnumProperty(
+    Scene.rsl_retargeting_armature_target = PointerProperty(
         name='Target',
         description='Select the armature that should receive the animation',
-        items=retargeting.get_armatures_target,
+        type=Object,
+        poll=retargeting.poll_target_armatures,
         update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_auto_scaling = BoolProperty(
+        name='Auto Scale',
+        description='This will scale the source armature to fit the height of the target armature.'
+                    '\nBoth armatures have to be in T-pose for this to work correctly',
+        default=True
     )
     Scene.rsl_retargeting_bone_list = CollectionProperty(
         type=retargeting_ui.BoneListItem
@@ -105,11 +116,17 @@ def register():
         name='Actor',
         description='Select the actor that you want to attach this armature to',
         items=animation_lists.get_actors,
-        update=state_manager.update_armature
+        update=state_manager.update_actor
+    )
+    Object.rsl_animations_gloves = EnumProperty(
+        name='Glove',
+        description='Select the glove that you want to attach this armature to',
+        items=animation_lists.get_gloves,
+        update=state_manager.update_glove
     )
     Object.rsl_use_custom_scale = BoolProperty(
         name='Use Custom Scale',
-        description='Select this if the objects scene scalidng should be overwritten',
+        description='Select this if the objects scene scaling should be overwritten',
         default=False,
     )
     Object.rsl_custom_scene_scale = FloatProperty(
@@ -132,4 +149,11 @@ def register():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'
+        ))
+
+    # Glove bones
+    for bone in animation_lists.glove_bones.keys():
+        setattr(Object, 'rsl_glove_' + bone, StringProperty(
+            name=bone,
+            description='Select the bone that corresponds to the gloves bone'
         ))

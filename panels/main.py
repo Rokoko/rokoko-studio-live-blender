@@ -98,7 +98,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         used_trackers = []
         used_faces = []
 
-        # Get all paired inputs
+        # Get all paired inputs. Paired inputs are paired to an object in the scene
         for obj in bpy.data.objects:
             # Get paired props and trackers
             if animations.props or animations.trackers:
@@ -122,6 +122,14 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 paired = paired_inputs.get(obj.rsl_animations_actors)
                 if not paired:
                     paired_inputs[obj.rsl_animations_actors] = [obj.name]
+                else:
+                    paired.append(obj.name)
+
+            # Get paired actors
+            if animations.gloves and obj.rsl_animations_gloves and obj.rsl_animations_gloves != 'None':
+                paired = paired_inputs.get(obj.rsl_animations_gloves)
+                if not paired:
+                    paired_inputs[obj.rsl_animations_gloves] = [obj.name]
                 else:
                     paired.append(obj.name)
 
@@ -189,6 +197,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         # row = layout.row(align=True)
         # row.label(text='faceId2', icon_value=Icons.FACE.get_icon())
 
+        for glove in animations.gloves:
+            show_glove(layout, glove, scale=True)
+
 
 def add_indent(split, empty=False):
     row = split.row(align=True)
@@ -209,6 +220,18 @@ def show_actor(layout, actor, scale=False):
     else:
         row.enabled = False
         row.label(text=actor['id'], icon_value=Icons.SUIT.get_icon())
+
+
+def show_glove(layout, glove, scale=False):
+    row = layout.row(align=True)
+    if scale:
+        row.scale_y = row_scale
+
+    if paired_inputs.get(glove['gloveID']):
+        row.label(text=glove['gloveID'] + '  --> ' + ', '.join(paired_inputs.get(glove['gloveID'])), icon='VIEW_PAN')
+    else:
+        row.enabled = False
+        row.label(text=glove['gloveID'], icon='VIEW_PAN')
 
 
 def show_face(layout, face, scale=False):
