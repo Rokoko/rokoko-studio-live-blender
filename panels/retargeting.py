@@ -3,6 +3,7 @@ import bpy
 from .main import ToolPanel
 from ..operators import retargeting
 from ..core.icon_manager import Icons
+from ..core.retargeting import get_target_armature
 
 from bpy.types import PropertyGroup, UIList
 from bpy.props import StringProperty
@@ -21,18 +22,25 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.label(text='Select the armatures:')
 
-        row = layout.split(factor=0.26, align=True)
-        row.label(text='Source:')
-        row.prop(context.scene, 'rsl_retargeting_armature_source', text='')
+        row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_retargeting_armature_source', icon='ARMATURE_DATA')
 
-        row = layout.split(factor=0.26, align=True)
-        row.label(text='Target:')
-        row.prop(context.scene, 'rsl_retargeting_armature_target', text='')
+        row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_retargeting_armature_target', icon='ARMATURE_DATA')
 
-        if context.scene.rsl_retargeting_armature_source == 'None' \
-                or context.scene.rsl_retargeting_armature_source == '' \
-                or context.scene.rsl_retargeting_armature_target == 'None' \
-                or context.scene.rsl_retargeting_armature_target == '':
+        anim_exists = False
+        for obj in bpy.data.objects:
+            if obj.animation_data and obj.animation_data.action:
+                anim_exists = True
+
+        if not anim_exists:
+            row = layout.row(align=True)
+            row.label(text='No animated armature found!', icon='INFO')
+            return
+
+
+
+        if not context.scene.rsl_retargeting_armature_source or not context.scene.rsl_retargeting_armature_target:
             return
 
         if not context.scene.rsl_retargeting_bone_list:
@@ -56,6 +64,9 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.template_list("RSL_UL_BoneList", "Bone List", context.scene, "rsl_retargeting_bone_list", context.scene, "rsl_retargeting_bone_list_index", rows=1, maxrows=10)
 
         row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_retargeting_auto_scaling')
+
+        row = layout.row(align=True)
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
 
@@ -75,8 +86,9 @@ class BoneListItem(PropertyGroup):
 
 class RSL_UL_BoneList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        obj = bpy.data.objects.get(context.scene.rsl_retargeting_armature_target)
+        armature_target = get_target_armature()
 
         layout = layout.split(factor=0.36, align=True)
         layout.label(text=item.bone_name_source)
-        layout.prop_search(item, 'bone_name_target', obj.pose, "bones", text='')
+        if armature_target:
+            layout.prop_search(item, 'bone_name_target', armature_target.pose, "bones", text='')

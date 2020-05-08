@@ -1,5 +1,5 @@
 from bpy.types import Scene, Object
-from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty, PointerProperty
 
 from .core import animation_lists, state_manager, recorder, retargeting
 from .panels import retargeting as retargeting_ui
@@ -71,17 +71,25 @@ def register():
     )
 
     # Retargeting
-    Scene.rsl_retargeting_armature_source = EnumProperty(
+    Scene.rsl_retargeting_armature_source = PointerProperty(
         name='Source',
         description='Select the armature with the animation that you want to retarget',
-        items=retargeting.get_armatures_source,
+        type=Object,
+        poll=retargeting.poll_source_armatures,
         update=retargeting.clear_bone_list
     )
-    Scene.rsl_retargeting_armature_target = EnumProperty(
+    Scene.rsl_retargeting_armature_target = PointerProperty(
         name='Target',
         description='Select the armature that should receive the animation',
-        items=retargeting.get_armatures_target,
+        type=Object,
+        poll=retargeting.poll_target_armatures,
         update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_auto_scaling = BoolProperty(
+        name='Auto Scale',
+        description='This will scale the source armature to fit the height of the target armature.'
+                    '\nBoth armatures have to be in T-pose for this to work correctly',
+        default=True
     )
     Scene.rsl_retargeting_bone_list = CollectionProperty(
         type=retargeting_ui.BoneListItem
