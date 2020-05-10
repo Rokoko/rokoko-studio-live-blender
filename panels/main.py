@@ -73,7 +73,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
             row.operator(recorder.RecorderStart.bl_idname, icon_value=Icons.START_RECORDING.get_icon())
         else:
             row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
-            timestamps = list(recorder_manager.recorded_data.keys())
+            timestamps = list(recorder_manager.recorded_timestamps.keys())
             if not timestamps:
                 return
 

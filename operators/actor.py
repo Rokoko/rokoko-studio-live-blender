@@ -25,6 +25,11 @@ class InitTPose(bpy.types.Operator):
 
         # Save local and global space rotations and local and object space locations for each bone
         for bone in obj.pose.bones:
+            # Save rotation mode
+            rotation_mode = bone.rotation_mode
+            if rotation_mode == 'QUATERNION':
+                rotation_mode = 'XYZ'
+
             bone.rotation_mode = 'QUATERNION'
             bones[bone.name] = {
                 'location_local': bone.location,
@@ -33,6 +38,8 @@ class InitTPose(bpy.types.Operator):
                 'rotation_global': bone.matrix.to_quaternion(),
                 'inherit_rotation': obj.data.bones.get(bone.name).use_inherit_rotation,
             }
+            # Load rotation mode
+            bone.rotation_mode = rotation_mode
 
         # Save tpose data to custom data
         custom_data['rsl_tpose_bones'] = copy.deepcopy(bones)
@@ -74,10 +81,18 @@ class ResetTPose(bpy.types.Operator):
         for bone_name, data in tpose_bones.items():
             bone = obj.pose.bones.get(bone_name)
             if bone:
+                # Save rotation mode
+                rotation_mode = bone.rotation_mode
+                if rotation_mode == 'QUATERNION':
+                    rotation_mode = 'XYZ'
+
                 bone.rotation_mode = 'QUATERNION'
                 bone.rotation_quaternion = data['rotation_local']
                 bone.location = data['location_local']
                 obj.data.bones.get(bone_name).use_inherit_rotation = data['inherit_rotation']
+
+                # Load rotation mode
+                bone.rotation_mode = rotation_mode
 
         self.report({'INFO'}, 'T-Pose successfully restored!')
         return {'FINISHED'}
@@ -96,6 +111,11 @@ class PrintCurrentPose(bpy.types.Operator):
             return {'CANCELLED'}
 
         for bone in obj.pose.bones:
+            # Save rotation mode
+            rotation_mode = bone.rotation_mode
+            if rotation_mode == 'QUATERNION':
+                rotation_mode = 'XYZ'
+
             bone.rotation_mode = 'QUATERNION'
             rot = bone.matrix.to_euler().to_quaternion().copy()
             i = 5
@@ -105,5 +125,8 @@ class PrintCurrentPose(bpy.types.Operator):
                   + str(round(rot[2], i)) + ', '
                   + str(round(rot[3], i))
                   + '))')
+
+            # Load rotation mode
+            bone.rotation_mode = rotation_mode
 
         return {'FINISHED'}

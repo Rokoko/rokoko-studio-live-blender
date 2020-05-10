@@ -126,13 +126,14 @@ def save_armature(obj):
     bones = {}
 
     for bone in obj.pose.bones:
-        rotation_mode = bone.rotation_mode
+        # Fix rotation mode
+        if bone.rotation_mode == 'QUATERNION':
+            bone.rotation_mode = 'XYZ'
 
-        bone.rotation_mode = 'QUATERNION'
         bones[bone.name] = {
             'location': bone.location,
-            'rotation': bone.rotation_quaternion,
-            'rotation_mode': rotation_mode,
+            'rotation': bone.rotation_euler,
+            'rotation_mode': bone.rotation_mode,
             'inherit_rotation': obj.data.bones.get(bone.name).use_inherit_rotation
         }
 
@@ -162,10 +163,13 @@ def load_armature(obj):
         rotation_mode = bone_data['rotation_mode']
         inherit_rotation = bone_data['inherit_rotation']
 
-        bone.rotation_mode = 'QUATERNION'
+        # Fix rotation mode
+        if rotation_mode == 'QUATERNION':
+            rotation_mode = 'XYZ'
+
         bone.location = location
-        bone.rotation_quaternion = rotation
         bone.rotation_mode = rotation_mode
+        bone.rotation_euler = rotation
         obj.data.bones.get(bone_name).use_inherit_rotation = inherit_rotation
 
     # Remove element from dictionary
