@@ -253,23 +253,8 @@ class RetargetAnimation(bpy.types.Operator):
             # Select the bone for animation
             armature_target.data.bones.get(item.bone_name_target).select = True
 
-        # Read the animation length from the animation
-        frame_start = None
-        frame_end = None
-        for fcurve in armature_source.animation_data.action.fcurves:
-            for key in fcurve.keyframe_points:
-                keyframe = key.co.x
-                if frame_start is None:
-                    frame_start = keyframe
-                if frame_end is None:
-                    frame_end = keyframe
-
-                if keyframe < frame_start:
-                    frame_start = keyframe
-                if keyframe > frame_end:
-                    frame_end = keyframe
-
         # Bake the animation to the target armature
+        frame_start, frame_end = self.read_anim_start_end(armature_source)
         utils.set_active(armature_target)
         bpy.ops.nla.bake(frame_start=frame_start, frame_end=frame_end, visual_keying=True, only_selected=True, bake_types={'POSE'})
 
@@ -349,6 +334,20 @@ class RetargetAnimation(bpy.types.Operator):
 
         armature_source.scale *= scale_factor
 
+    def read_anim_start_end(self, armature):
+        frame_start = None
+        frame_end = None
+        for fcurve in armature.animation_data.action.fcurves:
+            for key in fcurve.keyframe_points:
+                keyframe = key.co.x
+                if frame_start is None:
+                    frame_start = keyframe
+                if frame_end is None:
+                    frame_end = keyframe
 
+                if keyframe < frame_start:
+                    frame_start = keyframe
+                if keyframe > frame_end:
+                    frame_end = keyframe
 
-
+        return frame_start, frame_end

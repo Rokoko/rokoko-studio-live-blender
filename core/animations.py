@@ -152,8 +152,9 @@ def animate_actor(obj):
         if not bone or not bone_tpose_data:
             continue
 
-        # Set the bones quaternion mode and disable inherit rotation
-        bone.rotation_mode = 'QUATERNION'
+        # Set the bones rotation mode to euler and disable inherit rotation
+        if bone.rotation_mode == 'QUATERNION':
+            bone.rotation_mode = 'XYZ'
         bone_data.use_inherit_rotation = False
 
         # The global rotation of the models t-pose, which was set by the user
@@ -237,7 +238,7 @@ def animate_actor(obj):
 
         # Record the data
         if bpy.context.scene.rsl_recording:
-            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_quaternion, location=bone.location if bone_name == 'hip' else None)
+            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_euler, location=bone.location if bone_name == 'hip' else None)
 
 
 def animate_glove(obj):
