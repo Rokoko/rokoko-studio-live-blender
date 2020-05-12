@@ -38,8 +38,6 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
             row.label(text='No animated armature found!', icon='INFO')
             return
 
-
-
         if not context.scene.rsl_retargeting_armature_source or not context.scene.rsl_retargeting_armature_target:
             return
 
@@ -81,6 +79,11 @@ class BoneListItem(PropertyGroup):
     bone_name_target: StringProperty(
         name="Target Bone",
         description="The target bone name",
+        default="")
+
+    bone_name_key: StringProperty(
+        name="Auto Detection Key",
+        description="The automatically detected bone key",
         default="")
 
 
