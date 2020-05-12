@@ -108,6 +108,9 @@ def register():
     # Load custom icons
     core.icon_manager.load_icons()
 
+    # Load bone detection list
+    core.detection_manager.load_bone_detection_list()
+
     print("### Loaded Rokoko Studio Live for Blender successfully!\n")
 
 

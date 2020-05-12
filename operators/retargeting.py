@@ -5,6 +5,7 @@ from . import detector
 from ..core import utils
 from ..core.auto_detect_lists import bones
 from ..core.retargeting import get_source_armature, get_target_armature
+from ..core import detection_manager as detector
 
 RETARGET_ID = '_RSL_RETARGET'
 
@@ -79,11 +80,14 @@ class BuildBoneList(bpy.types.Operator):
                 continue
 
             # Go through the target armature and search for bones that fit the main source bone
-            for bone in armature_target.pose.bones:
-                bone_name_standardized = detector.standardize_bone_name(bone.name)
-
-                if bone_name_standardized in bone_detection_list[main_bone_name]:
-                    bone_item.bone_name_target = bone.name
+            for bone_name_detected in bone_detection_list[main_bone_name]:
+                found_bone_name = ''
+                for bone in armature_target.pose.bones:
+                    if bone_name_detected == detector.standardize_bone_name(bone.name):
+                        found_bone_name = bone.name
+                        break
+                if found_bone_name:
+                    bone_item.bone_name_target = found_bone_name
                     break
 
         # Add target spines to list for later fixing
@@ -110,6 +114,10 @@ class BuildBoneList(bpy.types.Operator):
                 for item in context.scene.rsl_retargeting_bone_list:
                     if item.bone_name_source == spine_source:
                         item.bone_name_target = spine_target
+
+        # Set the detected target bone for all items in the list. Used to check if the user modified the target bone
+        for item in context.scene.rsl_retargeting_bone_list:
+            item.bone_name_target_detected = item.bone_name_target
 
         return {'FINISHED'}
 
@@ -154,6 +162,10 @@ class RetargetAnimation(bpy.types.Operator):
             self.report({'ERROR'}, 'No root bone found!'
                                    '\nCheck if the bones are mapped correctly or try rebuilding the bone list.')
             return {'CANCELLED'}
+
+        # Save the bone list if the user changed anything
+        detector.save_custom_bone_list()
+        # return
 
         # Prepare armatures
         utils.set_active(armature_target)

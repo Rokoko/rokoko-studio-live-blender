@@ -8,6 +8,7 @@ if "bpy" not in locals():
     from . import icon_manager
     from . import recorder
     from . import retargeting
+    from . import detection_manager
 else:
     import importlib
 
@@ -19,3 +20,4 @@ else:
     importlib.reload(icon_manager)
     importlib.reload(recorder)
     importlib.reload(retargeting)
+    importlib.reload(detection_manager)

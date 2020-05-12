@@ -86,6 +86,11 @@ class BoneListItem(PropertyGroup):
         description="The automatically detected bone key",
         default="")
 
+    bone_name_target_detected: StringProperty(
+        name="Detected Target Bone",
+        description="The target bone name, that initially got detected by the plugin",
+        default="")
+
 
 class RSL_UL_BoneList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
