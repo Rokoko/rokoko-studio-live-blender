@@ -32,19 +32,6 @@ def update_bone_lists():
     bone_detection_list = combine_bone_lists()
 
 
-def load_custom_bone_list_from_file(file_path=custom_bone_list_file):
-    custom_bone_list = {}
-    try:
-        with open(file_path, encoding="utf8") as file:
-            custom_bone_list = json.load(file)
-    except FileNotFoundError:
-        print('Custom bone list not found.')
-    except json.decoder.JSONDecodeError:
-        print("Custom bone list is not a valid json file!")
-
-    return custom_bone_list
-
-
 def save_custom_bone_list():
     save_retargeting_to_list()
     save_to_file_and_update()
@@ -56,24 +43,48 @@ def save_to_file_and_update():
 
 
 def save_custom_to_file(file_path=custom_bone_list_file):
-    clean_custom_list()
+    new_custom_list = clean_custom_list()
     with open(file_path, 'w', encoding="utf8") as outfile:
-        json.dump(bone_detection_list_custom, outfile, ensure_ascii=False, indent=4)
+        json.dump(new_custom_list, outfile, ensure_ascii=False, indent=4)
+
+
+def load_custom_bone_list_from_file(file_path=custom_bone_list_file):
+    custom_bone_list = {}
+    try:
+        with open(file_path, encoding="utf8") as file:
+            custom_bone_list = json.load(file)
+    except FileNotFoundError:
+        print('Custom bone list not found.')
+    except json.decoder.JSONDecodeError:
+        print("Custom bone list is not a valid json file!")
+
+    if not custom_bone_list.get('rokoko_custom_bones') or not custom_bone_list.get('version'):
+        print("Custom bone list file is not a valid bone list fine")
+        return {}
+
+    custom_bone_list.pop('rokoko_custom_bones')
+    custom_bone_list.pop('version')
+
+    return custom_bone_list
 
 
 def clean_custom_list():
-    remove_keys = []
+    new_custom_list = {
+        'rokoko_custom_bones':  True,
+        'version': 1,
+    }
 
     # Remove all empty fields and make all custom fields lowercase
     for key, values in bone_detection_list_custom.items():
         if not values:
-            remove_keys.append(key)
+            continue
 
         for i in range(len(values)):
             values[i] = values[i].lower()
 
-    for key in remove_keys:
-        bone_detection_list_custom.pop(key)
+        new_custom_list[key] = values
+
+    return new_custom_list
 
 
 def save_retargeting_to_list():
@@ -172,9 +183,9 @@ def export_custom_list(file_path):
 
 
 def print_bone_detection_list():
-    for key, values in bone_detection_list.items():
-        print(key, values)
-        print()
+    # for key, values in bone_detection_list.items():
+    #     print(key, values)
+    #     print()
     print('CUSTOM')
     for key, values in bone_detection_list_custom.items():
         print(key, values)

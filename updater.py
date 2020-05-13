@@ -406,7 +406,7 @@ def clean_addon_dir():
 
     for f in folders:
         folder = os.path.join(main_dir, f)
-        if f.startswith('.') or f == 'resources' or f == 'downloads':
+        if f.startswith('.') or f == 'resources' or f == 'downloads' or f == 'custom_bones':
             continue
 
         try:
@@ -421,7 +421,7 @@ def clean_addon_dir():
     folders = [f for f in os.listdir(resources_folder) if os.path.isdir(os.path.join(resources_folder, f))]
 
     for f in files:
-        if f == 'no_auto_ver_check.txt':
+        if f == 'no_auto_ver_check.txt' or f == 'custom_bone_list.json':
             continue
 
         file = os.path.join(resources_folder, f)
