@@ -85,16 +85,25 @@ class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
     def execute(self, context):
+        import_count = 0
         if self.directory:
             for f in self.files:
                 file_name = f.name
+                if not file_name.endswith('.json'):
+                    continue
                 detection_manager.import_custom_list(self.directory, file_name)
+                import_count += 1
 
         # If this operator is called with no directory but a filepath argument, import that
         elif self.filepath:
             detection_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
+            import_count += 1
 
         detection_manager.save_to_file_and_update()
+
+        if not import_count:
+            self.report({'ERROR'}, 'No files were imported.')
+            return {'FINISHED'}
 
         self.report({'INFO'}, 'Successfully imported new naming schemes.')
         return {'FINISHED'}
@@ -110,8 +119,21 @@ class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
     def execute(self, context):
+        file_name = detection_manager.export_custom_list(self.filepath)
+
+        self.report({'INFO'}, 'Exported custom naming schemes as "' + file_name + '".')
+        return {'FINISHED'}
+
+
+class ClearCustomBones(bpy.types.Operator):
+    bl_idname = "rsl.clear_custom_bones"
+    bl_label = "Clear Custom Bones"
+    bl_description = "Clear all custom bones naming schemes"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
         # file_name = detection_manager.export_custom_list(self.directory)
         file_name = detection_manager.export_custom_list(self.filepath)
 
-        self.report({'INFO'}, 'Exported custom naming schemes as ' + file_name)
+        self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
         return {'FINISHED'}

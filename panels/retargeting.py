@@ -39,12 +39,14 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
             return
 
         if not context.scene.rsl_retargeting_armature_source or not context.scene.rsl_retargeting_armature_target:
+            self.draw_import_export(layout)
             return
 
         if not context.scene.rsl_retargeting_bone_list:
             row = layout.row(align=True)
             row.scale_y = 1.2
             row.operator(retargeting.BuildBoneList.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
+            self.draw_import_export(layout)
             return
 
         subrow = layout.row(align=True)
@@ -68,12 +70,19 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
 
+        self.draw_import_export(layout)
+
+    def draw_import_export(self, layout):
         layout.separator()
+
+        row = layout.row(align=True)
+        row.label(text='Custom Naming Schemes:')
 
         row = layout.row(align=True)
         row.scale_y = 0.9
         row.operator(detector.ImportCustomBones.bl_idname, text='Import')
         row.operator(detector.ExportCustomBones.bl_idname, text='Export')
+
 
 
 class BoneListItem(PropertyGroup):
