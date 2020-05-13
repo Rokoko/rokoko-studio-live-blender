@@ -19,7 +19,7 @@ def load_bone_detection_list():
 
     # Create the list from the internal bone list
     bone_detection_list = create_internal_bone_list()
-    bone_detection_list_custom = load_custom_bone_list()
+    bone_detection_list_custom = load_custom_bone_list_from_file()
 
     bone_detection_list = combine_bone_lists()
 
@@ -32,10 +32,10 @@ def update_bone_lists():
     bone_detection_list = combine_bone_lists()
 
 
-def load_custom_bone_list():
+def load_custom_bone_list_from_file(file_path=custom_bone_list_file):
     custom_bone_list = {}
     try:
-        with open(custom_bone_list_file, encoding="utf8") as file:
+        with open(file_path, encoding="utf8") as file:
             custom_bone_list = json.load(file)
     except FileNotFoundError:
         print('Custom bone list not found.')
@@ -47,13 +47,33 @@ def load_custom_bone_list():
 
 def save_custom_bone_list():
     save_retargeting_to_list()
+    save_to_file_and_update()
+
+
+def save_to_file_and_update():
     save_custom_to_file()
-    update_bone_lists()
+    load_bone_detection_list()
 
 
-def save_custom_to_file():
-    with open(custom_bone_list_file, 'w', encoding="utf8") as outfile:
+def save_custom_to_file(file_path=custom_bone_list_file):
+    clean_custom_list()
+    with open(file_path, 'w', encoding="utf8") as outfile:
         json.dump(bone_detection_list_custom, outfile, ensure_ascii=False, indent=4)
+
+
+def clean_custom_list():
+    remove_keys = []
+
+    # Remove all empty fields and make all custom fields lowercase
+    for key, values in bone_detection_list_custom.items():
+        if not values:
+            remove_keys.append(key)
+
+        for i in range(len(values)):
+            values[i] = values[i].lower()
+
+    for key in remove_keys:
+        bone_detection_list_custom.pop(key)
 
 
 def save_retargeting_to_list():
@@ -64,20 +84,29 @@ def save_retargeting_to_list():
         if bone_item.bone_name_target_detected == bone_item.bone_name_target:
             continue
 
-        # If the source bone got detected but the target bone got changed, save the target bone into the custom list
-        if bone_item.bone_name_key:
-            if not bone_detection_list_custom.get(bone_item.bone_name_key):
-                bone_detection_list_custom[bone_item.bone_name_key] = []
-            if bone_item.bone_name_target not in bone_detection_list_custom[bone_item.bone_name_key]:
-                bone_detection_list_custom[bone_item.bone_name_key] = [bone_item.bone_name_target] + bone_detection_list_custom[bone_item.bone_name_key]
+        bone_name_key = bone_item.bone_name_key
+        bone_name_source = bone_item.bone_name_source.lower()
+        bone_name_target = bone_item.bone_name_target.lower()
+        bone_name_target_detected = bone_item.bone_name_target_detected.lower()
 
-            # If the detected target is in the custom bones list but it got changed, remove it from the list
-            if bone_item.bone_name_target_detected in bone_detection_list_custom[bone_item.bone_name_key]:
-                bone_detection_list_custom[bone_item.bone_name_key].remove(bone_item.bone_name_target_detected)
+        if bone_name_key and bone_name_key != 'spine':
+            if not bone_detection_list_custom.get(bone_name_key):
+                bone_detection_list_custom[bone_name_key] = []
+
+            # TODO Idea: If a target bone got detected but was removed and left empty, add it to a ignore list. So if that exact match-up gets detected again, leave it empty
+
+            # If the detected target is in the custom bones list but it got changed, remove it from the list and don't add the new bone into the list (maybe do add it, we'll have to see how this turns out)
+            if bone_name_target_detected in bone_detection_list_custom[bone_name_key]:
+                bone_detection_list_custom[bone_name_key].remove(bone_name_target_detected)
+                continue
+
+            # If the source bone got detected but the target bone got changed, save the target bone into the custom list
+            if bone_name_target not in bone_detection_list_custom[bone_name_key]:
+                bone_detection_list_custom[bone_name_key] = [bone_name_target] + bone_detection_list_custom[bone_name_key]
             continue
 
-        # If it is a completely new pair of bones, add it as a new bone to the list
-        bone_detection_list_custom['custom_bone_' + bone_item.bone_name_source] = [bone_item.bone_name_source.lower(), bone_item.bone_name_target.lower()]
+        # If it is a completely new pair of bones or a spine bone, add it as a new bone to the list
+        bone_detection_list_custom['custom_bone_' + bone_name_source] = [bone_name_source, bone_name_target]
 
 
 def combine_bone_lists():
@@ -91,7 +120,8 @@ def combine_bone_lists():
     for key, bones in bone_detection_list_custom.items():
         new_bone_list[key] = []
         for bone in bones:
-            new_bone_list[key].append(standardize_bone_name(bone))
+            new_bone_list[key].append(bone.lower())
+            # new_bone_list[key].append(standardize_bone_name(bone))
 
     # Load in internal bones
     for key, bones in bone_detection_list.items():
@@ -99,6 +129,46 @@ def combine_bone_lists():
             new_bone_list[key].append(bone)
 
     return new_bone_list
+
+
+def import_custom_list(directory, file_name):
+    global bone_detection_list_custom
+
+    file_path = os.path.join(directory, file_name)
+    new_custom_bone_list = load_custom_bone_list_from_file(file_path=file_path)
+
+    # Merge the new and old custom bone lists
+    for key, bones in bone_detection_list_custom.items():
+        if not new_custom_bone_list.get(key):
+            new_custom_bone_list[key] = []
+
+        for bone in new_custom_bone_list[key]:
+            if bone in bones:
+                bones.remove(bone)
+
+        new_custom_bone_list[key] += bones
+
+    bone_detection_list_custom = new_custom_bone_list
+
+
+def export_custom_list2(directory):
+    file_path = os.path.join(directory, 'custom_bone_list.json')
+
+    i = 1
+    while os.path.isfile(file_path):
+        file_path = os.path.join(directory, 'custom_bone_list' + str(i) + '.json')
+        i += 1
+
+    save_custom_to_file(file_path=file_path)
+
+    return os.path.basename(file_path)
+
+
+def export_custom_list(file_path):
+
+    save_custom_to_file(file_path=file_path)
+
+    return os.path.basename(file_path)
 
 
 def print_bone_detection_list():
@@ -155,6 +225,10 @@ def create_internal_bone_list():
 
 def get_bone_list():
     return bone_detection_list
+
+
+def get_custom_bone_list():
+    return bone_detection_list_custom
 
 
 def standardize_bone_name(name):

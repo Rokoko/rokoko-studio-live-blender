@@ -1,7 +1,7 @@
 import bpy
 
 from .main import ToolPanel
-from ..operators import retargeting
+from ..operators import retargeting, detector
 from ..core.icon_manager import Icons
 from ..core.retargeting import get_target_armature
 
@@ -67,6 +67,13 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.9
+        row.operator(detector.ImportCustomBones.bl_idname, text='Import')
+        row.operator(detector.ExportCustomBones.bl_idname, text='Export')
 
 
 class BoneListItem(PropertyGroup):

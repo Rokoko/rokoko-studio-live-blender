@@ -1,4 +1,6 @@
+import os
 import bpy
+import bpy_extras
 
 from ..core import animation_lists
 from ..core import detection_manager
@@ -69,4 +71,47 @@ class DetectGloveBones(bpy.types.Operator):
                 if bone_name in bone_names:
                     setattr(obj, 'rsl_glove_' + bone_name_key, bone.name)
 
+        return {'FINISHED'}
+
+
+class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = "rsl.import_custom_bones"
+    bl_label = "Import Custom Bones"
+    bl_description = "Import a custom bone naming scheme"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    files = bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={'HIDDEN', 'SKIP_SAVE'})
+    directory = bpy.props.StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+    filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+
+    def execute(self, context):
+        if self.directory:
+            for f in self.files:
+                file_name = f.name
+                detection_manager.import_custom_list(self.directory, file_name)
+
+        # If this operator is called with no directory but a filepath argument, import that
+        elif self.filepath:
+            detection_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
+
+        detection_manager.save_to_file_and_update()
+
+        self.report({'INFO'}, 'Successfully imported new naming schemes.')
+        return {'FINISHED'}
+
+
+class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    bl_idname = "rsl.export_custom_bones"
+    bl_label = "Export Custom Bones"
+    bl_description = "Export your custom bones naming schemes"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    filename_ext = ".json"
+    filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+
+    def execute(self, context):
+        # file_name = detection_manager.export_custom_list(self.directory)
+        file_name = detection_manager.export_custom_list(self.filepath)
+
+        self.report({'INFO'}, 'Exported custom naming schemes as ' + file_name)
         return {'FINISHED'}

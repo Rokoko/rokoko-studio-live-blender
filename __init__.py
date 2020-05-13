@@ -51,6 +51,8 @@ classes = [
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
     operators.detector.DetectGloveBones,
+    operators.detector.ImportCustomBones,
+    operators.detector.ExportCustomBones,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
@@ -66,7 +68,6 @@ classes = [
     operators.retargeting.BuildBoneList,
     operators.retargeting.ClearBoneList,
     operators.retargeting.RetargetAnimation,
-
 ]
 
 
