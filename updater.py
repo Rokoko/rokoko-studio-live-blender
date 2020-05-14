@@ -432,6 +432,9 @@ def clean_addon_dir():
             print("Failed to pre-remove " + file)
 
     for f in folders:
+        if f == 'custom_bones':
+            continue
+
         folder = os.path.join(resources_folder, f)
         try:
             shutil.rmtree(folder)

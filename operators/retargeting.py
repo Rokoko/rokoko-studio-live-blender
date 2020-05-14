@@ -5,6 +5,7 @@ from . import detector
 from ..core import utils
 from ..core.auto_detect_lists import bones
 from ..core.retargeting import get_source_armature, get_target_armature
+from ..core import detection_manager as detector
 
 RETARGET_ID = '_RSL_RETARGET'
 
@@ -18,6 +19,7 @@ class BuildBoneList(bpy.types.Operator):
     def execute(self, context):
         bone_list = []
         bone_detection_list = detector.get_bone_list()
+        bone_detection_list_custom = detector.get_custom_bone_list()
         armature_source = get_source_armature()
         armature_target = get_target_armature()
 
@@ -62,9 +64,12 @@ class BuildBoneList(bpy.types.Operator):
 
             # Find the main bone name of the source bone
             for bone_main, bone_values in bone_detection_list.items():
-                if standardized_bone_name_source in bone_values or standardized_bone_name_source == bone_main.lower():
+                if bone_main == 'chest':  # Ignore chest bones, these are only used for live data
+                    continue
+                if bone_name.lower() in bone_values or standardized_bone_name_source in bone_values or standardized_bone_name_source == bone_main.lower():
                     main_bone_name = bone_main
-                    break
+                    if main_bone_name != 'spine':  # Ignore the spine bones for now, so that it can add the custom spine bones first
+                        break
 
             # If no main bone name was found, continue
             if not main_bone_name:
@@ -73,18 +78,40 @@ class BuildBoneList(bpy.types.Operator):
             # Add the main bone name to the bone item
             bone_item.bone_name_key = main_bone_name
 
-            # If it's a spine bone, it to the list for later fixing
+            # If it's a spine bone, add it to the list for later fixing
             if main_bone_name == 'spine':
                 spines_source.append(bone_name)
                 continue
 
-            # Go through the target armature and search for bones that fit the main source bone
-            for bone in armature_target.pose.bones:
-                bone_name_standardized = detector.standardize_bone_name(bone.name)
+            # If it's a custom spine/chest bone, add it to the spine list nonetheless
+            custom_main_bone = main_bone_name.startswith('custom_bone_')
+            if custom_main_bone and detector.standardize_bone_name(main_bone_name.replace('custom_bone_', '')) in bone_detection_list['spine']:
+                spines_source.append(bone_name)
 
-                if bone_name_standardized in bone_detection_list[main_bone_name]:
-                    bone_item.bone_name_target = bone.name
+            # Go through the target armature and search for bones that fit the main source bone
+            found_bone_name = ''
+            is_custom = False
+            for bone in armature_target.pose.bones:
+                if is_custom:  # If a custom bone name was found, stop searching. it has priority
                     break
+
+                if bone_detection_list_custom.get(main_bone_name):
+                    for bone_name_detected in bone_detection_list_custom[main_bone_name]:
+                        if bone_name_detected == bone.name.lower():
+                            found_bone_name = bone.name
+                            is_custom = True
+                            break
+
+                if found_bone_name:  # If a bone_name was found, only continue looking for custom bone names, they have priority
+                    continue
+
+                if not found_bone_name:
+                    for bone_name_detected in bone_detection_list[main_bone_name]:
+                        if bone_name_detected == detector.standardize_bone_name(bone.name):
+                            found_bone_name = bone.name
+                            break
+
+            bone_item.bone_name_target = found_bone_name
 
         # Add target spines to list for later fixing
         for bone in armature_target.pose.bones:
@@ -94,6 +121,7 @@ class BuildBoneList(bpy.types.Operator):
 
         # Fix spine auto detection
         if spines_target and spines_source:
+            print(spines_source)
             spine_dict = {}
 
             i = 0
@@ -108,8 +136,12 @@ class BuildBoneList(bpy.types.Operator):
             # Fill in fixed spines
             for spine_source, spine_target in spine_dict.items():
                 for item in context.scene.rsl_retargeting_bone_list:
-                    if item.bone_name_source == spine_source:
+                    if item.bone_name_source == spine_source and not item.bone_name_target:
                         item.bone_name_target = spine_target
+
+        # Set the detected target bone for all items in the list. Used to check if the user modified the target bone
+        for item in context.scene.rsl_retargeting_bone_list:
+            item.bone_name_target_detected = item.bone_name_target
 
         return {'FINISHED'}
 
@@ -154,6 +186,10 @@ class RetargetAnimation(bpy.types.Operator):
             self.report({'ERROR'}, 'No root bone found!'
                                    '\nCheck if the bones are mapped correctly or try rebuilding the bone list.')
             return {'CANCELLED'}
+
+        # Save the bone list if the user changed anything
+        detector.save_custom_bone_list()
+        return
 
         # Prepare armatures
         utils.set_active(armature_target)

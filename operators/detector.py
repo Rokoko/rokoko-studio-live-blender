@@ -1,7 +1,9 @@
+import os
 import bpy
+import bpy_extras
 
 from ..core import animation_lists
-from ..core.auto_detect_lists.bones import bone_list
+from ..core import detection_manager
 
 
 class DetectFaceShapes(bpy.types.Operator):
@@ -40,9 +42,9 @@ class DetectActorBones(bpy.types.Operator):
         obj = context.object
 
         for bone_name_key in animation_lists.actor_bones.keys():
-            bone_names = get_bone_list()[bone_name_key]
+            bone_names = detection_manager.get_bone_list()[bone_name_key]
             for bone in obj.pose.bones:
-                bone_name = standardize_bone_name(bone.name)
+                bone_name = detection_manager.standardize_bone_name(bone.name)
                 if bone_name in bone_names:
                     setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
 
@@ -63,116 +65,92 @@ class DetectGloveBones(bpy.types.Operator):
         obj = context.object
 
         for bone_name_key in animation_lists.glove_bones.keys():
-            bone_names = get_bone_list()[bone_name_key]
+            bone_names = detection_manager.get_bone_list()[bone_name_key]
             for bone in obj.pose.bones:
-                bone_name = standardize_bone_name(bone.name)
+                bone_name = detection_manager.standardize_bone_name(bone.name)
                 if bone_name in bone_names:
                     setattr(obj, 'rsl_glove_' + bone_name_key, bone.name)
 
         return {'FINISHED'}
 
 
-def standardize_bone_name(name):
-    # List of chars to replace if they are at the start of a bone name
-    starts_with = [
-        ('_', ''),
-        ('ValveBiped_', ''),
-        ('Valvebiped_', ''),
-        ('Bip1_', 'Bip_'),
-        ('Bip01_', 'Bip_'),
-        ('Bip001_', 'Bip_'),
-        ('Character1_', ''),
-        ('HLP_', ''),
-        ('JD_', ''),
-        ('JU_', ''),
-        ('Armature|', ''),
-        ('Bone_', ''),
-        ('C_', ''),
-        ('Cf_S_', ''),
-        ('Cf_J_', ''),
-        ('G_', ''),
-        ('Joint_', ''),
-        ('DEF_', ''),
-    ]
+class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = "rsl.import_custom_bones"
+    bl_label = "Import Custom Bones"
+    bl_description = "Import a custom bone naming scheme"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
-    # Standardize names
-    # Make all the underscores!
-    name = name.replace(' ', '_') \
-        .replace('-', '_') \
-        .replace('.', '_') \
-        .replace('____', '_') \
-        .replace('___', '_') \
-        .replace('__', '_') \
+    files: bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={'HIDDEN', 'SKIP_SAVE'})
+    directory: bpy.props.StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
-    # Replace if name starts with specified chars
-    for replacement in starts_with:
-        if name.startswith(replacement[0]):
-            name = replacement[1] + name[len(replacement[0]):]
-
-    # Remove digits from the start
-    name_split = name.split('_')
-    if len(name_split) > 1 and name_split[0].isdigit():
-        name = name_split[1]
-
-    # Specific condition
-    name_split = name.split('"')
-    if len(name_split) > 3:
-        name = name_split[1]
-
-    # Another specific condition
-    if ':' in name:
-        for i, split in enumerate(name.split(':')):
-            if i == 0:
-                name = ''
-            else:
-                name += split
-
-    # Remove S0 from the end
-    if name[-2:] == 'S0':
-        name = name[:-2]
-
-    if name[-4:] == '_Jnt':
-        name = name[:-4]
-
-    return name.lower()
-
-
-def get_bone_list():
-    new_bone_list = {}
-
-    for bone_key, bone_values in bone_list.items():
-        if 'left' not in bone_key:
-            new_bone_list[bone_key] = [bone_value.lower() for bone_value in bone_values]
-            if bone_key == 'spine':
-                new_bone_list['chest'] = [bone_value.lower() for bone_value in bone_values]
-            continue
-
-        bone_values_left = []
-        bone_values_right = []
-
-        for bone_name in bone_values:
-            bone_name = bone_name.lower()
-
-            if '\l' in bone_name:
-                bone_name_l = bone_name.replace('\l', 'l')
-                bone_name_left = bone_name.replace('\l', 'left')
-                bone_name_r = bone_name.replace('\l', 'r')
-                bone_name_right = bone_name.replace('\l', 'right')
-
-                # Debug if duplicates are found
-                if bone_name_l in bone_values_left:
-                    print('Duplicate autodetect bone entry:', bone_name, bone_name_l)
+    def execute(self, context):
+        import_count = 0
+        if self.directory:
+            for f in self.files:
+                file_name = f.name
+                if not file_name.endswith('.json'):
                     continue
+                detection_manager.import_custom_list(self.directory, file_name)
+                import_count += 1
 
-                bone_values_left.append(bone_name_l)
-                bone_values_left.append(bone_name_left)
-                bone_values_right.append(bone_name_r)
-                bone_values_right.append(bone_name_right)
+        # If this operator is called with no directory but a filepath argument, import that
+        elif self.filepath:
+            detection_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
+            import_count += 1
 
-        bone_key_left = bone_key
-        bone_key_right = bone_key.replace('left', 'right')
+        detection_manager.save_to_file_and_update()
 
-        new_bone_list[bone_key_left] = bone_values_left
-        new_bone_list[bone_key_right] = bone_values_right
+        if not import_count:
+            self.report({'ERROR'}, 'No files were imported.')
+            return {'FINISHED'}
 
-    return new_bone_list
+        self.report({'INFO'}, 'Successfully imported new naming schemes.')
+        return {'FINISHED'}
+
+
+class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    bl_idname = "rsl.export_custom_bones"
+    bl_label = "Export Custom Bones"
+    bl_description = "Export your custom bones naming schemes"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    filename_ext = ".json"
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+
+    def execute(self, context):
+        file_name = detection_manager.export_custom_list(self.filepath)
+
+        self.report({'INFO'}, 'Exported custom naming schemes as "' + file_name + '".')
+        return {'FINISHED'}
+
+
+class ClearCustomBones(bpy.types.Operator):
+    bl_idname = "rsl.clear_custom_bones"
+    bl_label = "Clear Custom Bones"
+    bl_description = "Clear all custom bones naming schemes"
+    bl_options = {'INTERNAL'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='You are about to delete all stored custom bone naming schemes.', icon='ERROR')
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='Continue?', icon='BLANK1')
+
+        layout.separator()
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
+    def execute(self, context):
+        detection_manager.delete_custom_list()
+
+        self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
+        return {'FINISHED'}

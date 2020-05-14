@@ -1,7 +1,7 @@
 import bpy
 
 from .main import ToolPanel
-from ..operators import retargeting
+from ..operators import retargeting, detector
 from ..core.icon_manager import Icons
 from ..core.retargeting import get_target_armature
 
@@ -39,12 +39,14 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
             return
 
         if not context.scene.rsl_retargeting_armature_source or not context.scene.rsl_retargeting_armature_target:
+            self.draw_import_export(layout)
             return
 
         if not context.scene.rsl_retargeting_bone_list:
             row = layout.row(align=True)
             row.scale_y = 1.2
             row.operator(retargeting.BuildBoneList.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
+            self.draw_import_export(layout)
             return
 
         subrow = layout.row(align=True)
@@ -68,6 +70,25 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
 
+        self.draw_import_export(layout)
+
+    def draw_import_export(self, layout):
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.label(text='Custom Naming Schemes:')
+
+        subrow = layout.row(align=True)
+        row = subrow.row(align=True)
+        row.scale_y = 0.9
+        row.operator(detector.ImportCustomBones.bl_idname, text='Import')
+        row.operator(detector.ExportCustomBones.bl_idname, text='Export')
+        row = subrow.row(align=True)
+        row.scale_y = 0.9
+        row.alignment = 'RIGHT'
+        row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
+
+
 
 class BoneListItem(PropertyGroup):
     """Properties of the bone list items"""
@@ -84,6 +105,11 @@ class BoneListItem(PropertyGroup):
     bone_name_key: StringProperty(
         name="Auto Detection Key",
         description="The automatically detected bone key",
+        default="")
+
+    bone_name_target_detected: StringProperty(
+        name="Detected Target Bone",
+        description="The target bone name, that initially got detected by the plugin",
         default="")
 
 
