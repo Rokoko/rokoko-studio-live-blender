@@ -78,10 +78,15 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.label(text='Custom Naming Schemes:')
 
-        row = layout.row(align=True)
+        subrow = layout.row(align=True)
+        row = subrow.row(align=True)
         row.scale_y = 0.9
         row.operator(detector.ImportCustomBones.bl_idname, text='Import')
         row.operator(detector.ExportCustomBones.bl_idname, text='Export')
+        row = subrow.row(align=True)
+        row.scale_y = 0.9
+        row.alignment = 'RIGHT'
+        row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
 
 
 

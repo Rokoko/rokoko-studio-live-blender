@@ -182,6 +182,12 @@ def export_custom_list(file_path):
     return os.path.basename(file_path)
 
 
+def delete_custom_list():
+    global bone_detection_list_custom
+    bone_detection_list_custom = {}
+    save_to_file_and_update()
+
+
 def print_bone_detection_list():
     # for key, values in bone_detection_list.items():
     #     print(key, values)

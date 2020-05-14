@@ -406,7 +406,7 @@ def clean_addon_dir():
 
     for f in folders:
         folder = os.path.join(main_dir, f)
-        if f.startswith('.') or f == 'resources' or f == 'downloads' or f == 'custom_bones':
+        if f.startswith('.') or f == 'resources' or f == 'downloads':
             continue
 
         try:
@@ -421,7 +421,7 @@ def clean_addon_dir():
     folders = [f for f in os.listdir(resources_folder) if os.path.isdir(os.path.join(resources_folder, f))]
 
     for f in files:
-        if f == 'no_auto_ver_check.txt' or f == 'custom_bone_list.json':
+        if f == 'no_auto_ver_check.txt':
             continue
 
         file = os.path.join(resources_folder, f)
@@ -432,6 +432,9 @@ def clean_addon_dir():
             print("Failed to pre-remove " + file)
 
     for f in folders:
+        if f == 'custom_bones':
+            continue
+
         folder = os.path.join(resources_folder, f)
         try:
             shutil.rmtree(folder)

@@ -131,9 +131,26 @@ class ClearCustomBones(bpy.types.Operator):
     bl_description = "Clear all custom bones naming schemes"
     bl_options = {'INTERNAL'}
 
+    def draw(self, context):
+        layout = self.layout
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='You are about to delete all stored custom bone naming schemes.', icon='ERROR')
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='Continue?', icon='BLANK1')
+
+        layout.separator()
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
     def execute(self, context):
-        # file_name = detection_manager.export_custom_list(self.directory)
-        file_name = detection_manager.export_custom_list(self.filepath)
+        detection_manager.delete_custom_list()
 
         self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
         return {'FINISHED'}

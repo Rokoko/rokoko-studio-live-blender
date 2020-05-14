@@ -53,6 +53,7 @@ classes = [
     operators.detector.DetectGloveBones,
     operators.detector.ImportCustomBones,
     operators.detector.ExportCustomBones,
+    operators.detector.ClearCustomBones,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
