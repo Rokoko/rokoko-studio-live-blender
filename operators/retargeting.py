@@ -189,7 +189,6 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Save the bone list if the user changed anything
         detector.save_custom_bone_list()
-        return
 
         # Prepare armatures
         utils.set_active(armature_target)
@@ -197,12 +196,20 @@ class RetargetAnimation(bpy.types.Operator):
         utils.set_active(armature_source)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # # Apply pose of source armature  # TODO: Finish or remove this
-        # bpy.ops.object.mode_set(mode='POSE')
-        # bpy.ops.pose.armature_apply()
-        # bpy.ops.object.mode_set(mode='OBJECT')
-        #
-        # armature_source = self.copy_rest_pose(context, armature_source, armature_target)
+        # Set armatures into pose mode
+        armature_source.data.pose_position = 'POSE'
+        armature_target.data.pose_position = 'POSE'
+
+        if context.scene.rsl_retargeting_auto_scaling:
+            # Clean source animation
+            self.clean_animation(armature_source)
+
+            # Scale the source armature to fit the target armature
+            self.scale_armature(context, armature_source, armature_target, root_bones)
+
+        # Duplicate source armature to apply transforms to the animation
+        armature_source_original = armature_source
+        armature_source = self.copy_rest_pose(context, armature_source)
 
         # Save transforms of target armature
         rotation_mode = armature_target.rotation_mode
@@ -214,13 +221,6 @@ class RetargetAnimation(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
         utils.set_active(armature_target)
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-
-        if context.scene.rsl_retargeting_auto_scaling:
-            # Clean source animation
-            self.clean_animation(armature_source)
-
-            # Scale the source armature to fit the target armature
-            self.scale_armature(context, armature_source, armature_target, root_bones)
 
         bpy.ops.object.mode_set(mode='EDIT')
 
@@ -284,9 +284,16 @@ class RetargetAnimation(bpy.types.Operator):
             armature_target.data.bones.get(item.bone_name_target).select = True
 
         # Bake the animation to the target armature
-        frame_start, frame_end = self.read_anim_start_end(armature_source)
-        utils.set_active(armature_target)
-        bpy.ops.nla.bake(frame_start=frame_start, frame_end=frame_end, visual_keying=True, only_selected=True, bake_types={'POSE'})
+        self.bake_animation(armature_source, armature_target, root_bones)
+
+        # Delete the duplicate helper armature
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature_source)
+        bpy.data.actions.remove(armature_source.animation_data.action)
+        bpy.ops.object.delete()
+
+        # Change armature source back to original
+        armature_source = armature_source_original
 
         # Change action name
         armature_target.animation_data.action.name = armature_source.animation_data.action.name + ' Retarget'
@@ -297,16 +304,6 @@ class RetargetAnimation(bpy.types.Operator):
                 if RETARGET_ID in constraint.name:
                     bone.constraints.remove(constraint)
 
-        bpy.ops.object.select_all(action='DESELECT')
-        utils.set_active(armature_source)
-        bpy.ops.object.mode_set(mode='EDIT')
-
-        # Delete helper bones
-        for bone in armature_source.data.edit_bones:
-            if RETARGET_ID in bone.name:
-                armature_source.data.edit_bones.remove(bone)
-
-        bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.select_all(action='DESELECT')
         utils.set_active(armature_target)
 
@@ -408,7 +405,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         return frame_start, frame_end
 
-    def copy_rest_pose(self, context, armature_source, armature_target):
+    def copy_rest_pose(self, context, armature_source):
         # make sure auto keyframe is disabled, leads to issues
         context.scene.tool_settings.use_keyframe_insert_auto = False
 
@@ -418,14 +415,103 @@ class RetargetAnimation(bpy.types.Operator):
         utils.set_active(armature_source)
         bpy.ops.object.mode_set(mode='OBJECT')
 
-        # set the target in rest pose for correct transform copy
-        armature_target.data.pose_position = 'REST'
-
+        # Duplicate the source armature
         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked": False, "mode": 'TRANSLATION'},
                                       TRANSFORM_OT_translate={"value": (0, 0, 0), "constraint_axis": (False, True, False), "mirror": False, "snap": False, "remove_on_cancel": False,
                                                               "release_confirm": False})
-        # context.object.name = armature_source.name + "_copy"
+
+        # Set name of the copied source armature
+        source_armature_copy = context.object
+        source_armature_copy.name = armature_source.name + "_copy"
 
         bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(source_armature_copy)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='POSE')
 
-        return bpy.data.objects.get(bpy.context.object.name)
+        # Apply transforms of the new source armature. Unlink action temporarily to prevent warning in console
+        action_tmp = source_armature_copy.animation_data.action
+        source_armature_copy.animation_data.action = None
+        bpy.ops.pose.armature_apply()
+        source_armature_copy.animation_data.action = action_tmp
+
+        # Mimic the animation of the original source armature by adding constraints to the bones.
+        # -> the new armature has the exact same animation but with applied transforms
+        for bone in source_armature_copy.pose.bones:
+            constraint = bone.constraints.new('COPY_TRANSFORMS')
+            constraint.name = bone.name
+            constraint.target = armature_source
+            constraint.subtarget = bone.name
+
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        return source_armature_copy
+
+    def bake_animation(self, armature_source, armature_target, root_bones):
+        frame_split = 50
+        frame_start, frame_end = self.read_anim_start_end(armature_source)
+        frame_start, frame_end = int(frame_start), int(frame_end)
+        utils.set_active(armature_target)
+
+        frame_count = frame_end - frame_start + 1
+
+        actions_all = []
+
+        # Bake the animation in parts because multiple short parts are processed much faster than one long animation
+        for frame in range(frame_start, frame_end + 2, frame_split):
+            start = frame
+            end = frame + frame_split - 1
+            if end > frame_end:
+                end = frame_end
+
+            print(start, end)
+            # Bake animation part
+            bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=True, use_current_action=False, bake_types={'POSE'})
+
+            # Rename animation part
+            armature_target.animation_data.action.name = 'RSL_RETARGETING_' + str(frame)
+
+            actions_all.append(armature_target.animation_data.action)
+
+        if not actions_all:
+            return
+
+        # Create new action
+        action_final = bpy.data.actions.new(name='RSL_RETARGETING_FINAL')
+        action_final.use_fake_user = True
+        armature_target.animation_data_create().action = action_final
+
+        # Put all baked animations parts back together into one
+        print_i = 0
+        for fcurve in actions_all[0].fcurves:
+            if fcurve.data_path.endswith('scale'):
+                continue
+            if fcurve.data_path.endswith('location'):
+                bone_name = fcurve.data_path.split('"')
+                if len(bone_name) != 3:
+                    continue
+                if bone_name[1] not in root_bones:
+                    continue
+
+            curve_final = action_final.fcurves.new(data_path=fcurve.data_path, index=fcurve.array_index, action_group=fcurve.group.name)
+            keyframe_points = curve_final.keyframe_points
+            keyframe_points.add(frame_count)
+
+            index = 0
+            for action in actions_all:
+                fcruve_to_add = action.fcurves.find(data_path=fcurve.data_path, index=fcurve.array_index)
+
+                for kp in fcruve_to_add.keyframe_points:
+                    keyframe_points[index].co.x = kp.co.x
+                    keyframe_points[index].co.y = kp.co.y
+                    keyframe_points[index].interpolation = 'LINEAR'
+                    index += 1
+
+            for i in range(frame_count - 1, index - 1, -1):
+                keyframe_points.remove(keyframe_points[i])
+
+            print_i += 1
+
+        # Delete all baked animation parts, only the combined one is needed
+        for action in actions_all:
+            bpy.data.actions.remove(action)

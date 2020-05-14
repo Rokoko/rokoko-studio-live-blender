@@ -38,6 +38,7 @@ def reprint(*x):
 
 def set_active(obj):
     obj.select_set(True)
+    obj.hide_set(False)
     bpy.context.view_layer.objects.active = obj
 
 
