@@ -24,7 +24,7 @@ def load_bone_detection_list():
     bone_detection_list = combine_bone_lists()
 
     # Print the whole bone list
-    print_bone_detection_list()
+    # print_bone_detection_list()
 
 
 def update_bone_lists():
@@ -192,7 +192,7 @@ def print_bone_detection_list():
     # for key, values in bone_detection_list.items():
     #     print(key, values)
     #     print()
-    print('CUSTOM')
+    # print('CUSTOM')
     for key, values in bone_detection_list_custom.items():
         print(key, values)
         print('--> ', bone_detection_list[key])

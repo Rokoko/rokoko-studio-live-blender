@@ -80,9 +80,9 @@ class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_description = "Import a custom bone naming scheme"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
-    files = bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={'HIDDEN', 'SKIP_SAVE'})
-    directory = bpy.props.StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
-    filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+    files: bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={'HIDDEN', 'SKIP_SAVE'})
+    directory: bpy.props.StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
     def execute(self, context):
         import_count = 0
@@ -116,7 +116,7 @@ class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
     filename_ext = ".json"
-    filter_glob = bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
     def execute(self, context):
         file_name = detection_manager.export_custom_list(self.filepath)

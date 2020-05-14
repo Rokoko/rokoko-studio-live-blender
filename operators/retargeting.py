@@ -189,7 +189,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Save the bone list if the user changed anything
         detector.save_custom_bone_list()
-        # return
+        return
 
         # Prepare armatures
         utils.set_active(armature_target)
