@@ -44,6 +44,10 @@ def save_to_file_and_update():
 
 def save_custom_to_file(file_path=custom_bone_list_file):
     new_custom_list = clean_custom_list()
+
+    if not os.path.isdir(custom_bones_dir):
+        os.mkdir(custom_bones_dir)
+
     with open(file_path, 'w', encoding="utf8") as outfile:
         json.dump(new_custom_list, outfile, ensure_ascii=False, indent=4)
 
