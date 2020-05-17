@@ -448,14 +448,21 @@ class RetargetAnimation(bpy.types.Operator):
         return source_armature_copy
 
     def bake_animation(self, armature_source, armature_target, root_bones):
-        frame_split = 50
+        frame_split = 25
         frame_start, frame_end = self.read_anim_start_end(armature_source)
         frame_start, frame_end = int(frame_start), int(frame_end)
         utils.set_active(armature_target)
 
-        frame_count = frame_end - frame_start + 1
-
         actions_all = []
+
+        # Setup loading bar
+        current_step = 0
+        steps = int((frame_end - frame_start) / frame_split) + 1
+        wm = bpy.context.window_manager
+        wm.progress_begin(current_step, steps)
+
+        import time
+        start_time = time.time()
 
         # Bake the animation in parts because multiple short parts are processed much faster than one long animation
         for frame in range(frame_start, frame_end + 2, frame_split):
@@ -463,8 +470,9 @@ class RetargetAnimation(bpy.types.Operator):
             end = frame + frame_split - 1
             if end > frame_end:
                 end = frame_end
+            if start > end:
+                continue
 
-            print(start, end)
             # Bake animation part
             bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=True, use_current_action=False, bake_types={'POSE'})
 
@@ -473,8 +481,21 @@ class RetargetAnimation(bpy.types.Operator):
 
             actions_all.append(armature_target.animation_data.action)
 
+            current_step += 1
+            if steps != current_step:
+                wm.progress_update(current_step)
+
         if not actions_all:
             return
+
+        # Count all keys for all data_paths
+        key_counts = {}
+        for action in actions_all:
+            for fcurve in action.fcurves:
+                key = fcurve.data_path + str(fcurve.array_index)
+                if not key_counts.get(key):
+                    key_counts[key] = 0
+                key_counts[key] += len(fcurve.keyframe_points)
 
         # Create new action
         action_final = bpy.data.actions.new(name='RSL_RETARGETING_FINAL')
@@ -495,7 +516,7 @@ class RetargetAnimation(bpy.types.Operator):
 
             curve_final = action_final.fcurves.new(data_path=fcurve.data_path, index=fcurve.array_index, action_group=fcurve.group.name)
             keyframe_points = curve_final.keyframe_points
-            keyframe_points.add(frame_count)
+            keyframe_points.add(key_counts[fcurve.data_path + str(fcurve.array_index)])
 
             index = 0
             for action in actions_all:
@@ -507,11 +528,29 @@ class RetargetAnimation(bpy.types.Operator):
                     keyframe_points[index].interpolation = 'LINEAR'
                     index += 1
 
-            for i in range(frame_count - 1, index - 1, -1):
-                keyframe_points.remove(keyframe_points[i])
-
             print_i += 1
+
+        # Clean up animation. Delete all keyframes the use the same value as the previous and next one
+        for fcurve in action_final.fcurves:
+            if len(fcurve.keyframe_points) <= 2:
+                continue
+
+            kp_pre_pre = fcurve.keyframe_points[0]
+            kp_pre = fcurve.keyframe_points[1]
+
+            kp_to_delete = []
+            for kp in fcurve.keyframe_points[2:]:
+                if round(kp_pre_pre.co.y, 5) == round(kp_pre.co.y, 5) == round(kp.co.y, 5):
+                    kp_to_delete.append(kp_pre)
+                kp_pre_pre = kp_pre
+                kp_pre = kp
+
+            for kp in reversed(kp_to_delete):
+                fcurve.keyframe_points.remove(kp)
 
         # Delete all baked animation parts, only the combined one is needed
         for action in actions_all:
             bpy.data.actions.remove(action)
+
+        print('Retargeting Time:', round(time.time() - start_time, 2), 'seconds')
+        wm.progress_end()
