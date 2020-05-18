@@ -9,6 +9,7 @@ if "bpy" not in locals():
     from . import recorder
     from . import retargeting
     from . import detection_manager
+    from . import fbx_patcher
 else:
     import importlib
 
@@ -21,3 +22,4 @@ else:
     importlib.reload(recorder)
     importlib.reload(retargeting)
     importlib.reload(detection_manager)
+    importlib.reload(fbx_patcher)

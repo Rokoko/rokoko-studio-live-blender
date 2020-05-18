@@ -113,6 +113,9 @@ def register():
     # Load bone detection list
     core.detection_manager.load_bone_detection_list()
 
+    # Init fbx patcher
+    core.fbx_patcher.start_fbx_patch_timer()
+
     print("### Loaded Rokoko Studio Live for Blender successfully!\n")
 
 
