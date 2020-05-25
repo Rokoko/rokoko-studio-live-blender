@@ -17,9 +17,6 @@ class BuildBoneList(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
     def execute(self, context):
-        bone_list = []
-        bone_detection_list = detector.get_bone_list()
-        bone_detection_list_custom = detector.get_custom_bone_list()
         armature_source = get_source_armature()
         armature_target = get_target_armature()
 
@@ -33,115 +30,18 @@ class BuildBoneList(bpy.types.Operator):
                                    '\nPlease select different armatures.')
             return {'CANCELLED'}
 
-        # Get all bones from the animation
-        for fc in armature_source.animation_data.action.fcurves:
-            bone_name = fc.data_path.split('"')
-            if len(bone_name) == 3 and bone_name[1] not in bone_list:
-                bone_list.append(bone_name[1])
-
-        # Check if this animation is from Rokoko Studio. Ignore certain bones in that case
-        is_rokoko_animation = False
-        if 'newton' in bone_list and 'RightFinger1Tip' in bone_list and 'HeadVertex' in bone_list and 'LeftFinger2Metacarpal' in bone_list:
-            is_rokoko_animation = True
-            # print('Rokoko animation detected')
+        retargeting_dict = detector.detect_retarget_bones()
 
         # Clear the bone retargeting list
         context.scene.rsl_retargeting_bone_list.clear()
 
-        spines_source = []
-        spines_target = []
-
-        # Then add all the bones to the list
-        for bone_name in bone_list:
-            if is_rokoko_animation and bone_name in bones.ignore_rokoko_retargeting_bones:
-                continue
+        for bone_source, bone_values in retargeting_dict.items():
+            bone_target, bone_key = bone_values
 
             bone_item = context.scene.rsl_retargeting_bone_list.add()
-            bone_item.bone_name_source = bone_name
-
-            main_bone_name = ''
-            standardized_bone_name_source = detector.standardize_bone_name(bone_name)
-
-            # Find the main bone name of the source bone
-            for bone_main, bone_values in bone_detection_list.items():
-                if bone_main == 'chest':  # Ignore chest bones, these are only used for live data
-                    continue
-                if bone_name.lower() in bone_values or standardized_bone_name_source in bone_values or standardized_bone_name_source == bone_main.lower():
-                    main_bone_name = bone_main
-                    if main_bone_name != 'spine':  # Ignore the spine bones for now, so that it can add the custom spine bones first
-                        break
-
-            # If no main bone name was found, continue
-            if not main_bone_name:
-                continue
-
-            # Add the main bone name to the bone item
-            bone_item.bone_name_key = main_bone_name
-
-            # If it's a spine bone, add it to the list for later fixing
-            if main_bone_name == 'spine':
-                spines_source.append(bone_name)
-                continue
-
-            # If it's a custom spine/chest bone, add it to the spine list nonetheless
-            custom_main_bone = main_bone_name.startswith('custom_bone_')
-            if custom_main_bone and detector.standardize_bone_name(main_bone_name.replace('custom_bone_', '')) in bone_detection_list['spine']:
-                spines_source.append(bone_name)
-
-            # Go through the target armature and search for bones that fit the main source bone
-            found_bone_name = ''
-            is_custom = False
-            for bone in armature_target.pose.bones:
-                if is_custom:  # If a custom bone name was found, stop searching. it has priority
-                    break
-
-                if bone_detection_list_custom.get(main_bone_name):
-                    for bone_name_detected in bone_detection_list_custom[main_bone_name]:
-                        if bone_name_detected == bone.name.lower():
-                            found_bone_name = bone.name
-                            is_custom = True
-                            break
-
-                if found_bone_name:  # If a bone_name was found, only continue looking for custom bone names, they have priority
-                    continue
-
-                if not found_bone_name:
-                    for bone_name_detected in bone_detection_list[main_bone_name]:
-                        if bone_name_detected == detector.standardize_bone_name(bone.name):
-                            found_bone_name = bone.name
-                            break
-
-            bone_item.bone_name_target = found_bone_name
-
-        # Add target spines to list for later fixing
-        for bone in armature_target.pose.bones:
-            bone_name_standardized = detector.standardize_bone_name(bone.name)
-            if bone_name_standardized in bone_detection_list['spine']:
-                spines_target.append(bone.name)
-
-        # Fix spine auto detection
-        if spines_target and spines_source:
-            print(spines_source)
-            spine_dict = {}
-
-            i = 0
-            for spine in reversed(spines_source):
-                i += 1
-                if i == len(spines_target):
-                    break
-                spine_dict[spine] = spines_target[-i]
-
-            spine_dict[spines_source[0]] = spines_target[0]
-
-            # Fill in fixed spines
-            for spine_source, spine_target in spine_dict.items():
-                for item in context.scene.rsl_retargeting_bone_list:
-                    if item.bone_name_source == spine_source and not item.bone_name_target:
-                        item.bone_name_target = spine_target
-
-        # Set the detected target bone for all items in the list. Used to check if the user modified the target bone
-        for item in context.scene.rsl_retargeting_bone_list:
-            item.bone_name_target_detected = item.bone_name_target
+            bone_item.bone_name_key = bone_key
+            bone_item.bone_name_source = bone_source
+            bone_item.bone_name_target = bone_target
 
         return {'FINISHED'}
 
@@ -188,7 +88,7 @@ class RetargetAnimation(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Save the bone list if the user changed anything
-        detector.save_custom_bone_list()
+        detector.save_retargeting_to_list()
 
         # Prepare armatures
         utils.set_active(armature_target)

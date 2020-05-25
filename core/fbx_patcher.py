@@ -4,11 +4,15 @@ import addon_utils
 
 from threading import Thread
 
-from io_scene_fbx import import_fbx
-from io_scene_fbx.import_fbx import blen_read_animations_curves_iter, blen_read_object_transform_do
+if bpy.app.version < (2, 83, 17):
+    from io_scene_fbx import import_fbx
+    from io_scene_fbx.import_fbx import blen_read_animations_curves_iter, blen_read_object_transform_do
 
 
 def start_fbx_patch_timer():
+    if bpy.app.version >= (2, 83, 17):  # This patch is officially accepted in Blender 2.83.17, so don't patch it
+        return
+
     # Asynchronously start the timer looking for the right time to patch the fbx importer
     thread = Thread(target=time_fbx_patch, args=[])
     thread.start()
@@ -59,8 +63,8 @@ def blen_read_animations_action_item_patched(action, item, cnodes, fps, anim_off
     keyframes = {}
 
     # Add each keyframe to the keyframe dict
-    def insert_keyframe(fc, frame, value):
-        fc_key = fc.data_path + str(fc.array_index)
+    def store_keyframe(fc, frame, value):
+        fc_key = (fc.data_path, fc.array_index)
         if not keyframes.get(fc_key):
             keyframes[fc_key] = []
         keyframes[fc_key].append((frame, value))
@@ -106,7 +110,7 @@ def blen_read_animations_action_item_patched(action, item, cnodes, fps, anim_off
                 value[channel] = v
 
             for fc, v in zip(blen_curves, value):
-                insert_keyframe(fc, frame, v)
+                store_keyframe(fc, frame, v)
 
     elif isinstance(item, ShapeKey):
         for frame, values in blen_read_animations_curves_iter(fbx_curves, anim_offset, 0, fps):
@@ -117,7 +121,7 @@ def blen_read_animations_action_item_patched(action, item, cnodes, fps, anim_off
                 value = v / 100.0
 
             for fc, v in zip(blen_curves, (value,)):
-                insert_keyframe(fc, frame, v)
+                store_keyframe(fc, frame, v)
 
     elif isinstance(item, Camera):
         for frame, values in blen_read_animations_curves_iter(fbx_curves, anim_offset, 0, fps):
@@ -128,7 +132,7 @@ def blen_read_animations_action_item_patched(action, item, cnodes, fps, anim_off
                 value = v
 
             for fc, v in zip(blen_curves, (value,)):
-                insert_keyframe(fc, frame, v)
+                store_keyframe(fc, frame, v)
 
     else:  # Object or PoseBone:
         if item.is_bone:
@@ -187,22 +191,21 @@ def blen_read_animations_action_item_patched(action, item, cnodes, fps, anim_off
 
             # Add each keyframe and its value to the keyframe dict
             for fc, value in zip(blen_curves, chain(loc, rot, sca)):
-                insert_keyframe(fc, frame, value)
+                store_keyframe(fc, frame, value)
 
     # Add all keyframe points to the fcurves at once and modify them after
-    for fc_data_path, key_values in keyframes.items():
-        data_path = fc_data_path[:-1]
-        index = int(fc_data_path[-1])
+    for fc_key, key_values in keyframes.items():
+        data_path, index = fc_key
 
         # Add all keyframe points at once
         fcurve = action.fcurves.find(data_path=data_path, index=index)
-        keyframe_points = fcurve.keyframe_points
-        keyframe_points.add(len(key_values))
+        num_keys = len(key_values)
+        fcurve.keyframe_points.add(num_keys)
 
         # Apply values to each keyframe point
-        for i in range(len(key_values)):
-            keyframe_points[i].co = key_values[i]
-            keyframe_points[i].interpolation = 'LINEAR'
+        for kf_point, v in zip(fcurve.keyframe_points, key_values):
+            kf_point.co = v
+            kf_point.interpolation = 'LINEAR'
 
     # Since we inserted our keyframes in 'FAST' mode, we have to update the fcurves now.
     for fc in blen_curves:

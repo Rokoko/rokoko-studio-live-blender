@@ -216,10 +216,10 @@ def show_actor(layout, actor, scale=False):
         row.scale_y = row_scale
 
     if paired_inputs.get(actor['id']):
-        row.label(text=actor['id'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
+        row.label(text=actor['name'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
     else:
         row.enabled = False
-        row.label(text=actor['id'], icon_value=Icons.SUIT.get_icon())
+        row.label(text=actor['name'], icon_value=Icons.SUIT.get_icon())
 
 
 def show_glove(layout, glove, scale=False):

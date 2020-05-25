@@ -50,10 +50,12 @@ classes = [
     operators.recorder.RecorderStop,
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
-    operators.detector.DetectGloveBones,
+    operators.detector.SaveCustomShapes,
+    operators.detector.SaveCustomBones,
     operators.detector.ImportCustomBones,
     operators.detector.ExportCustomBones,
     operators.detector.ClearCustomBones,
+    operators.detector.ClearCustomShapes,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
@@ -111,7 +113,7 @@ def register():
     core.icon_manager.load_icons()
 
     # Load bone detection list
-    core.detection_manager.load_bone_detection_list()
+    core.detection_manager.load_detection_lists()
 
     # Init fbx patcher
     core.fbx_patcher.start_fbx_patch_timer()

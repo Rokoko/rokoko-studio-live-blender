@@ -89,7 +89,6 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
 
 
-
 class BoneListItem(PropertyGroup):
     """Properties of the bone list items"""
     bone_name_source: StringProperty(
@@ -105,11 +104,6 @@ class BoneListItem(PropertyGroup):
     bone_name_key: StringProperty(
         name="Auto Detection Key",
         description="The automatically detected bone key",
-        default="")
-
-    bone_name_target_detected: StringProperty(
-        name="Detected Target Bone",
-        description="The target bone name, that initially got detected by the plugin",
         default="")
 
 

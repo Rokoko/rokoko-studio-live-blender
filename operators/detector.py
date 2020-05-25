@@ -19,15 +19,8 @@ class DetectFaceShapes(bpy.types.Operator):
             self.report({'ERROR'}, 'This mesh has no shapekeys!')
             return {'CANCELLED'}
 
-        for shape_name in animation_lists.face_shapes:
-            shortest_detected_shape = None
-            for shapekey in obj.data.shape_keys.key_blocks:
-                if shape_name.lower() in shapekey.name.lower():
-                    if not shortest_detected_shape or len(shortest_detected_shape) > len(shapekey.name):
-                        shortest_detected_shape = shapekey.name
-
-            if shortest_detected_shape:
-                setattr(obj, 'rsl_face_' + shape_name, shortest_detected_shape)
+        for shape_name_key in animation_lists.face_shapes:
+            setattr(obj, 'rsl_face_' + shape_name_key, detection_manager.detect_shape(obj, shape_name_key))
 
         return {'FINISHED'}
 
@@ -42,34 +35,63 @@ class DetectActorBones(bpy.types.Operator):
         obj = context.object
 
         for bone_name_key in animation_lists.actor_bones.keys():
-            bone_names = detection_manager.get_bone_list()[bone_name_key]
-            for bone in obj.pose.bones:
-                bone_name = detection_manager.standardize_bone_name(bone.name)
-                if bone_name in bone_names:
-                    setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
-
-                    # If looking for the chest bone, use the last found entry instead of the first one
-                    if bone_name_key != 'chest':
-                        break
+            setattr(obj, 'rsl_actor_' + bone_name_key, detection_manager.detect_bone(obj, bone_name_key))
 
         return {'FINISHED'}
 
 
-class DetectGloveBones(bpy.types.Operator):
-    bl_idname = "rsl.detect_glove_bones"
-    bl_label = "Auto Detect"
-    bl_description = "Automatically detect glove bones for supported naming schemes"
-    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+class SaveCustomShapes(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_shapes"
+    bl_label = "Save Custom Shapes"
+    bl_description = "This saves the currently selected shapekeys and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         obj = context.object
 
-        for bone_name_key in animation_lists.glove_bones.keys():
-            bone_names = detection_manager.get_bone_list()[bone_name_key]
-            for bone in obj.pose.bones:
-                bone_name = detection_manager.standardize_bone_name(bone.name)
-                if bone_name in bone_names:
-                    setattr(obj, 'rsl_glove_' + bone_name_key, bone.name)
+        # Go over all face shapekeys and see if the user changed the detected shapekey. If yes, save that new shapekey
+        for shape_name_key in animation_lists.face_shapes:
+            shape_name_selected = getattr(obj, 'rsl_face_' + shape_name_key)
+            if not shape_name_selected:
+                continue  # TODO idea: maybe save these unselected choices as well
+
+            shape_name_detected = detection_manager.detect_shape(obj, shape_name_key)
+
+            if shape_name_detected == shape_name_selected:  # This means that the user changed nothing, so don't save this
+                continue
+
+            detection_manager.save_live_data_shape_to_list(shape_name_key, shape_name_selected, shape_name_detected)
+
+        # At the end save all custom shapes to the file
+        detection_manager.save_to_file_and_update()
+
+        return {'FINISHED'}
+
+
+class SaveCustomBones(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_bones"
+    bl_label = "Save Custom Bones"
+    bl_description = "This saves the currently selected bones and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        obj = context.object
+
+        # Go over all actor bones and see if the user changed the detected bone. If yes, save that new bone
+        for bone_name_key in animation_lists.actor_bones.keys():
+            bone_name_selected = getattr(obj, 'rsl_actor_' + bone_name_key)
+            if not bone_name_selected:
+                continue  # TODO idea: maybe save these unselected choices as well
+
+            bone_name_detected = detection_manager.detect_bone(obj, bone_name_key)
+
+            if bone_name_detected == bone_name_selected:  # This means that the user changed nothing, so don't save this
+                continue
+
+            detection_manager.save_live_data_bone_to_list(bone_name_key, bone_name_selected, bone_name_detected)
+
+        # At the end save all custom bones to the file
+        detection_manager.save_to_file_and_update()
 
         return {'FINISHED'}
 
@@ -128,7 +150,7 @@ class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
 class ClearCustomBones(bpy.types.Operator):
     bl_idname = "rsl.clear_custom_bones"
     bl_label = "Clear Custom Bones"
-    bl_description = "Clear all custom bones naming schemes"
+    bl_description = "Clear all custom bone naming schemes"
     bl_options = {'INTERNAL'}
 
     def draw(self, context):
@@ -150,7 +172,38 @@ class ClearCustomBones(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self, width=400)
 
     def execute(self, context):
-        detection_manager.delete_custom_list()
+        detection_manager.delete_custom_bone_list()
 
         self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
+        return {'FINISHED'}
+
+
+class ClearCustomShapes(bpy.types.Operator):
+    bl_idname = "rsl.clear_custom_shapes"
+    bl_label = "Clear Custom Shapekeys"
+    bl_description = "Clear all custom shape naming schemes"
+    bl_options = {'INTERNAL'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='You are about to delete all stored custom shape naming schemes.', icon='ERROR')
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='Continue?', icon='BLANK1')
+
+        layout.separator()
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
+    def execute(self, context):
+        detection_manager.delete_custom_shape_list()
+
+        self.report({'INFO'}, 'Cleared all custom shape naming schemes!')
         return {'FINISHED'}

@@ -4,7 +4,7 @@ from mathutils import Quaternion, Matrix
 from . import animation_lists, recorder
 
 
-# version = None
+version = 0
 # playbacktimestamp = None
 timestamp = None
 props = []
@@ -126,13 +126,13 @@ def animate_actor(obj):
     # The models t-pose bone rotations and locations, which are set by the user, are stored inside this custom data
     custom_data = obj.get('CUSTOM')
     if not custom_data:
-        print('NO CUSTOM DATA')
+        # print('NO CUSTOM DATA')
         return
 
     # Get tpose data from custom data
     tpose_bones = custom_data.get('rsl_tpose_bones')
     if not tpose_bones:
-        print('NO TPOSE DATA')
+        # print('NO TPOSE DATA')
         return
 
     # Go over every mapped bone and animate it
