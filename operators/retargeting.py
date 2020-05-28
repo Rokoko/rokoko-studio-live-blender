@@ -100,11 +100,19 @@ class RetargetAnimation(bpy.types.Operator):
         armature_source.data.pose_position = 'POSE'
         armature_target.data.pose_position = 'POSE'
 
+        # Save and reset the current pose position of both armatures if rest position should be used
+        pose_source, pose_target = {}, {}
+        if bpy.context.scene.rsl_retargeting_use_rest_pose:
+            pose_source = self.get_and_reset_pose_rotations(armature_source)
+            pose_target = self.get_and_reset_pose_rotations(armature_target)
+
+        source_scale = None
         if context.scene.rsl_retargeting_auto_scaling:
             # Clean source animation
             self.clean_animation(armature_source)
 
             # Scale the source armature to fit the target armature
+            source_scale = copy.deepcopy(armature_source.scale)
             self.scale_armature(context, armature_source, armature_target, root_bones)
 
         # Duplicate source armature to apply transforms to the animation
@@ -216,6 +224,14 @@ class RetargetAnimation(bpy.types.Operator):
         armature_target.rotation_quaternion = rotation
         armature_target.rotation_mode = rotation_mode
 
+        # Reset source armature scale
+        if source_scale:
+            armature_source.scale = source_scale
+
+        # Reset pose positions to old state
+        # self.load_pose_rotations(armature_source, pose_source)
+        # self.load_pose_rotations(armature_target, pose_target)
+
         bpy.ops.object.select_all(action='DESELECT')
 
         self.report({'INFO'}, 'Retargeted animation.')
@@ -247,6 +263,46 @@ class RetargetAnimation(bpy.types.Operator):
         for fcurve in armature_source.animation_data.action.fcurves:
             if fcurve.data_path in deletable_fcurves:
                 armature_source.animation_data.action.fcurves.remove(fcurve)
+
+    def get_and_reset_pose_rotations(self, armature):
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature)
+        bpy.ops.object.mode_set(mode='POSE')
+
+        # Save rotations
+        pose_rotations = {}
+        for bone in armature.pose.bones:
+            if bone.rotation_mode == 'QUATERNION':
+                pose_rotations[bone.name] = copy.deepcopy(bone.rotation_quaternion)
+                bone.rotation_quaternion = (1, 0, 0, 0)
+            else:
+                pose_rotations[bone.name] = copy.deepcopy(bone.rotation_euler)
+                bone.rotation_euler = (0, 0, 0)
+
+        # Reset rotations
+        # bpy.ops.pose.rot_clear()
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        return pose_rotations
+
+    def load_pose_rotations(self, armature, pose_rotations):
+        if not pose_rotations:
+            return
+
+        bpy.ops.object.select_all(action='DESELECT')
+        utils.set_active(armature)
+        bpy.ops.object.mode_set(mode='POSE')
+
+        # Load rotations
+        for bone in armature.pose.bones:
+            rot = pose_rotations.get(bone.name)
+            if rot:
+                if bone.rotation_mode == 'QUATERNION':
+                    bone.rotation_quaternion = rot
+                else:
+                    bone.rotation_euler = rot
+
+        bpy.ops.object.mode_set(mode='OBJECT')
 
     def scale_armature(self, context, armature_source, armature_target, root_bones):
         source_min = None

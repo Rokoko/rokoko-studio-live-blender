@@ -91,6 +91,16 @@ def register():
                     '\nBoth armatures have to be in T-pose for this to work correctly',
         default=True
     )
+    Scene.rsl_retargeting_use_rest_pose = BoolProperty(
+        name='Use Rest Position',
+        description='Disabling this means that the current pose position will be used',
+        default=True
+    )
+    Scene.rsl_retargeting_use_current_pose = BoolProperty(
+        name='Use Current Pose',
+        description='Enabling this means that the pose position instead of the rest position is used',
+        default=False
+    )
     Scene.rsl_retargeting_bone_list = CollectionProperty(
         type=retargeting_ui.BoneListItem
     )

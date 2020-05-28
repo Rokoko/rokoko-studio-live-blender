@@ -300,10 +300,10 @@ def clean_custom_list():
 
 
 def import_custom_list(directory, file_name):
-    global bone_detection_list_custom
+    global bone_detection_list_custom, shape_detection_list_custom
 
     file_path = os.path.join(directory, file_name)
-    new_custom_bone_list = load_custom_lists_from_file(file_path=file_path)
+    new_custom_bone_list, new_custom_shape_list = load_custom_lists_from_file(file_path=file_path)
 
     # Merge the new and old custom bone lists
     for key, bones in bone_detection_list_custom.items():
@@ -316,7 +316,19 @@ def import_custom_list(directory, file_name):
 
         new_custom_bone_list[key] += bones
 
+    # Merge the new and old custom shape lists
+    for key, shapes in shape_detection_list_custom.items():
+        if not new_custom_shape_list.get(key):
+            new_custom_shape_list[key] = []
+
+        for shape in new_custom_shape_list[key]:
+            if shape in shapes:
+                shapes.remove(shape)
+
+        new_custom_shape_list[key] += shapes
+
     bone_detection_list_custom = new_custom_bone_list
+    shape_detection_list_custom = new_custom_shape_list
 
 
 def export_custom_list2(directory):
@@ -333,6 +345,9 @@ def export_custom_list2(directory):
 
 
 def export_custom_list(file_path):
+    if not bone_detection_list_custom and not shape_detection_list_custom:
+        return None
+
     save_custom_to_file(file_path=file_path)
     return os.path.basename(file_path)
 

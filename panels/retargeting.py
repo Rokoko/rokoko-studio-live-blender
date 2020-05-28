@@ -67,6 +67,9 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.prop(context.scene, 'rsl_retargeting_auto_scaling')
 
         row = layout.row(align=True)
+        row.prop(context.scene, 'rsl_retargeting_use_rest_pose')
+
+        row = layout.row(align=True)
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
 
