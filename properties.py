@@ -93,7 +93,9 @@ def register():
     )
     Scene.rsl_retargeting_use_rest_pose = BoolProperty(
         name='Use Rest Position',
-        description='Disabling this means that the current pose position will be used',
+        description='Uses the rest pose of the source and target armature to retarget the animation.'
+                    '\nIf disabled the current pose of both armatures will be used.'
+                    '\nBoth armatures should be in the same pose before retargeting',
         default=True
     )
     Scene.rsl_retargeting_use_current_pose = BoolProperty(

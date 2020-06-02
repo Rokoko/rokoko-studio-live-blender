@@ -91,6 +91,23 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.alignment = 'RIGHT'
         row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
 
+    def draw_import_export(self, layout):
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.label(text='Custom Naming Schemes:')
+        row.operator(detector.SaveCustomBonesRetargeting.bl_idname, text='Save')
+
+        subrow = layout.row(align=True)
+        row = subrow.row(align=True)
+        row.scale_y = 0.9
+        row.operator(detector.ImportCustomBones.bl_idname, text='Import')
+        row.operator(detector.ExportCustomBones.bl_idname, text='Export')
+        row = subrow.row(align=True)
+        row.scale_y = 0.9
+        row.alignment = 'RIGHT'
+        row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
+
 
 class BoneListItem(PropertyGroup):
     """Properties of the bone list items"""

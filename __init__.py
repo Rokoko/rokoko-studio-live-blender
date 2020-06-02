@@ -52,6 +52,7 @@ classes = [
     operators.detector.DetectActorBones,
     operators.detector.SaveCustomShapes,
     operators.detector.SaveCustomBones,
+    operators.detector.SaveCustomBonesRetargeting,
     operators.detector.ImportCustomBones,
     operators.detector.ExportCustomBones,
     operators.detector.ClearCustomBones,

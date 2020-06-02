@@ -144,7 +144,10 @@ def draw_import_export(layout, shapes=False):
 
     row = layout.row(align=True)
     row.label(text='Custom Naming Schemes:')
-    row.operator(detector.SaveCustomBones.bl_idname, text='Save Current Naming Scheme')
+    if shapes:
+        row.operator(detector.SaveCustomShapes.bl_idname, text='Save Current Naming Scheme')
+    else:
+        row.operator(detector.SaveCustomBones.bl_idname, text='Save Current Naming Scheme')
 
     subrow = layout.row(align=True)
     row = subrow.row(align=True)

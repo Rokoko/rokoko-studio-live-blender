@@ -96,6 +96,19 @@ class SaveCustomBones(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class SaveCustomBonesRetargeting(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_bones_retargeting"
+    bl_label = "Save Custom Bones"
+    bl_description = "This saves the currently selected bones and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        # Save the bone list if the user changed anything
+        detection_manager.save_retargeting_to_list()
+
+        return {'FINISHED'}
+
+
 class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "rsl.import_custom_schemes"
     bl_label = "Import Custom Scheme"
