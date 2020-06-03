@@ -102,7 +102,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Save and reset the current pose position of both armatures if rest position should be used
         pose_source, pose_target = {}, {}
-        if bpy.context.scene.rsl_retargeting_use_rest_pose:
+        if bpy.context.scene.rsl_retargeting_use_pose == 'REST':
             pose_source = self.get_and_reset_pose_rotations(armature_source)
             pose_target = self.get_and_reset_pose_rotations(armature_target)
 

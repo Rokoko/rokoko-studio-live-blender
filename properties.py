@@ -91,17 +91,14 @@ def register():
                     '\nBoth armatures have to be in T-pose for this to work correctly',
         default=True
     )
-    Scene.rsl_retargeting_use_rest_pose = BoolProperty(
-        name='Use Rest Position',
-        description='Uses the rest pose of the source and target armature to retarget the animation.'
-                    '\nIf disabled the current pose of both armatures will be used.'
+    Scene.rsl_retargeting_use_pose = EnumProperty(
+        name="Use Pose",
+        description='Select which pose of the source and target armature to use to retarget the animation.'
                     '\nBoth armatures should be in the same pose before retargeting',
-        default=True
-    )
-    Scene.rsl_retargeting_use_current_pose = BoolProperty(
-        name='Use Current Pose',
-        description='Enabling this means that the pose position instead of the rest position is used',
-        default=False
+        items=[
+            ("REST", "Rest", "Select this to use the rest pose during retargeting."),
+            ("CURRENT", "Current", "Select this to use the current pose during retargeting.")
+        ]
     )
     Scene.rsl_retargeting_bone_list = CollectionProperty(
         type=retargeting_ui.BoneListItem

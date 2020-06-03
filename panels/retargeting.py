@@ -67,29 +67,14 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.prop(context.scene, 'rsl_retargeting_auto_scaling')
 
         row = layout.row(align=True)
-        row.prop(context.scene, 'rsl_retargeting_use_rest_pose')
+        row.label(text='Use Pose:')
+        row.prop(context.scene, 'rsl_retargeting_use_pose', expand=True)
 
         row = layout.row(align=True)
         row.scale_y = 1.4
         row.operator(retargeting.RetargetAnimation.bl_idname, icon_value=Icons.CALIBRATE.get_icon())
 
         self.draw_import_export(layout)
-
-    def draw_import_export(self, layout):
-        layout.separator()
-
-        row = layout.row(align=True)
-        row.label(text='Custom Naming Schemes:')
-
-        subrow = layout.row(align=True)
-        row = subrow.row(align=True)
-        row.scale_y = 0.9
-        row.operator(detector.ImportCustomBones.bl_idname, text='Import')
-        row.operator(detector.ExportCustomBones.bl_idname, text='Export')
-        row = subrow.row(align=True)
-        row.scale_y = 0.9
-        row.alignment = 'RIGHT'
-        row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
 
     def draw_import_export(self, layout):
         layout.separator()
