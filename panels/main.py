@@ -21,13 +21,19 @@ class ToolPanel(object):
     bl_region_type = 'UI'
 
 
+def separator(layout, scale=1):
+    # Add small separator
+    row = layout.row(align=True)
+    row.scale_y = scale
+    row.label(text='')
+
+
 # Main panel of the Rokoko panel
 class ReceiverPanel(ToolPanel, bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_rsl_receiver'
     bl_label = 'Rokoko Studio Live'
 
     def draw(self, context):
-
         layout = self.layout
         layout.use_property_split = False
 

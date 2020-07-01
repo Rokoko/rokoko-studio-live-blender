@@ -6,6 +6,7 @@ if "bpy" not in locals():
     from . import retargeting
     from . import updater
     from . import info
+    from . import login
 else:
     import importlib
 
@@ -15,3 +16,4 @@ else:
     importlib.reload(retargeting)
     importlib.reload(updater)
     importlib.reload(info)
+    importlib.reload(login)

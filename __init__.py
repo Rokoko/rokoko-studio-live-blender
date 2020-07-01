@@ -41,7 +41,6 @@ classes = [
     panels.command_api.CommandPanel,
     panels.retargeting.RetargetingPanel,
     panels.retargeting.RSL_UL_BoneList,
-    panels.retargeting.BoneListItem,
     panels.updater.UpdaterPanel,
     panels.info.InfoPanel,
     operators.receiver.ReceiverStart,
@@ -73,6 +72,14 @@ classes = [
     operators.retargeting.ClearBoneList,
     operators.retargeting.RetargetAnimation,
 ]
+classes_always_enable = [
+    panels.retargeting.BoneListItem,
+]
+classes_login = [
+    panels.login.LoginPanel,
+    operators.login.LoginButton,
+    operators.login.ShowPassword,
+]
 
 
 def check_unsupported_blender_versions():
@@ -103,8 +110,19 @@ def register():
     # Register updater and check for Rokoko Studio Live updates
     updater_ops.register(bl_info, beta_branch)
 
-    # Register all classes
-    for cls in classes:
+    # Login
+    logged_in = core.login.login_from_cache(classes, classes_login)
+
+    print('LoG', logged_in)
+
+    # Register classes
+    if logged_in:
+        for cls in classes:
+            bpy.utils.register_class(cls)
+    else:
+        for cls in classes_login:
+            bpy.utils.register_class(cls)
+    for cls in classes_always_enable:
         bpy.utils.register_class(cls)
 
     # Register all custom properties
@@ -133,8 +151,11 @@ def unregister():
         operators.receiver.ReceiverStart.force_disable()
 
     # Unregister all classes
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    for cls in reversed(classes_login + classes + classes_always_enable):
+        try:
+            bpy.utils.unregister_class(cls)
+        except RuntimeError:
+            pass
 
     # Unload all custom icons
     core.icon_manager.unload_icons()

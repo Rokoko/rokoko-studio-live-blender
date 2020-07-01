@@ -415,7 +415,7 @@ def clean_addon_dir():
         except OSError:
             print("Failed to pre-remove folder " + folder)
 
-    # then remove resource files and folders (except settings and google dict)
+    # then remove resource files and folders (except settings, custom_bones and cache)
     resources_folder = os.path.join(main_dir, 'resources')
     files = [f for f in os.listdir(resources_folder) if os.path.isfile(os.path.join(resources_folder, f))]
     folders = [f for f in os.listdir(resources_folder) if os.path.isdir(os.path.join(resources_folder, f))]
@@ -432,7 +432,7 @@ def clean_addon_dir():
             print("Failed to pre-remove " + file)
 
     for f in folders:
-        if f == 'custom_bones':
+        if f == 'custom_bones' or f == 'cache':
             continue
 
         folder = os.path.join(resources_folder, f)
