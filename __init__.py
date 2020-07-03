@@ -79,6 +79,7 @@ classes_always_enable = [
 classes_login = [
     panels.login.LoginPanel,
     operators.login.LoginButton,
+    operators.login.RegisterButton,
     operators.login.ShowPassword,
 ]
 

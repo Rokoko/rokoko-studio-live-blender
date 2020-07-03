@@ -1,4 +1,5 @@
 import bpy
+import webbrowser
 from ..core import login
 
 
@@ -26,6 +27,18 @@ class LogoutButton(bpy.types.Operator):
 
     def execute(self, context):
         login.logout()
+        return {'FINISHED'}
+
+
+class RegisterButton(bpy.types.Operator):
+    bl_idname = 'rsl.login_register'
+    bl_label = 'Sign up in Browser'
+    bl_description = 'Opens the Rokoko ID website in your browser'
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        webbrowser.open('https://www.rokoko.com/en/rmp/account/sign-up')
+        self.report({'INFO'}, 'Opened Rokoko ID website.')
         return {'FINISHED'}
 
 

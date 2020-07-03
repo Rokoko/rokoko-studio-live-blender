@@ -1,6 +1,6 @@
 import bpy
 from .main import ToolPanel, separator
-from ..operators.login import LoginButton, ShowPassword
+from ..operators.login import LoginButton, RegisterButton, ShowPassword
 from ..core import login
 from ..core.icon_manager import Icons
 
@@ -40,4 +40,7 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
             row.label(text='Wrong email or password!', icon='ERROR')
 
         row = layout.row(align=True)
-        row.operator(LoginButton.bl_idname, icon='X')
+        row.operator(LoginButton.bl_idname, icon='KEYINGSET')
+
+        row = layout.row(align=True)
+        row.operator(RegisterButton.bl_idname, icon='URL')
