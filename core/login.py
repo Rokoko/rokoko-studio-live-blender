@@ -8,6 +8,7 @@ lib = None
 show_password = False
 show_wrong_auth = False
 credentials_updated = True
+logged_in_email = 'test@email.com'
 
 main_dir = pathlib.Path(os.path.dirname(__file__)).parent.resolve()
 resources_dir = os.path.join(main_dir, "resources")
@@ -28,8 +29,13 @@ def load():
     if libs_dir not in os.environ['PATH']:
         os.environ['PATH'] = os.environ['PATH'] + os.pathsep + libs_dir
 
+    # Create cache folder if it doesn't exist
+    if not os.path.isdir(cache_dir):
+        os.mkdir(cache_dir)
+
     # Load in the library
     if not lib:
+        print('LIB EXISTS?', os.path.isfile(lib_file), lib_file)
         lib = ctypes.CDLL(lib_file)
 
     # Set the cache path
@@ -43,7 +49,7 @@ def unload():
     if not lib:
         return
 
-    lib.shutdown()
+    lib.close()
 
     kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
     kernel32.FreeLibrary.argtypes = [wintypes.HMODULE]
@@ -53,11 +59,15 @@ def unload():
 
 
 def login_from_cache(classes_list, classes_login_list):
-    load()
-
     global classes, classes_login
     classes = classes_list
     classes_login = classes_login_list
+
+    try:
+        load()
+    except OSError as e:
+        print(e)
+        return
 
     lib.getCachePath.restype = ctypes.c_char_p
     print("Current cache path:", lib.getCachePath().decode())
@@ -95,6 +105,13 @@ def login(email, password):
     return False
 
 
+def logout():
+    load()
+    lib.signOut()
+    unload()
+    unregister_classes()
+
+
 def register_classes():
     unload()
 
@@ -103,12 +120,26 @@ def register_classes():
     bpy.context.scene.rsl_login_password = ''
     bpy.context.scene.rsl_login_password_shown = ''
 
+    # Store the email of the user
+    global logged_in_email
+    # logged_in_email = lib.signedInEmail()
+
     # Unregister login classes
     for cls in reversed(classes_login):
         bpy.utils.unregister_class(cls)
 
     # Register normal classes
     for cls in classes:
+        bpy.utils.register_class(cls)
+
+
+def unregister_classes():
+    # Unregister login classes
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+
+    # Register normal classes
+    for cls in classes_login:
         bpy.utils.register_class(cls)
 
 

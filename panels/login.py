@@ -7,13 +7,13 @@ from ..core.icon_manager import Icons
 
 class LoginPanel(ToolPanel, bpy.types.Panel):
     bl_idname = 'VIEW3D_PT_rsl_login'
-    bl_label = 'Login'
+    bl_label = 'Sign in'
 
     def draw(self, context):
         layout = self.layout
 
         row = layout.row(align=True)
-        row.label(text='Login with your Rokoko ID:', icon_value=Icons.STUDIO_LIVE_LOGO.get_icon())
+        row.label(text='Sign in with your Rokoko ID:', icon_value=Icons.STUDIO_LIVE_LOGO.get_icon())
         separator(layout, 0.1)
 
         row = layout.row(align=True)

@@ -71,6 +71,7 @@ classes = [
     operators.retargeting.BuildBoneList,
     operators.retargeting.ClearBoneList,
     operators.retargeting.RetargetAnimation,
+    operators.login.LogoutButton,
 ]
 classes_always_enable = [
     panels.retargeting.BoneListItem,

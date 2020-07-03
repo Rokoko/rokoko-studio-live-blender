@@ -4,8 +4,8 @@ from ..core import login
 
 class LoginButton(bpy.types.Operator):
     bl_idname = "rsl.login_login"
-    bl_label = "Login"
-    bl_description = "Login into your Rokoko account"
+    bl_label = "Sign in"
+    bl_description = "Sign into your Rokoko account"
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
@@ -14,7 +14,18 @@ class LoginButton(bpy.types.Operator):
             password = context.scene.rsl_login_password_shown
 
         if login.login(context.scene.rsl_login_email, password):
-            self.report({'INFO'}, 'Logged in successfully!')
+            self.report({'INFO'}, 'Signed in successfully!')
+        return {'FINISHED'}
+
+
+class LogoutButton(bpy.types.Operator):
+    bl_idname = "rsl.login_logout"
+    bl_label = "Sign out"
+    bl_description = "Sign ouf of your Rokoko account"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        login.logout()
         return {'FINISHED'}
 
 

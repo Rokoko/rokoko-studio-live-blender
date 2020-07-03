@@ -1,9 +1,11 @@
 import bpy
 
-from .main import ToolPanel
+from .main import ToolPanel, separator
 from .. import updater
 from ..operators import info
 from ..core.icon_manager import Icons
+from ..core import login
+from ..operators.login import LogoutButton
 
 
 class InfoPanel(ToolPanel, bpy.types.Panel):
@@ -19,9 +21,7 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 0.1
         row.label(text='for Blender (v' + updater.current_version_str + ')', icon='BLANK1')
 
-        # Separator
-        row = layout.row(align=True)
-        row.scale_y = 0.01
+        separator(layout, 0.01)
 
         row = layout.row(align=True)
         row.label(text='Developed by ', icon='BLANK1')
@@ -30,9 +30,7 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 0.3
         row.label(text='Rokoko Electronics ApS', icon='BLANK1')
 
-        # Separator
-        row = layout.row(align=True)
-        row.scale_y = 0.1
+        separator(layout, 0.1)
 
         col = layout.column(align=True)
 
@@ -43,3 +41,14 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row.operator(info.DocumentationButton.bl_idname)
         row = col.row(align=True)
         row.operator(info.ForumButton.bl_idname)
+
+        separator(layout, 0.1)
+
+        row = layout.row(align=True)
+        row.label(text='Rokoko ID:')
+        row.scale_y = 0.6
+        row = layout.row(align=True)
+        row.scale_y = 0.3
+        row.label(text=login.logged_in_email)
+        row = layout.row(align=True)
+        row.operator(LogoutButton.bl_idname)
