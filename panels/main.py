@@ -30,7 +30,7 @@ def separator(layout, scale=1):
 
 # Main panel of the Rokoko panel
 class ReceiverPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_receiver'
+    bl_idname = 'VIEW3D_PT_rsl_receiver_v2'
     bl_label = 'Rokoko Studio Live'
 
     def draw(self, context):

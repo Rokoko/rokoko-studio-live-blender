@@ -6,7 +6,7 @@ from ..core.icon_manager import Icons
 
 
 class LoginPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_login'
+    bl_idname = 'VIEW3D_PT_rsl_login_v2'
     bl_label = 'Rokoko ID'
 
     def draw(self, context):

@@ -8,7 +8,7 @@ from ..operators import detector
 # Create a panel in the Object category of all objects
 class ObjectsPanel(bpy.types.Panel):
     bl_label = "Rokoko Studio Live Setup"
-    bl_idname = "OBJECT_PT_rsl_objects"
+    bl_idname = "OBJECT_PT_rsl_objects_v2"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"

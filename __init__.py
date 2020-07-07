@@ -35,14 +35,24 @@ else:
 
 
 # List of all buttons and panels
-classes = [
+classes = [  # These panels will only be loaded when the user is logged in
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
     panels.retargeting.RetargetingPanel,
-    panels.retargeting.RSL_UL_BoneList,
     panels.updater.UpdaterPanel,
     panels.info.InfoPanel,
+]
+classes_login = [  # These panels will only be loaded when the user is logged out
+    panels.login.LoginPanel,
+    panels.updater.UpdaterPanel,
+    panels.info.InfoPanel,
+]
+classes_always_enable = [  # These non-panels will always be loaded, all non-panel ui should go in here
+    operators.login.LoginButton,
+    operators.login.RegisterButton,
+    operators.login.ShowPassword,
+    operators.login.LogoutButton,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
@@ -64,23 +74,15 @@ classes = [
     operators.command_api.Restart,
     operators.command_api.StartRecording,
     operators.command_api.StopRecording,
+    operators.retargeting.BuildBoneList,
+    operators.retargeting.ClearBoneList,
+    operators.retargeting.RetargetAnimation,
+    panels.retargeting.RSL_UL_BoneList,
+    panels.retargeting.BoneListItem,
     operators.info.LicenseButton,
     operators.info.RokokoButton,
     operators.info.DocumentationButton,
     operators.info.ForumButton,
-    operators.retargeting.BuildBoneList,
-    operators.retargeting.ClearBoneList,
-    operators.retargeting.RetargetAnimation,
-    operators.login.LogoutButton,
-]
-classes_always_enable = [
-    panels.retargeting.BoneListItem,
-]
-classes_login = [
-    panels.login.LoginPanel,
-    operators.login.LoginButton,
-    operators.login.RegisterButton,
-    operators.login.ShowPassword,
 ]
 
 
@@ -112,10 +114,8 @@ def register():
     # Register updater and check for Rokoko Studio Live updates
     updater_ops.register(bl_info, beta_branch)
 
-    # Login
+    # Check if the user is logged in, show the login panel if not
     logged_in = core.login.login_from_cache(classes, classes_login)
-
-    print('LoG', logged_in)
 
     # Register classes
     if logged_in:

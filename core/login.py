@@ -8,7 +8,7 @@ lib = None
 show_password = False
 show_wrong_auth = False
 credentials_updated = True
-logged_in_email = 'test@email.com'
+logged_in_email = ''
 
 main_dir = pathlib.Path(os.path.dirname(__file__)).parent.resolve()
 resources_dir = os.path.join(main_dir, "resources")
@@ -59,7 +59,7 @@ def unload():
 
 
 def login_from_cache(classes_list, classes_login_list):
-    global classes, classes_login
+    global classes, classes_login, logged_in_email
     classes = classes_list
     classes_login = classes_login_list
 
@@ -73,7 +73,17 @@ def login_from_cache(classes_list, classes_login_list):
     print("Current cache path:", lib.getCachePath().decode())
 
     lib.signInCache()
-    return lib.isSignedIn()
+
+    logged_in = lib.isSignedIn()
+
+    if logged_in:
+        # Store the email of the user
+        lib.getEmail.restype = ctypes.c_char_p
+        logged_in_email = lib.getEmail().decode()
+
+    unload()
+
+    return logged_in
 
 
 def login(email, password):
@@ -113,16 +123,18 @@ def logout():
 
 
 def register_classes():
+    # Store the email of the user
+    global logged_in_email
+    lib.getEmail.restype = ctypes.c_char_p
+    logged_in_email = lib.getEmail().decode()
+
+    # Unload the library
     unload()
 
     # Reset the credentials, so they won't get saved
     bpy.context.scene.rsl_login_email = ''
     bpy.context.scene.rsl_login_password = ''
     bpy.context.scene.rsl_login_password_shown = ''
-
-    # Store the email of the user
-    global logged_in_email
-    # logged_in_email = lib.signedInEmail()
 
     # Unregister login classes
     for cls in reversed(classes_login):
@@ -134,6 +146,9 @@ def register_classes():
 
 
 def unregister_classes():
+    global logged_in_email
+    logged_in_email = ''
+
     # Unregister login classes
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)

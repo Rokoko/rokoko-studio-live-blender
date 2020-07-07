@@ -7,7 +7,7 @@ from ..core.icon_manager import Icons
 
 # Main panel of the Rokoko panel
 class CommandPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_command_api_v1'
+    bl_idname = 'VIEW3D_PT_rsl_command_api_v2'
     bl_label = 'Studio Command API'
 
     def draw(self, context):

@@ -9,7 +9,7 @@ from ..operators.login import LogoutButton
 
 
 class InfoPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_info'
+    bl_idname = 'VIEW3D_PT_rsl_info_v2'
     bl_label = 'Info'
 
     def draw(self, context):
@@ -42,8 +42,11 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row = col.row(align=True)
         row.operator(info.ForumButton.bl_idname)
 
-        separator(layout, 0.1)
+        # If there is no email, the user is not logged in yet
+        if not login.logged_in_email:
+            return
 
+        separator(layout, 0.1)
         row = layout.row(align=True)
         row.label(text='Rokoko ID:')
         row.scale_y = 0.6
