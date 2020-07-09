@@ -77,9 +77,12 @@ def login_from_cache(classes_list, classes_login_list):
     logged_in = lib.isSignedIn()
 
     if logged_in:
-        # Store the email of the user
-        lib.getEmail.restype = ctypes.c_char_p
-        logged_in_email = lib.getEmail().decode()
+        try:
+            # Store the email of the user
+            lib.getEmail.restype = ctypes.c_char_p
+            logged_in_email = lib.getEmail().decode()
+        except UnicodeDecodeError:
+            logged_in_email = 'Could not get email'
 
     unload()
 
@@ -97,7 +100,7 @@ def login(email, password):
     # Check if already signed in
     if lib.isSignedIn():
         print('ALREADY SIGNED IN!')
-        register_classes()
+        register_classes(email)
         return True
 
     # Sign in with email and password
@@ -106,7 +109,7 @@ def login(email, password):
     print('RESULT', result)
 
     if result == 0:
-        register_classes()
+        register_classes(email)
         show_wrong_auth = False
         return True
 
@@ -122,11 +125,14 @@ def logout():
     unregister_classes()
 
 
-def register_classes():
-    # Store the email of the user
-    global logged_in_email
-    lib.getEmail.restype = ctypes.c_char_p
-    logged_in_email = lib.getEmail().decode()
+def register_classes(email):
+    try:
+        # Store the email of the user
+        global logged_in_email
+        lib.getEmail.restype = ctypes.c_char_p
+        logged_in_email = lib.getEmail().decode()
+    except UnicodeDecodeError:
+        logged_in_email = email
 
     # Unload the library
     unload()
