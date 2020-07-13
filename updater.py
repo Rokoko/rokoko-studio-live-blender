@@ -64,11 +64,13 @@ class Version:
 
         # Set version data
         self.version_string = version_string
+        self.version_display_string = version_string
         self.version_number = version_number
         self.name = data.get('name')
         self.download_link = data.get('zipball_url')
         self.patch_notes = data.get('body')
         self.release_date = data.get('published_at')
+        self.is_prerelease = data.get('prerelease')
 
         if 'T' in data.get('published_at')[1:]:
             self.release_date = data.get('published_at').split('T')[0]
@@ -76,6 +78,9 @@ class Version:
         # If the name of the release contains "yanked", ignore it
         if 'yanked' in self.name.lower():
             return
+
+        if self.is_prerelease:
+            self.version_display_string += ' (beta)'
 
         version_list.append(self)
 
@@ -87,7 +92,8 @@ def get_version_by_string(version_string) -> Version:
 
 
 def get_latest_version() -> Version:
-    return version_list[0]
+    version_list_releases = [version for version in version_list if not version.is_prerelease]
+    return version_list_releases[0]
 
 
 def check_for_update_background(check_on_startup=False):
@@ -483,7 +489,10 @@ def check_ignored_version():
 def get_version_list(self, context):
     choices = []
     for version in version_list:
-        choices.append((version.version_string, version.version_string, version.version_string))
+        # 1. Will be returned by context.scene
+        # 2. Will be shown in lists
+        # 3. will be shown in the hover description (below description)
+        choices.append((version.version_string, version.version_display_string, version.version_display_string))
 
     bpy.types.Object.Enum = choices
     return bpy.types.Object.Enum
