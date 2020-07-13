@@ -82,7 +82,7 @@ def login_from_cache(classes_list, classes_login_list):
             lib.getEmail.restype = ctypes.c_char_p
             logged_in_email = lib.getEmail().decode()
         except UnicodeDecodeError:
-            logged_in_email = 'Could not get email'
+            logged_in_email = 'Not Found'
 
     unload()
 

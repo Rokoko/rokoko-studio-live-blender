@@ -1,5 +1,6 @@
 import bpy
 import copy
+from math import radians, degrees
 
 from collections import OrderedDict
 
@@ -68,27 +69,61 @@ def process_actor_recording(obj_name, data):
     action.use_fake_user = True
     armature.animation_data_create().action = action
 
-    # Handle recording data
+    # Handle recorded data
     data_paths = OrderedDict()
+    prev_rotations = {}
+    rotation_modifiers = {}
     for item in data:
+        bone_name = item["bone_name"]
+
         if item['location']:
-            data_path = 'pose.bones["%s"].location' % item['bone_name']
+            data_path = 'pose.bones["%s"].location' % bone_name
             if not data_paths.get(data_path):
                 data_paths[data_path] = []
             data_paths[data_path].append((item['timestamp'], item['location']))
 
         if item['rotation']:
-            data_path = 'pose.bones["%s"].rotation_euler' % item['bone_name']
+            rotation = item['rotation']
+            data_path = 'pose.bones["%s"].rotation_euler' % bone_name
             if not data_paths.get(data_path):
                 data_paths[data_path] = []
-            data_paths[data_path].append((item['timestamp'], item['rotation']))
+
+            # Load previous rotation from dict
+            prev_rot = prev_rotations.get(bone_name)
+            if not prev_rot:
+                prev_rot = rotation
+
+            # Fix each rotation axis separately
+            for i in [0, 1, 2]:
+                # Load rotation modifier of the bone rotation axis
+                # The rotation modifier is used to cut down on processing time. It gets set when a axis had been normalized
+                # and then is used to apply the same fix to subsequent rotations. This prevents having to normalize subsequent rotations
+                rotation_mod = rotation_modifiers.get((bone_name, i))
+                if not rotation_mod:
+                    rotation_mod = 0
+
+                # Get axis rotation in degrees, since they are stored as radians. Also add the rotation modifier to the rotation
+                axis = degrees(rotation[i]) + rotation_mod
+                axis_prev = degrees(prev_rot[i])
+
+                # Normalize the rotation
+                axis_normalized, rotation_mod_new = normalize_rotation(axis, axis_prev)
+
+                # Save the normalized axis to the rotation and save the rotation modifier
+                rotation[i] = radians(axis_normalized)
+                rotation_modifiers[bone_name, i] = rotation_mod + rotation_mod_new
+
+            # Save the rotation to the data paths and save the current rotation as the previous rotation
+            data_paths[data_path].append((item['timestamp'], rotation))
+            prev_rotations[bone_name] = rotation
 
         use_inherit_rotation = False
-        data_path = 'data.bones["%s"].use_inherit_rotation' % item['bone_name']
+        data_path = 'data.bones["%s"].use_inherit_rotation' % bone_name
         if not data_paths.get(data_path):
             data_paths[data_path] = []
         data_paths[data_path].append((item['timestamp'], [use_inherit_rotation]))
 
+    # Go through each datapath (fcurve) and add all keyframes at once
     for data_path, values_tmp in data_paths.items():
         frame_count = len(values_tmp)
         values_tmp = list(zip(*values_tmp))  # This unzips the list of tuples into two separate lists
@@ -192,6 +227,25 @@ def process_face_recording(obj_name, data):
                 recorded_timestamps[timestamp],
                 shapekey_value)
             keyframe_points[frame_i].interpolation = 'LINEAR'
+
+
+def normalize_rotation(axis, axis_prev):
+    rotation_mod = 0
+    if abs(axis - axis_prev) > 180:
+        desired_axis = axis
+        if axis_prev > axis:
+            while abs(desired_axis - axis_prev) > 180 and axis_prev > axis:
+                print(axis_prev, axis, desired_axis)
+                desired_axis += 360
+                rotation_mod += 360
+            axis = desired_axis
+        else:
+            while abs(desired_axis - axis_prev) > 180 and axis_prev < axis:
+                print(axis_prev, axis, desired_axis)
+                desired_axis -= 360
+                rotation_mod -= 360
+            axis = desired_axis
+    return axis, rotation_mod
 
 
 def convert_timestamps_to_keyframes():
