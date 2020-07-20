@@ -16,6 +16,7 @@ beta_branch = True
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
 import sys
+import platform
 if "bpy" not in locals():
     import bpy
     from . import core
@@ -87,6 +88,16 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
 
 
 def check_unsupported_blender_versions():
+    # Don't allow Blender versions older than 2.80
+    print(platform.system())
+    if platform.system() != "Windows":
+        unregister()
+        sys.tracebacklimit = 0
+        raise ImportError('\n\nThis beta version of Rokoko Studio Live does currently only work on Windows.'
+                          '\nWe will release the full version for Linux and Mac very soon.'
+                          '\nPlease check back later!'
+                          '\n')
+
     # Don't allow Blender versions older than 2.80
     if bpy.app.version < (2, 80):
         unregister()

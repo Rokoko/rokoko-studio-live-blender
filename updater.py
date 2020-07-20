@@ -155,11 +155,21 @@ def get_github_releases():
         print('FAKE INSTALL!')
 
         Version({
+            'tag_name': '100.1',
+            'name': 'Pre release!',
+            'zipball_url': '',
+            'body': 'Nothing new to see',
+            'published_at': 'Just now!!',
+            'prerelease': True
+        })
+
+        Version({
             'tag_name': 'v-99-99',
             'name': 'v-99-99',
             'zipball_url': '',
             'body': 'Put exiting new stuff here\nOr maybe there is?',
-            'published_at': 'Today'
+            'published_at': 'Today',
+            'prerelease': False
         })
 
         Version({
@@ -167,7 +177,8 @@ def get_github_releases():
             'name': '12.34.56 Test Release',
             'zipball_url': '',
             'body': 'Nothing new to see',
-            'published_at': 'A week ago probably'
+            'published_at': 'A week ago probably',
+            'prerelease': False
         })
         return True
 
@@ -261,6 +272,7 @@ def show_update_notification(scene):  # One argument in necessary for some reaso
 
 def update_now(version=None, latest=False, beta=False):
     if fake_update:
+        print('FAKE UPDATE TO VERSION:', version)
         finish_update()
         return
     if beta:
