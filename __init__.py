@@ -93,10 +93,13 @@ def check_unsupported_blender_versions():
     if platform.system() != "Windows":
         unregister()
         sys.tracebacklimit = 0
-        raise ImportError('\n\nThis beta version of Rokoko Studio Live does currently only work on Windows.'
+        raise ImportError('\n\nThis beta version of Rokoko Studio Live does currently only work on Windows.                                                    '
                           '\nWe will release the full version for Linux and Mac very soon.'
-                          '\nPlease check back later!'
-                          '\n')
+                          '\n'
+                          '\nYou can download the previous version here and you will get a notification in the plugin when the update gets released:'
+                          '\n  https://github.com/Rokoko/rokoko-studio-live-blender/releases'
+                          '\n\n\n'
+                          )
 
     # Don't allow Blender versions older than 2.80
     if bpy.app.version < (2, 80):
