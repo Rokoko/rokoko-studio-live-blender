@@ -12,13 +12,7 @@ row_scale = 0.75
 paired_inputs = {}
 
 
-# Initializes the Rokoko panel in the toolbar
-class ToolPanel(object):
-    bl_label = 'Rokoko'
-    bl_idname = 'VIEW3D_TS_rokoko'
-    bl_category = 'Rokoko'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+is_moved = True
 
 
 def separator(layout, scale=1):
@@ -28,10 +22,35 @@ def separator(layout, scale=1):
     row.label(text='')
 
 
+# Initializes the Rokoko panel in the toolbar
+class ToolPanel:
+    if not is_moved:
+        bl_label = 'Rokoko'
+        bl_idname = 'VIEW3D_TS_rokoko'
+        bl_category = 'Rokoko'
+        bl_space_type = 'VIEW_3D'
+        bl_region_type = 'UI'
+    else:
+        bl_category = "Tools"
+        bl_space_type = 'PROPERTIES'
+        bl_region_type = 'WINDOW'
+        bl_context = "object"
+
+
+class RokokoMainPanel(ToolPanel, bpy.types.Panel):
+    bl_idname = "OBJECT_PT_rokoko_main"
+    bl_label = "Rokoko"
+
+    def draw(self, context):
+        pass
+
+
 # Main panel of the Rokoko panel
 class ReceiverPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_receiver_v2'
     bl_label = 'Rokoko Studio Live'
+    bl_idname = 'VIEW3D_PT_rsl_receiver_v2'
+    if is_moved:
+        bl_parent_id = "OBJECT_PT_rokoko_main"
 
     def draw(self, context):
         layout = self.layout

@@ -37,12 +37,21 @@ else:
 
 # List of all buttons and panels
 classes = [  # These panels will only be loaded when the user is logged in
+    panels.main.RokokoMainPanel,
+
     panels.main.ReceiverPanel,
-    panels.objects.ObjectsPanel,
-    panels.command_api.CommandPanel,
-    panels.retargeting.RetargetingPanel,
-    panels.updater.UpdaterPanel,
-    panels.info.InfoPanel,
+    # panels.objects.ObjectsPanel,
+    # panels.command_api.CommandPanel,
+    # panels.retargeting.RetargetingPanel,
+    # panels.updater.UpdaterPanel,
+    # panels.info.InfoPanel,
+
+    # panels.main_moved.RokokoPanel,
+    # panels.main_moved.RokokoSubPanel,
+
+    # panels.main_moved.HELLO_PT_World1,
+    # panels.main_moved.HELLO_PT_World2,
+    # panels.main_moved.HELLO_PT_World3,
 ]
 classes_login = [  # These panels will only be loaded when the user is logged out
     panels.login.LoginPanel,
