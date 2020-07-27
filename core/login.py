@@ -27,7 +27,8 @@ def load():
 
     # Add the libs dir to the paths
     if libs_dir not in os.environ['PATH']:
-        os.environ['PATH'] = os.environ['PATH'] + os.pathsep + libs_dir
+        print("ADDED")
+        os.environ['PATH'] = libs_dir + os.pathsep + os.environ['PATH']
 
     # Create cache folder if it doesn't exist
     if not os.path.isdir(cache_dir):
@@ -35,7 +36,13 @@ def load():
 
     # Load in the library
     if not lib:
-        print('LIB EXISTS?', os.path.isfile(lib_file), lib_file)
+        print()
+        print('LIB EXISTS 1?', os.path.isfile(lib_file), lib_file)
+        print('LIB EXISTS 2?', os.path.isfile(lib_file.replace("\\", "/")), lib_file.replace("\\", "/"))
+        print('ENVIRONMENT:', os.environ['PATH'])
+        path = os.environ['PATH'].split(os.pathsep)[0]
+        print('DLLs:', os.listdir(path))
+        print()
         lib = ctypes.CDLL(lib_file)
 
     # Set the cache path
