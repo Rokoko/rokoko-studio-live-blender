@@ -45,7 +45,6 @@ bone_list['hip'] = [
     'Pelvis',
     'B_C_Pelvis',
     'Bip_Pelvis',
-    'Root',
     'Hips_Root',
     'Rot_Root',
     'Sk',
@@ -68,6 +67,7 @@ bone_list['hip'] = [
     'Pelvis_R',
     'Root_Pelvis_1',
     'Root_X',
+    # 'Root',
 ]
 bone_list['spine'] = [  # This is a list of all spine and chest bones
     'Spine',  # First entry!
@@ -168,6 +168,10 @@ bone_list['spine'] = [  # This is a list of all spine and chest bones
     'Spine_D',
     'Spine_E',
 
+    'Spine_001',
+    'Spine_002',
+    'Spine_003',
+
     'Spina00',
     'Spina01',
     'Spina02',
@@ -267,6 +271,7 @@ bone_list['neck'] = [
     'J_Neck1',
     'NeckLower',
     'Neck_X',
+    'Spine_004',
 ]
 bone_list['head'] = [
     'Head',
@@ -286,6 +291,7 @@ bone_list['head'] = [
     'J_Head',
     'Head_X',
     'J_Kao',
+    'Spine_005',
 ]
 bone_list['leftShoulder'] = [
     '\L_Shoulder',
