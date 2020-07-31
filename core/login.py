@@ -123,7 +123,7 @@ def login(email, password):
     # Check if already signed in
     if lib.isSignedIn():
         print('ALREADY SIGNED IN!')
-        register_classes(email)
+        register_classes()
         return True
 
     # Sign in with email and password
@@ -132,7 +132,7 @@ def login(email, password):
     print('LOGGED IN?', logged_in)
 
     if logged_in:
-        register_classes(email)
+        register_classes()
         show_wrong_auth = False
         return True
 
