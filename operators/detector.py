@@ -1,7 +1,9 @@
+import os
 import bpy
+import bpy_extras
 
 from ..core import animation_lists
-from ..core.auto_detect_lists.bones import bone_list
+from ..core import detection_manager
 
 
 class DetectFaceShapes(bpy.types.Operator):
@@ -17,15 +19,8 @@ class DetectFaceShapes(bpy.types.Operator):
             self.report({'ERROR'}, 'This mesh has no shapekeys!')
             return {'CANCELLED'}
 
-        for shape_name in animation_lists.face_shapes:
-            shortest_detected_shape = None
-            for shapekey in obj.data.shape_keys.key_blocks:
-                if shape_name.lower() in shapekey.name.lower():
-                    if not shortest_detected_shape or len(shortest_detected_shape) > len(shapekey.name):
-                        shortest_detected_shape = shapekey.name
-
-            if shortest_detected_shape:
-                setattr(obj, 'rsl_face_' + shape_name, shortest_detected_shape)
+        for shape_name_key in animation_lists.face_shapes:
+            setattr(obj, 'rsl_face_' + shape_name_key, detection_manager.detect_shape(obj, shape_name_key))
 
         return {'FINISHED'}
 
@@ -40,120 +35,192 @@ class DetectActorBones(bpy.types.Operator):
         obj = context.object
 
         for bone_name_key in animation_lists.actor_bones.keys():
-            bone_names = get_bone_list()[bone_name_key]
-            for bone in obj.pose.bones:
-                bone_name = standardize_bone_name(bone.name)
-                if bone_name.lower() in bone_names:
-                    setattr(obj, 'rsl_actor_' + bone_name_key, bone.name)
-
-                    # If looking for the chest bone, use the last found entry instead of the first one
-                    if bone_name_key != 'chest':
-                        break
+            setattr(obj, 'rsl_actor_' + bone_name_key, detection_manager.detect_bone(obj, bone_name_key))
 
         return {'FINISHED'}
 
 
-def standardize_bone_name(name):
-    # List of chars to replace if they are at the start of a bone name
-    starts_with = [
-        ('_', ''),
-        ('ValveBiped_', ''),
-        ('Valvebiped_', ''),
-        ('Bip1_', 'Bip_'),
-        ('Bip01_', 'Bip_'),
-        ('Bip001_', 'Bip_'),
-        ('Character1_', ''),
-        ('HLP_', ''),
-        ('JD_', ''),
-        ('JU_', ''),
-        ('Armature|', ''),
-        ('Bone_', ''),
-        ('C_', ''),
-        ('Cf_S_', ''),
-        ('Cf_J_', ''),
-        ('G_', ''),
-        ('Joint_', ''),
-        ('DEF_', ''),
-    ]
+class SaveCustomShapes(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_shapes"
+    bl_label = "Save Custom Shapes"
+    bl_description = "This saves the currently selected shapekeys and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
 
-    # Standardize names
-    # Make all the underscores!
-    name = name.replace(' ', '_') \
-        .replace('-', '_') \
-        .replace('.', '_') \
-        .replace('____', '_') \
-        .replace('___', '_') \
-        .replace('__', '_') \
+    def execute(self, context):
+        obj = context.object
 
-    # Replace if name starts with specified chars
-    for replacement in starts_with:
-        if name.startswith(replacement[0]):
-            name = replacement[1] + name[len(replacement[0]):]
+        # Go over all face shapekeys and see if the user changed the detected shapekey. If yes, save that new shapekey
+        for shape_name_key in animation_lists.face_shapes:
+            shape_name_selected = getattr(obj, 'rsl_face_' + shape_name_key)
+            if not shape_name_selected:
+                continue  # TODO idea: maybe save these unselected choices as well
 
-    # Remove digits from the start
-    name_split = name.split('_')
-    if len(name_split) > 1 and name_split[0].isdigit():
-        name = name_split[1]
+            shape_name_detected = detection_manager.detect_shape(obj, shape_name_key)
 
-    # Specific condition
-    name_split = name.split('"')
-    if len(name_split) > 3:
-        name = name_split[1]
+            if shape_name_detected == shape_name_selected:  # This means that the user changed nothing, so don't save this
+                continue
 
-    # Another specific condition
-    if ':' in name:
-        for i, split in enumerate(name.split(':')):
-            if i == 0:
-                name = ''
-            else:
-                name += split
+            detection_manager.save_live_data_shape_to_list(shape_name_key, shape_name_selected, shape_name_detected)
 
-    # Remove S0 from the end
-    if name[-2:] == 'S0':
-        name = name[:-2]
+        # At the end save all custom shapes to the file
+        detection_manager.save_to_file_and_update()
 
-    if name[-4:] == '_Jnt':
-        name = name[:-4]
-
-    return name
+        return {'FINISHED'}
 
 
-def get_bone_list():
-    new_bone_list = {}
+class SaveCustomBones(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_bones"
+    bl_label = "Save Custom Bones"
+    bl_description = "This saves the currently selected bones and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
 
-    for bone_key, bone_values in bone_list.items():
-        if 'left' not in bone_key:
-            new_bone_list[bone_key] = [bone_value.lower() for bone_value in bone_values]
-            if bone_key == 'spine':
-                new_bone_list['chest'] = [bone_value.lower() for bone_value in bone_values]
-            continue
+    def execute(self, context):
+        obj = context.object
 
-        bone_values_left = []
-        bone_values_right = []
+        # Go over all actor bones and see if the user changed the detected bone. If yes, save that new bone
+        for bone_name_key in animation_lists.actor_bones.keys():
+            bone_name_selected = getattr(obj, 'rsl_actor_' + bone_name_key)
+            if not bone_name_selected:
+                continue  # TODO idea: maybe save these unselected choices as well
 
-        for bone_name in bone_values:
-            bone_name = bone_name.lower()
+            bone_name_detected = detection_manager.detect_bone(obj, bone_name_key)
 
-            if '\l' in bone_name:
-                bone_name_l = bone_name.replace('\l', 'l')
-                bone_name_left = bone_name.replace('\l', 'left')
-                bone_name_r = bone_name.replace('\l', 'r')
-                bone_name_right = bone_name.replace('\l', 'right')
+            if bone_name_detected == bone_name_selected:  # This means that the user changed nothing, so don't save this
+                continue
 
-                # Debug if duplicates are found
-                if bone_name_l in bone_values_left:
-                    print('Duplicate autodetect bone entry:', bone_name, bone_name_l)
+            detection_manager.save_live_data_bone_to_list(bone_name_key, bone_name_selected, bone_name_detected)
+
+        # At the end save all custom bones to the file
+        detection_manager.save_to_file_and_update()
+
+        return {'FINISHED'}
+
+
+class SaveCustomBonesRetargeting(bpy.types.Operator):
+    bl_idname = "rsl.save_custom_bones_retargeting"
+    bl_label = "Save Custom Bones"
+    bl_description = "This saves the currently selected bones and they will then get automatically detected"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        # Save the bone list if the user changed anything
+        detection_manager.save_retargeting_to_list()
+
+        return {'FINISHED'}
+
+
+class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = "rsl.import_custom_schemes"
+    bl_label = "Import Custom Scheme"
+    bl_description = "Import a custom naming scheme"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    files: bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={'HIDDEN', 'SKIP_SAVE'})
+    directory: bpy.props.StringProperty(maxlen=1024, subtype='FILE_PATH', options={'HIDDEN', 'SKIP_SAVE'})
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+
+    def execute(self, context):
+        import_count = 0
+        if self.directory:
+            for f in self.files:
+                file_name = f.name
+                if not file_name.endswith('.json'):
                     continue
+                detection_manager.import_custom_list(self.directory, file_name)
+                import_count += 1
 
-                bone_values_left.append(bone_name_l)
-                bone_values_left.append(bone_name_left)
-                bone_values_right.append(bone_name_r)
-                bone_values_right.append(bone_name_right)
+        # If this operator is called with no directory but a filepath argument, import that
+        elif self.filepath:
+            detection_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
+            import_count += 1
 
-        bone_key_left = bone_key
-        bone_key_right = bone_key.replace('left', 'right')
+        detection_manager.save_to_file_and_update()
 
-        new_bone_list[bone_key_left] = bone_values_left
-        new_bone_list[bone_key_right] = bone_values_right
+        if not import_count:
+            self.report({'ERROR'}, 'No files were imported.')
+            return {'FINISHED'}
 
-    return new_bone_list
+        self.report({'INFO'}, 'Successfully imported new naming schemes.')
+        return {'FINISHED'}
+
+
+class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    bl_idname = "rsl.export_custom_schemes"
+    bl_label = "Export Custom Scheme"
+    bl_description = "Export your custom naming schemes"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    filename_ext = ".json"
+    filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
+
+    def execute(self, context):
+        file_name = detection_manager.export_custom_list(self.filepath)
+
+        if not file_name:
+            self.report({'ERROR'}, 'You don\'t have any custom naming schemes!')
+            return {'FINISHED'}
+
+        self.report({'INFO'}, 'Exported custom naming schemes as "' + file_name + '".')
+        return {'FINISHED'}
+
+
+class ClearCustomBones(bpy.types.Operator):
+    bl_idname = "rsl.clear_custom_bones"
+    bl_label = "Clear Custom Bones"
+    bl_description = "Clear all custom bone naming schemes"
+    bl_options = {'INTERNAL'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='You are about to delete all stored custom bone naming schemes.', icon='ERROR')
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='Continue?', icon='BLANK1')
+
+        layout.separator()
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
+    def execute(self, context):
+        detection_manager.delete_custom_bone_list()
+
+        self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
+        return {'FINISHED'}
+
+
+class ClearCustomShapes(bpy.types.Operator):
+    bl_idname = "rsl.clear_custom_shapes"
+    bl_label = "Clear Custom Shapekeys"
+    bl_description = "Clear all custom shape naming schemes"
+    bl_options = {'INTERNAL'}
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.separator()
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='You are about to delete all stored custom shape naming schemes.', icon='ERROR')
+
+        row = layout.row(align=True)
+        row.scale_y = 0.5
+        row.label(text='Continue?', icon='BLANK1')
+
+        layout.separator()
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=400)
+
+    def execute(self, context):
+        detection_manager.delete_custom_shape_list()
+
+        self.report({'INFO'}, 'Cleared all custom shape naming schemes!')
+        return {'FINISHED'}

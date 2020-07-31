@@ -1,7 +1,9 @@
 import bpy
+import datetime
 
 from .. import updater, updater_ops
 from ..core import animations
+from ..core import recorder as recorder_manager
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import Icons
 from ..operators import receiver, recorder
@@ -19,13 +21,19 @@ class ToolPanel(object):
     bl_region_type = 'UI'
 
 
+def separator(layout, scale=1):
+    # Add small separator
+    row = layout.row(align=True)
+    row.scale_y = scale
+    row.label(text='')
+
+
 # Main panel of the Rokoko panel
 class ReceiverPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_receiver'
+    bl_idname = 'VIEW3D_PT_rsl_receiver_v2'
     bl_label = 'Rokoko Studio Live'
 
     def draw(self, context):
-
         layout = self.layout
         layout.use_property_split = False
 
@@ -67,10 +75,17 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.scale_y = 1.3
         row.enabled = receiver.receiver_enabled
-        if context.scene.rsl_recording:
-            row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
-        else:
+        if not context.scene.rsl_recording:
             row.operator(recorder.RecorderStart.bl_idname, icon_value=Icons.START_RECORDING.get_icon())
+        else:
+            row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
+            timestamps = list(recorder_manager.recorded_timestamps.keys())
+            if not timestamps:
+                return
+
+            time_recorded = int(timestamps[-1] - timestamps[0])
+            row = layout.row(align=True)
+            row.label(text='Recording time: ' + str(datetime.timedelta(seconds=time_recorded)))
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
@@ -89,7 +104,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         used_trackers = []
         used_faces = []
 
-        # Get all paired inputs
+        # Get all paired inputs. Paired inputs are paired to an object in the scene
         for obj in bpy.data.objects:
             # Get paired props and trackers
             if animations.props or animations.trackers:
@@ -113,6 +128,14 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 paired = paired_inputs.get(obj.rsl_animations_actors)
                 if not paired:
                     paired_inputs[obj.rsl_animations_actors] = [obj.name]
+                else:
+                    paired.append(obj.name)
+
+            # Get paired actors
+            if animations.gloves and obj.rsl_animations_gloves and obj.rsl_animations_gloves != 'None':
+                paired = paired_inputs.get(obj.rsl_animations_gloves)
+                if not paired:
+                    paired_inputs[obj.rsl_animations_gloves] = [obj.name]
                 else:
                     paired.append(obj.name)
 
@@ -180,6 +203,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         # row = layout.row(align=True)
         # row.label(text='faceId2', icon_value=Icons.FACE.get_icon())
 
+        for glove in animations.gloves:
+            show_glove(layout, glove, scale=True)
+
 
 def add_indent(split, empty=False):
     row = split.row(align=True)
@@ -196,10 +222,22 @@ def show_actor(layout, actor, scale=False):
         row.scale_y = row_scale
 
     if paired_inputs.get(actor['id']):
-        row.label(text=actor['id'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
+        row.label(text=actor['name'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
     else:
         row.enabled = False
-        row.label(text=actor['id'], icon_value=Icons.SUIT.get_icon())
+        row.label(text=actor['name'], icon_value=Icons.SUIT.get_icon())
+
+
+def show_glove(layout, glove, scale=False):
+    row = layout.row(align=True)
+    if scale:
+        row.scale_y = row_scale
+
+    if paired_inputs.get(glove['gloveID']):
+        row.label(text=glove['gloveID'] + '  --> ' + ', '.join(paired_inputs.get(glove['gloveID'])), icon='VIEW_PAN')
+    else:
+        row.enabled = False
+        row.label(text=glove['gloveID'], icon='VIEW_PAN')
 
 
 def show_face(layout, face, scale=False):

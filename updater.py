@@ -12,7 +12,7 @@ from threading import Thread
 from bpy.app.handlers import persistent
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
-GITHUB_URL_DEV = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/development.zip'
+GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/beta.zip'
 
 no_ver_check = False
 fake_update = False
@@ -64,11 +64,13 @@ class Version:
 
         # Set version data
         self.version_string = version_string
+        self.version_display_string = version_string
         self.version_number = version_number
         self.name = data.get('name')
         self.download_link = data.get('zipball_url')
         self.patch_notes = data.get('body')
         self.release_date = data.get('published_at')
+        self.is_prerelease = data.get('prerelease')
 
         if 'T' in data.get('published_at')[1:]:
             self.release_date = data.get('published_at').split('T')[0]
@@ -76,6 +78,9 @@ class Version:
         # If the name of the release contains "yanked", ignore it
         if 'yanked' in self.name.lower():
             return
+
+        if self.is_prerelease:
+            self.version_display_string += ' (beta)'
 
         version_list.append(self)
 
@@ -87,7 +92,8 @@ def get_version_by_string(version_string) -> Version:
 
 
 def get_latest_version() -> Version:
-    return version_list[0]
+    version_list_releases = [version for version in version_list if not version.is_prerelease]
+    return version_list_releases[0]
 
 
 def check_for_update_background(check_on_startup=False):
@@ -149,11 +155,21 @@ def get_github_releases():
         print('FAKE INSTALL!')
 
         Version({
+            'tag_name': '100.1',
+            'name': 'Pre release!',
+            'zipball_url': '',
+            'body': 'Nothing new to see',
+            'published_at': 'Just now!!',
+            'prerelease': True
+        })
+
+        Version({
             'tag_name': 'v-99-99',
             'name': 'v-99-99',
             'zipball_url': '',
             'body': 'Put exiting new stuff here\nOr maybe there is?',
-            'published_at': 'Today'
+            'published_at': 'Today',
+            'prerelease': False
         })
 
         Version({
@@ -161,7 +177,8 @@ def get_github_releases():
             'name': '12.34.56 Test Release',
             'zipball_url': '',
             'body': 'Nothing new to see',
-            'published_at': 'A week ago probably'
+            'published_at': 'A week ago probably',
+            'prerelease': False
         })
         return True
 
@@ -253,13 +270,14 @@ def show_update_notification(scene):  # One argument in necessary for some reaso
     bpy.ops.rsl_updater.update_notification_popup('INVOKE_DEFAULT')
 
 
-def update_now(version=None, latest=False, dev=False):
+def update_now(version=None, latest=False, beta=False):
     if fake_update:
+        print('FAKE UPDATE TO VERSION:', version)
         finish_update()
         return
-    if dev:
-        print('UPDATE TO DEVELOPMENT')
-        update_link = GITHUB_URL_DEV
+    if beta:
+        print('UPDATE TO BETA')
+        update_link = GITHUB_URL_BETA
     elif latest or not version:
         print('UPDATE TO ' + latest_version_str)
         update_link = get_latest_version().download_link
@@ -290,6 +308,7 @@ def download_file(update_url):
     # Download zip
     print('DOWNLOAD FILE')
     try:
+        ssl._create_default_https_context = ssl._create_unverified_context
         urllib.request.urlretrieve(update_url, update_zip_file)
     except urllib.error.URLError:
         print("FILE COULD NOT BE DOWNLOADED")
@@ -337,7 +356,6 @@ def download_file(update_url):
     if not extracted_zip_dir:
         print("INIT NOT FOUND!")
         shutil.rmtree(downloads_dir)
-        # finish_reloading()
         finish_update(error='Could not find Rokoko Studio'
                             '\nLive in the downloaded zip.')
         return
@@ -415,7 +433,7 @@ def clean_addon_dir():
         except OSError:
             print("Failed to pre-remove folder " + folder)
 
-    # then remove resource files and folders (except settings and google dict)
+    # then remove resource files and folders (except settings, custom_bones and cache)
     resources_folder = os.path.join(main_dir, 'resources')
     files = [f for f in os.listdir(resources_folder) if os.path.isfile(os.path.join(resources_folder, f))]
     folders = [f for f in os.listdir(resources_folder) if os.path.isdir(os.path.join(resources_folder, f))]
@@ -432,6 +450,9 @@ def clean_addon_dir():
             print("Failed to pre-remove " + file)
 
     for f in folders:
+        if f == 'custom_bones' or f == 'cache':
+            continue
+
         folder = os.path.join(resources_folder, f)
         try:
             shutil.rmtree(folder)
@@ -480,7 +501,10 @@ def check_ignored_version():
 def get_version_list(self, context):
     choices = []
     for version in version_list:
-        choices.append((version.version_string, version.version_string, version.version_string))
+        # 1. Will be returned by context.scene
+        # 2. Will be shown in lists
+        # 3. will be shown in the hover description (below description)
+        choices.append((version.version_string, version.version_display_string, version.version_display_string))
 
     bpy.types.Object.Enum = choices
     return bpy.types.Object.Enum

@@ -49,4 +49,5 @@ def load_icons():
 
 def unload_icons():
     global icons
-    previews.remove(icons)
+    if icons:
+        previews.remove(icons)

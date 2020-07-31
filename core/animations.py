@@ -4,21 +4,23 @@ from mathutils import Quaternion, Matrix
 from . import animation_lists, recorder
 
 
-# version = None
+version = 0
 # playbacktimestamp = None
 timestamp = None
 props = []
 trackers = []
 faces = []
 actors = []
+gloves = []
 
 
 def clear_animations():
-    global props, trackers, faces, actors
+    global props, trackers, faces, actors, gloves
     props = []
     trackers = []
     faces = []
     actors = []
+    gloves = []
 
 
 def animate():
@@ -28,12 +30,15 @@ def animate():
             animate_tracker_prop(obj)
 
         # Animate all faces
-        if faces and obj.type == 'MESH':
+        if obj.type == 'MESH' and faces:
             animate_face(obj)
 
         # Animate all actors
-        elif actors and obj.type == 'ARMATURE':
-            animate_actor(obj)
+        elif obj.type == 'ARMATURE':
+            if actors:
+                animate_actor(obj)
+            if gloves:
+                animate_glove(obj)
 
 
 def animate_tracker_prop(obj):
@@ -121,13 +126,13 @@ def animate_actor(obj):
     # The models t-pose bone rotations and locations, which are set by the user, are stored inside this custom data
     custom_data = obj.get('CUSTOM')
     if not custom_data:
-        print('NO CUSTOM DATA')
+        # print('NO CUSTOM DATA')
         return
 
     # Get tpose data from custom data
     tpose_bones = custom_data.get('rsl_tpose_bones')
     if not tpose_bones:
-        print('NO TPOSE DATA')
+        # print('NO TPOSE DATA')
         return
 
     # Go over every mapped bone and animate it
@@ -147,8 +152,9 @@ def animate_actor(obj):
         if not bone or not bone_tpose_data:
             continue
 
-        # Set the bones quaternion mode and disable inherit rotation
-        bone.rotation_mode = 'QUATERNION'
+        # Set the bones rotation mode to euler and disable inherit rotation
+        if bone.rotation_mode == 'QUATERNION':
+            bone.rotation_mode = 'XYZ'
         bone_data.use_inherit_rotation = False
 
         # The global rotation of the models t-pose, which was set by the user
@@ -232,7 +238,11 @@ def animate_actor(obj):
 
         # Record the data
         if bpy.context.scene.rsl_recording:
-            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_quaternion, location=bone.location if bone_name == 'hip' else None)
+            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_euler, location=bone.location if bone_name == 'hip' else None)
+
+
+def animate_glove(obj):
+    pass
 
 
 def pos_hips_studio_to_blender(x, y, z):

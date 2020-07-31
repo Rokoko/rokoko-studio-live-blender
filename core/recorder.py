@@ -1,8 +1,11 @@
 import bpy
 import copy
-from .utils import reprint
+from math import radians, degrees
+
+from collections import OrderedDict
 
 recorded_data = {}
+recorded_timestamps = OrderedDict()
 
 
 def toggle_recording(self, context):
@@ -17,22 +20,8 @@ def toggle_recording(self, context):
 def start_recorder(context):
     if recorded_data:
         return
+    # Here can be stuff done when starting the recorder
     pass
-
-
-def get_animation_counter(prefix, counter):
-    found = False
-    while not found:
-        is_new_number = True
-        for a in bpy.data.actions:
-            if a.name.startswith(prefix + str(counter)):
-                is_new_number = False
-                break
-        if is_new_number:
-            found = True
-        else:
-            counter += 1
-    return counter
 
 
 def stop_recorder(context):
@@ -42,193 +31,293 @@ def stop_recorder(context):
     # Set animation settings
     context.scene.render.fps = context.scene.rsl_receiver_fps
 
-    animation_counter = 1
-    action_name_prefix_prefix = 'Anim '
-    action_part = 1
-    action_suffix = ''
+    # Convert timestamps to keyframes to have a shared time axis
+    convert_timestamps_to_keyframes()
 
-    animation_counter = get_animation_counter(action_name_prefix_prefix, animation_counter)
-    action_name_prefix = action_name_prefix_prefix + str(animation_counter) + ': '
+    # Process each type of recorded data
+    for data_type, objects in recorded_data.items():
+        if not objects:
+            continue
 
-    def get_frame(frame_number):
-        return int(round((timestamps[frame_number] - timestamps[0]) * context.scene.rsl_receiver_fps, 0))
+        if data_type == 'actors':
+            for obj_name, data in objects.items():
+                process_actor_recording(obj_name, data)
 
-    def get_corrected_frame_number(frame_index):
-        # Fix frame numbers that are incorrect because of rounding errors
-        curr_frame = get_frame(frame_index)
-        if 0 < frame_index < len(timestamps) - 1:
-            prev_frame = get_frame(frame_index - 1)
-            next_frame = get_frame(frame_index + 1)
-            if prev_frame == curr_frame and next == curr_frame + 2:
-                curr_frame += 1
-            if next_frame == curr_frame and prev_frame == curr_frame - 2:
-                curr_frame -= 1
-        if frame_index == len(timestamps) - 1:
-            prev_frame = get_frame(frame_index - 1)
-            if prev_frame == curr_frame:
-                curr_frame += 1
-        return curr_frame
+        elif data_type == 'faces':
+            for obj_name, data in objects.items():
+                process_face_recording(obj_name, data)
 
-    def add_keyframe(action_tmp, data_path, data_index, group_name, frame_value):
-        # global frame_counter
-        if not action_tmp:
-            print('NO ACTION!')
-            return
-        fc = action_tmp.fcurves.find(data_path=data_path, index=data_index)
-        if not fc:
-            fc = action_tmp.fcurves.new(data_path=data_path, index=data_index, action_group=group_name)
-            if index != 0:
-                fc.keyframe_points.add(1)
-                fc.keyframe_points[-1].interpolation = 'CONSTANT'
-                fc.keyframe_points[-1].co = (0, frame_value)
-        fc.keyframe_points.add(1)
-        fc.keyframe_points[-1].interpolation = 'CONSTANT'
-        fc.keyframe_points[-1].co = (frame, frame_value)
-
-    index = -1
-    timestamps = list(recorded_data.keys())
-    for data in recorded_data.values():
-        reprint('Processing {}/{} ({}%)'.format(index + 2, len(timestamps), int(((index + 2) / len(timestamps)) * 100)))
-        index += 1
-        frame = get_corrected_frame_number(index)
-
-        # Set the suffix to something new every 5000 frames to split the actions and greatly reduce processing time
-        if index % 5000 == 0 and index > 0 and (len(timestamps) - index) > 2500:
-            action_part += 1
-            action_suffix = ' Part ' + str(action_part)
-            # print('\nprint new action:', action_suffix)
-
-        objects = data.get('objects')
-        faces = data.get('faces')
-        actors = data.get('actors')
-
-        if actors:
-            for arm_name, bones in actors.items():
-                armature = context.scene.objects.get(arm_name)
-                if not armature:
-                    continue
-
-                # Create new action in which the recorded animation will be stored and assign the action to the armature
-                action = bpy.data.actions.get(action_name_prefix + 'Arm ' + arm_name + action_suffix)
-                if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Arm ' + arm_name + action_suffix)
-                    action.use_fake_user = True
-                    armature.animation_data_create().action = action
-
-                for bone_name, bone_data in bones.items():
-                    bone = armature.pose.bones.get(bone_name)
-                    if not bone:
-                        continue
-
-                    location = bone_data['location']
-                    rotation = bone_data['rotation']
-                    location_path = 'pose.bones["%s"].location' % bone_name
-                    rotation_path = 'pose.bones["%s"].rotation_quaternion' % bone_name
-                    inherit_rotation_path = 'data.bones["%s"].use_inherit_rotation' % bone_name
-
-                    # Add location
-                    if location:
-                        for i in range(3):
-                            add_keyframe(action, location_path, i, bone_name, location[i])
-
-                    # Add rotation
-                    for i in range(4):
-                        add_keyframe(action, rotation_path, i, bone_name, rotation[i])
-
-                    # Add inherit rotation
-                    add_keyframe(action, inherit_rotation_path, 0, bone_name, False)
-
-        if faces:
-            for mesh_name, shapekeys in faces.items():
-                mesh = context.scene.objects.get(mesh_name)
-                if not mesh or not hasattr(mesh.data, 'shape_keys') or not hasattr(mesh.data.shape_keys, 'key_blocks'):
-                    continue
-
-                # Create new action in which the recorded animation will be stored and assign the action to the mesh
-                action = bpy.data.actions.get(action_name_prefix + 'Mesh ' + mesh_name + action_suffix)
-                if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Mesh ' + mesh_name + action_suffix)
-                    mesh.animation_data_create().action = action
-
-                for shapekey_name, value in shapekeys.items():
-                    shapekey = mesh.data.shape_keys.key_blocks.get(shapekey_name)
-                    if not shapekey:
-                        continue
-
-                    value_path = 'data.shape_keys.key_blocks["%s"].value' % shapekey_name
-
-                    # Add value
-                    add_keyframe(action, value_path, 0, mesh_name, value)
-
-        if objects:
-            for obj_name, obj_data in objects.items():
-                obj = context.scene.objects.get(obj_name)
-                if not obj:
-                    continue
-
-                # Create new action in which the recorded animation will be stored and assign the action to the object
-                action = bpy.data.actions.get(action_name_prefix + 'Obj ' + obj_name + action_suffix)
-                if not action:
-                    action = bpy.data.actions.new(name=action_name_prefix + 'Obj ' + obj_name + action_suffix)
-                    obj.animation_data_create().action = action
-
-                location = obj_data['location']
-                rotation = obj_data['rotation']
-                location_path = 'location'
-                rotation_path = 'rotation_quaternion'
-
-                # Add location
-                for i in range(3):
-                    add_keyframe(action, location_path, i, obj_name, location[i])
-
-                # Add rotation
-                for i in range(4):
-                    add_keyframe(action, rotation_path, i, obj_name, rotation[i])
+        elif data_type == 'objects':
+            for obj_name, data in objects.items():
+                process_object_recording(obj_name, data)
 
     # Clear recorded data
     recorded_data.clear()
+    recorded_timestamps.clear()
 
     print('\nSuccessfully saved the recording!')
 
 
-def record_bone(timestamp, arm_name, bone_name, rotation, location=None):
-    if not recorded_data.get(timestamp):
-        recorded_data[timestamp] = {
-            'objects': {},
-            'faces': {},
-            'actors': {}
-        }
-    if not recorded_data[timestamp]['actors'].get(arm_name):
-        recorded_data[timestamp]['actors'][arm_name] = {}
+def process_actor_recording(obj_name, data):
+    armature = bpy.data.objects.get(obj_name)
+    if not armature:
+        print('Armature', obj_name, 'not found!')
+        return
 
-    recorded_data[timestamp]['actors'][arm_name][bone_name] = copy.deepcopy({
-        'rotation': rotation,
-        'location': location
-    })
+    # Create new action
+    action = bpy.data.actions.new(name='Anim Arm ' + obj_name)
+    action.use_fake_user = True
+    armature.animation_data_create().action = action
+
+    # Handle recorded data
+    data_paths = OrderedDict()
+    prev_rotations = {}
+    rotation_modifiers = {}
+    for item in data:
+        bone_name = item["bone_name"]
+
+        if item['location']:
+            data_path = 'pose.bones["%s"].location' % bone_name
+            if not data_paths.get(data_path):
+                data_paths[data_path] = []
+            data_paths[data_path].append((item['timestamp'], item['location']))
+
+        if item['rotation']:
+            rotation = item['rotation']
+            data_path = 'pose.bones["%s"].rotation_euler' % bone_name
+            if not data_paths.get(data_path):
+                data_paths[data_path] = []
+
+            # Load previous rotation from dict
+            prev_rot = prev_rotations.get(bone_name)
+            if not prev_rot:
+                prev_rot = rotation
+
+            # Fix each rotation axis separately
+            for i in [0, 1, 2]:
+                # Load rotation modifier of the bone rotation axis
+                # The rotation modifier is used to cut down on processing time. It gets set when a axis had been normalized
+                # and then is used to apply the same fix to subsequent rotations. This prevents having to normalize subsequent rotations
+                rotation_mod = rotation_modifiers.get((bone_name, i))
+                if not rotation_mod:
+                    rotation_mod = 0
+
+                # Get axis rotation in degrees, since they are stored as radians. Also add the rotation modifier to the rotation
+                axis = degrees(rotation[i]) + rotation_mod
+                axis_prev = degrees(prev_rot[i])
+
+                # Normalize the rotation
+                axis_normalized, rotation_mod_new = normalize_rotation(axis, axis_prev)
+
+                # Save the normalized axis to the rotation and save the rotation modifier
+                rotation[i] = radians(axis_normalized)
+                rotation_modifiers[bone_name, i] = rotation_mod + rotation_mod_new
+
+            # Save the rotation to the data paths and save the current rotation as the previous rotation
+            data_paths[data_path].append((item['timestamp'], rotation))
+            prev_rotations[bone_name] = rotation
+
+        use_inherit_rotation = False
+        data_path = 'data.bones["%s"].use_inherit_rotation' % bone_name
+        if not data_paths.get(data_path):
+            data_paths[data_path] = []
+        data_paths[data_path].append((item['timestamp'], [use_inherit_rotation]))
+
+    # Go through each datapath (fcurve) and add all keyframes at once
+    for data_path, values_tmp in data_paths.items():
+        frame_count = len(values_tmp)
+        values_tmp = list(zip(*values_tmp))  # This unzips the list of tuples into two separate lists
+        timestamps = list(values_tmp[0])
+        values = list(values_tmp[1])
+        index_len = len(values[0])
+
+        for axis_i in range(index_len):
+            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            keyframe_points = curve.keyframe_points
+            keyframe_points.add(frame_count)
+
+            for frame_i in range(frame_count):
+                timestamp = timestamps[frame_i]
+                transform = values[frame_i][axis_i]
+                keyframe_points[frame_i].co = (
+                    recorded_timestamps[timestamp],
+                    transform)
+                keyframe_points[frame_i].interpolation = 'LINEAR'
+
+
+def process_object_recording(obj_name, data):
+    obj = bpy.data.objects.get(obj_name)
+    if not obj:
+        print('Object', obj_name, 'not found!')
+        return
+
+    # Create new action
+    action = bpy.data.actions.new(name='Anim Obj ' + obj_name)
+    action.use_fake_user = True
+    obj.animation_data_create().action = action
+
+    # Handle recording data
+    data_paths = OrderedDict()
+    for item in data:
+        if item['location']:
+            data_path = 'location'
+            if not data_paths.get(data_path):
+                data_paths[data_path] = []
+
+            data_paths[data_path].append((item['timestamp'], item['location']))
+
+        if item['rotation']:
+            data_path = 'rotation_quaternion'
+            if not data_paths.get(data_path):
+                data_paths[data_path] = []
+
+            data_paths[data_path].append((item['timestamp'], item['rotation']))
+
+    for data_path, values in data_paths.items():
+        # print(data_path)
+        frame_count = len(values)
+        index_len = 3 if data_path.endswith('location') else 4
+
+        for axis_i in range(index_len):
+            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            keyframe_points = curve.keyframe_points
+            keyframe_points.add(frame_count)
+
+            for frame_i in range(frame_count):
+                timestamp = values[frame_i][0]
+                transform = values[frame_i][1]
+                keyframe_points[frame_i].co = (
+                    recorded_timestamps[timestamp],
+                    transform[axis_i])
+                keyframe_points[frame_i].interpolation = 'LINEAR'
+
+
+def process_face_recording(obj_name, data):
+    mesh = bpy.data.objects.get(obj_name)
+    if not mesh:
+        print('Object', obj_name, 'not found!')
+        return
+
+    # Create new action
+    action = bpy.data.actions.new(name='Anim Face ' + obj_name)
+    action.use_fake_user = True
+    mesh.animation_data_create().action = action
+
+    # Handle recording data
+    data_paths = OrderedDict()
+    for item in data:
+        data_path = 'data.shape_keys.key_blocks["%s"].value' % item['shapekey_name']
+        if not data_paths.get(data_path):
+            data_paths[data_path] = []
+
+        data_paths[data_path].append((item['timestamp'], item['value']))
+
+    for data_path, values in data_paths.items():
+        # print(data_path)
+        frame_count = len(values)
+
+        curve = action.fcurves.new(data_path=data_path, index=0)
+        keyframe_points = curve.keyframe_points
+        keyframe_points.add(frame_count)
+
+        for frame_i in range(frame_count):
+            timestamp = values[frame_i][0]
+            shapekey_value = values[frame_i][1]
+            keyframe_points[frame_i].co = (
+                recorded_timestamps[timestamp],
+                shapekey_value)
+            keyframe_points[frame_i].interpolation = 'LINEAR'
+
+
+def normalize_rotation(axis, axis_prev):
+    rotation_mod = 0
+    if abs(axis - axis_prev) > 180:
+        desired_axis = axis
+        if axis_prev > axis:
+            while abs(desired_axis - axis_prev) > 180 and axis_prev > axis:
+                print(axis_prev, axis, desired_axis)
+                desired_axis += 360
+                rotation_mod += 360
+            axis = desired_axis
+        else:
+            while abs(desired_axis - axis_prev) > 180 and axis_prev < axis:
+                print(axis_prev, axis, desired_axis)
+                desired_axis -= 360
+                rotation_mod -= 360
+            axis = desired_axis
+    return axis, rotation_mod
+
+
+def convert_timestamps_to_keyframes():
+    timestamps = list(recorded_timestamps.keys())
+
+    def get_frame(frame_number):
+        return int(round((timestamps[frame_number] - timestamps[0]) * bpy.context.scene.rsl_receiver_fps, 0))
+
+    # Fix frame numbers that are incorrect because of rounding errors
+    for i, timestamp in enumerate(timestamps):
+        curr_frame = get_frame(i)
+
+        if 0 < i < len(timestamps) - 1:
+            prev_frame = get_frame(i - 1)
+            next_frame = get_frame(i + 1)
+            if prev_frame == curr_frame and next == curr_frame + 2:
+                curr_frame += 1
+            if next_frame == curr_frame and prev_frame == curr_frame - 2:
+                curr_frame -= 1
+
+        if i == len(timestamps) - 1:
+            prev_frame = get_frame(i - 1)
+            if prev_frame == curr_frame:
+                curr_frame += 1
+
+        recorded_timestamps[timestamp] = curr_frame
+
+
+def record_bone(timestamp, arm_name, bone_name, rotation, location=None):
+    if not recorded_data.get('actors'):
+        recorded_data['actors'] = {}
+    if not recorded_data['actors'].get(arm_name):
+        recorded_data['actors'][arm_name] = []
+
+    data = {
+        'timestamp': timestamp,
+        'bone_name': bone_name,
+        'rotation': copy.deepcopy(rotation),
+        'location': copy.deepcopy(location)
+    }
+
+    recorded_data['actors'][arm_name].append(data)
+    recorded_timestamps[timestamp] = 0
 
 
 def record_face(timestamp, mesh_name, shapekey_name, value):
-    if not recorded_data.get(timestamp):
-        recorded_data[timestamp] = {
-            'objects': {},
-            'faces': {},
-            'actors': {}
-        }
-    if not recorded_data[timestamp]['faces'].get(mesh_name):
-        recorded_data[timestamp]['faces'][mesh_name] = {}
+    if not recorded_data.get('faces'):
+        recorded_data['faces'] = {}
+    if not recorded_data['faces'].get(mesh_name):
+        recorded_data['faces'][mesh_name] = []
 
-    recorded_data[timestamp]['faces'][mesh_name][shapekey_name] = copy.deepcopy(value)
+    data = {
+        'timestamp': timestamp,
+        'shapekey_name': shapekey_name,
+        'value': copy.deepcopy(value)
+    }
+
+    recorded_data['faces'][mesh_name].append(data)
+    recorded_timestamps[timestamp] = 0
 
 
 def record_object(timestamp, obj_name, rotation, location):
-    if not recorded_data.get(timestamp):
-        recorded_data[timestamp] = {
-            'objects': {},
-            'faces': {},
-            'actors': {}
-        }
-    if not recorded_data[timestamp]['objects'].get(obj_name):
-        recorded_data[timestamp]['objects'][obj_name] = copy.deepcopy({
-            'rotation': rotation,
-            'location': location
-        })
+    if not recorded_data.get('objects'):
+        recorded_data['objects'] = {}
+    if not recorded_data['objects'].get(obj_name):
+        recorded_data['objects'][obj_name] = []
+
+    data = {
+        'timestamp': timestamp,
+        'rotation': copy.deepcopy(rotation),
+        'location': copy.deepcopy(location)
+    }
+
+    recorded_data['objects'][obj_name].append(data)
+    recorded_timestamps[timestamp] = 0

@@ -1,5 +1,28 @@
 from collections import OrderedDict
 
+
+ignore_rokoko_retargeting_bones = [
+    'newton',
+    'HeadVertex',
+    'Props_LeftArm',
+    'Props_RightArm',
+    'LeftToeTip',
+    'RightToeTip',
+    'LeftFinger2Metacarpal',
+    'LeftFinger3Metacarpal',
+    'LeftFinger4Metacarpal',
+    'LeftFinger5Metacarpal',
+    'RightFinger1Tip',
+    'RightFinger2Metacarpal',
+    'RightFinger2Tip',
+    'RightFinger3Metacarpal',
+    'RightFinger3Tip',
+    'RightFinger4Metacarpal',
+    'RightFinger4Tip',
+    'RightFinger5Metacarpal',
+    'RightFinger5Tip',
+]
+
 ################################
 # Replace '-' with '_'
 # Replace ' ' with '_'
@@ -22,7 +45,6 @@ bone_list['hip'] = [
     'Pelvis',
     'B_C_Pelvis',
     'Bip_Pelvis',
-    'Root',
     'Hips_Root',
     'Rot_Root',
     'Sk',
@@ -45,6 +67,7 @@ bone_list['hip'] = [
     'Pelvis_R',
     'Root_Pelvis_1',
     'Root_X',
+    # 'Root',
 ]
 bone_list['spine'] = [  # This is a list of all spine and chest bones
     'Spine',  # First entry!
@@ -145,6 +168,10 @@ bone_list['spine'] = [  # This is a list of all spine and chest bones
     'Spine_D',
     'Spine_E',
 
+    'Spine_001',
+    'Spine_002',
+    'Spine_003',
+
     'Spina00',
     'Spina01',
     'Spina02',
@@ -244,6 +271,7 @@ bone_list['neck'] = [
     'J_Neck1',
     'NeckLower',
     'Neck_X',
+    'Spine_004',
 ]
 bone_list['head'] = [
     'Head',
@@ -263,6 +291,7 @@ bone_list['head'] = [
     'J_Head',
     'Head_X',
     'J_Kao',
+    'Spine_005',
 ]
 bone_list['leftShoulder'] = [
     '\L_Shoulder',
@@ -419,6 +448,17 @@ bone_list['leftHand'] = [
     'J_Te_\L'
 ]
 bone_list['leftUpLeg'] = [
+    'Mixamorig:\LUpLeg',
+    'Upper_Leg_\L',
+    '\LUpLeg',
+    'Upleg_\L',
+    'UpperLeg_\L',
+    '\L_UpLeg',
+    'J_Bip_\L_UpperLeg',
+    'J_\L_UpLeg',
+    'Upperleg01_\L',
+    '\LHip',
+    '\L_Hip',
     '\L_Leg',
     '\L_Foot',
     '\LLeg',
@@ -428,19 +468,13 @@ bone_list['leftUpLeg'] = [
     'LegWAux_\L',
     'Leg00003333_\L',
     'Leg00004444_\L',
-    'Mixamorig:\LUpLeg',
     'Leg_\L_Thigh',
     'Bip_\L_Thigh',
     'Bip_Hip_\L',
     'B_\L_Leg1',
-    'Upper_Leg_\L',
     '\LThigh',
     'Thigh_\L',
     '\L_Thigh',
-    '\LUpLeg',
-    '\LHip',
-    'Upleg_\L',
-    '\L_Hip',
     '\L_Leg_01',
     '\L_Femur',
     'Waist_Cancel_\L',
@@ -450,22 +484,17 @@ bone_list['leftUpLeg'] = [
     '\LLegJ',
     'Tg_\L',
     'Leg_\L_Thigh_1',
-    'UpperLeg_\L',
     '\Lf_Leg',
-    '\L_UpLeg',
     'Thigh00_\L',
     '\Lfoot1',
     'Leg(\L)04',
     '\L_Momo',
     'Leg_Thigh_\L',
     'Hip\LT_01',
-    'J_Bip_\L_UpperLeg',
-    'J_\L_UpLeg',
     'Leg\L',
     'Leg_1_\L',
     'Bip_Thigh_\L',
     'Groin_\L',
-    'Upperleg01_\L',
     '\LThighBend',
     'Thigh_Stretch_\L',
     'J_Asi_A_\L'

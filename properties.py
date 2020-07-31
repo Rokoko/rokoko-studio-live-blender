@@ -1,10 +1,29 @@
 from bpy.types import Scene, Object
-from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty
+from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty, PointerProperty
 
-from .core import animation_lists, state_manager, recorder
+from .core import animation_lists, state_manager, recorder, retargeting, login
+from .panels import retargeting as retargeting_ui
 
 
 def register():
+    # Login
+    Scene.rsl_login_email = StringProperty(
+        name='Email',
+        description='Input the email address of your Rokoko account',
+        update=login.credentials_update
+    )
+    Scene.rsl_login_password = StringProperty(
+        name='Password',
+        description='Input the password of your Rokoko account',
+        subtype='PASSWORD',
+        update=login.credentials_update
+    )
+    Scene.rsl_login_password_shown = StringProperty(
+        name='Password',
+        description='Input the password of your Rokoko account',
+        update=login.credentials_update
+    )
+
     # Receiver
     Scene.rsl_receiver_port = IntProperty(
         name='Streaming Port',
@@ -47,6 +66,8 @@ def register():
         default=False,
         update=recorder.toggle_recording
     )
+
+    # Command API
     Scene.rsl_command_ip_address = StringProperty(
         name='IP Address',
         description='Input the IP address of Rokoko Studio',
@@ -67,6 +88,44 @@ def register():
         maxlen=15
     )
 
+    # Retargeting
+    Scene.rsl_retargeting_armature_source = PointerProperty(
+        name='Source',
+        description='Select the armature with the animation that you want to retarget',
+        type=Object,
+        poll=retargeting.poll_source_armatures,
+        update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_armature_target = PointerProperty(
+        name='Target',
+        description='Select the armature that should receive the animation',
+        type=Object,
+        poll=retargeting.poll_target_armatures,
+        update=retargeting.clear_bone_list
+    )
+    Scene.rsl_retargeting_auto_scaling = BoolProperty(
+        name='Auto Scale',
+        description='This will scale the source armature to fit the height of the target armature.'
+                    '\nBoth armatures have to be in T-pose for this to work correctly',
+        default=True
+    )
+    Scene.rsl_retargeting_use_pose = EnumProperty(
+        name="Use Pose",
+        description='Select which pose of the source and target armature to use to retarget the animation.'
+                    '\nBoth armatures should be in the same pose before retargeting',
+        items=[
+            ("REST", "Rest", "Select this to use the rest pose during retargeting."),
+            ("CURRENT", "Current", "Select this to use the current pose during retargeting.")
+        ]
+    )
+    Scene.rsl_retargeting_bone_list = CollectionProperty(
+        type=retargeting_ui.BoneListItem
+    )
+    Scene.rsl_retargeting_bone_list_index = IntProperty(
+        name="Index for the retargeting bone list",
+        default=0
+    )
+
     # Objects
     Object.rsl_animations_props_trackers = EnumProperty(
         name='Tracker or Prop',
@@ -84,7 +143,13 @@ def register():
         name='Actor',
         description='Select the actor that you want to attach this armature to',
         items=animation_lists.get_actors,
-        update=state_manager.update_armature
+        update=state_manager.update_actor
+    )
+    Object.rsl_animations_gloves = EnumProperty(
+        name='Glove',
+        description='Select the glove that you want to attach this armature to',
+        items=animation_lists.get_gloves,
+        update=state_manager.update_glove
     )
     Object.rsl_use_custom_scale = BoolProperty(
         name='Use Custom Scale',
@@ -111,4 +176,11 @@ def register():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'
+        ))
+
+    # Glove bones
+    for bone in animation_lists.glove_bones.keys():
+        setattr(Object, 'rsl_glove_' + bone, StringProperty(
+            name=bone,
+            description='Select the bone that corresponds to the gloves bone'
         ))

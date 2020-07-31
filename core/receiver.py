@@ -67,6 +67,9 @@ class Receiver:
             print('Old json data version! Please use v2 or higher')
             return ['Old data format!', 'Use JSON v2 or higher!'], True
 
+        # print(data)
+
+        animations.version = data['version']
         animations.timestamp = data['timestamp']
         # animations.playbacktimestamp = data['playbackTimestamp']
         animations.props = data['props']

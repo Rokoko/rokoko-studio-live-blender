@@ -5,7 +5,7 @@ from .. import updater_ops
 
 
 class UpdaterPanel(ToolPanel, bpy.types.Panel):
-    bl_idname = 'VIEW3D_PT_rsl_updater'
+    bl_idname = 'VIEW3D_PT_rsl_updater_v2'
     bl_label = 'Updater'
     bl_options = {'DEFAULT_CLOSED'}
 

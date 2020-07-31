@@ -2,13 +2,13 @@ import bpy
 
 from ..core import animations, animation_lists
 from ..operators.actor import InitTPose, ResetTPose
-from ..operators.detector import DetectFaceShapes, DetectActorBones
+from ..operators import detector
 
 
 # Create a panel in the Object category of all objects
 class ObjectsPanel(bpy.types.Panel):
     bl_label = "Rokoko Studio Live Setup"
-    bl_idname = "OBJECT_PT_rsl_objects"
+    bl_idname = "OBJECT_PT_rsl_objects_v2"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
@@ -69,12 +69,14 @@ class ObjectsPanel(bpy.types.Panel):
             layout.separator()
             row = layout.row(align=True)
             row.label(text='Select Shapekeys:')
-            row.operator(DetectFaceShapes.bl_idname)
+            row.operator(detector.DetectFaceShapes.bl_idname)
 
             if not hasattr(obj.data, 'shape_keys') or not hasattr(obj.data.shape_keys, 'key_blocks'):
                 row = layout.row(align=True)
                 row.label(text='This mesh has no shapekeys!', icon='INFO')
                 return
+
+            draw_import_export(layout, shapes=True)
 
             for shape in animation_lists.face_shapes:
                 row = layout.row(align=True)
@@ -96,23 +98,68 @@ class ObjectsPanel(bpy.types.Panel):
             row = layout.row(align=True)
             row.prop(context.object, 'rsl_animations_actors')
 
-        layout.separator()
-
-        split = layout.row(align=True)
-        row = split.split(factor=0.16, align=True)
-        row.label(text='Bones:')
-        row.operator(DetectActorBones.bl_idname)
-        row.operator(InitTPose.bl_idname)
-        row.operator(ResetTPose.bl_idname)
-
         if obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            layout.separator()
+
+            split = layout.row(align=True)
+            row = split.split(factor=0.16, align=True)
+            row.label(text='Bones:')
+            row.operator(detector.DetectActorBones.bl_idname)
+            row.operator(InitTPose.bl_idname)
+            row.operator(ResetTPose.bl_idname)
+
+            # if obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
             if not obj.get('CUSTOM') or not obj.get('CUSTOM').get('rsl_tpose_bones'):
                 row = layout.row(align=True)
                 row.label(text='T-Pose is not set yet!', icon='ERROR')
 
-        col = layout.column()
-        for shape in animation_lists.actor_bones.keys():
-            split = col.row(align=True)
-            row = split.split(factor=0.32, align=True)
-            row.label(text=shape + ':')
-            row.prop_search(obj, 'rsl_actor_' + shape, obj.pose, "bones", text='')
+            draw_import_export(layout)
+
+            col = layout.column()
+            show_gloves = True
+            for actor_bone in animation_lists.actor_bones.keys():
+                if not show_gloves:
+                    continue
+
+                split = col.row(align=True)
+                row = split.split(factor=0.32, align=True)
+                row.label(text=actor_bone + ':')
+                row.prop_search(obj, 'rsl_actor_' + actor_bone, obj.pose, "bones", text='')
+
+                # Make a split after right toe to separate hands
+                if actor_bone == 'rightToe':
+                    if animations.version < 3:  # Stop showing glove bones if they are not supported by the JSON version
+                        show_gloves = False
+                        continue
+                    col.separator()
+                    row = col.row(align=True)
+                    row.label(text='Gloves:', icon='VIEW_PAN')
+
+                if actor_bone == 'leftLittleDistal':
+                    col.separator()
+
+
+def draw_import_export(layout, shapes=False):
+    layout.separator()
+
+    row = layout.row(align=True)
+    row.label(text='Custom Naming Schemes:')
+    if shapes:
+        row.operator(detector.SaveCustomShapes.bl_idname, text='Save Current Naming Scheme')
+    else:
+        row.operator(detector.SaveCustomBones.bl_idname, text='Save Current Naming Scheme')
+
+    subrow = layout.row(align=True)
+    row = subrow.row(align=True)
+    row.scale_y = 0.9
+    row.operator(detector.ImportCustomBones.bl_idname, text='Import')
+    row.operator(detector.ExportCustomBones.bl_idname, text='Export')
+    row = subrow.row(align=True)
+    row.scale_y = 0.9
+    row.alignment = 'RIGHT'
+    if shapes:
+        row.operator(detector.ClearCustomShapes.bl_idname, text='', icon='X')
+    else:
+        row.operator(detector.ClearCustomBones.bl_idname, text='', icon='X')
+
+    layout.separator()

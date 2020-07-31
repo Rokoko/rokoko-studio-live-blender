@@ -5,17 +5,18 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 0, 0),
+    'version': (1, 1, 1),
     'blender': (2, 80, 0),
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-dev_branch = False
+beta_branch = False
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
 import sys
+import platform
 if "bpy" not in locals():
     import bpy
     from . import core
@@ -35,18 +36,37 @@ else:
 
 
 # List of all buttons and panels
-classes = [
+classes = [  # These panels will only be loaded when the user is logged in
     panels.main.ReceiverPanel,
     panels.objects.ObjectsPanel,
     panels.command_api.CommandPanel,
+    panels.retargeting.RetargetingPanel,
     panels.updater.UpdaterPanel,
     panels.info.InfoPanel,
+]
+classes_login = [  # These panels will only be loaded when the user is logged out
+    panels.login.LoginPanel,
+    panels.updater.UpdaterPanel,
+    panels.info.InfoPanel,
+]
+classes_always_enable = [  # These non-panels will always be loaded, all non-panel ui should go in here
+    operators.login.LoginButton,
+    operators.login.RegisterButton,
+    operators.login.ShowPassword,
+    operators.login.LogoutButton,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,
     operators.recorder.RecorderStop,
     operators.detector.DetectFaceShapes,
     operators.detector.DetectActorBones,
+    operators.detector.SaveCustomShapes,
+    operators.detector.SaveCustomBones,
+    operators.detector.SaveCustomBonesRetargeting,
+    operators.detector.ImportCustomBones,
+    operators.detector.ExportCustomBones,
+    operators.detector.ClearCustomBones,
+    operators.detector.ClearCustomShapes,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
@@ -55,11 +75,15 @@ classes = [
     operators.command_api.Restart,
     operators.command_api.StartRecording,
     operators.command_api.StopRecording,
+    operators.retargeting.BuildBoneList,
+    operators.retargeting.ClearBoneList,
+    operators.retargeting.RetargetAnimation,
+    panels.retargeting.RSL_UL_BoneList,
+    panels.retargeting.BoneListItem,
     operators.info.LicenseButton,
     operators.info.RokokoButton,
     operators.info.DocumentationButton,
     operators.info.ForumButton,
-
 ]
 
 
@@ -83,16 +107,25 @@ def check_unsupported_blender_versions():
 
 # register and unregister all classes
 def register():
-    print("\n### Loading Rokoko Studio Live...")
+    print("\n### Loading Rokoko Studio Live for Blender...")
 
     # Check for unsupported Blender versions
     check_unsupported_blender_versions()
 
     # Register updater and check for Rokoko Studio Live updates
-    updater_ops.register(bl_info, dev_branch)
+    updater_ops.register(bl_info, beta_branch)
 
-    # Register all classes
-    for cls in classes:
+    # Check if the user is logged in, show the login panel if not
+    logged_in = core.login.login_from_cache(classes, classes_login)
+
+    # Register classes
+    if logged_in:
+        for cls in classes:
+            bpy.utils.register_class(cls)
+    else:
+        for cls in classes_login:
+            bpy.utils.register_class(cls)
+    for cls in classes_always_enable:
         bpy.utils.register_class(cls)
 
     # Register all custom properties
@@ -101,11 +134,17 @@ def register():
     # Load custom icons
     core.icon_manager.load_icons()
 
-    print("### Loaded Rokoko Studio Live successfully!\n")
+    # Load bone detection list
+    core.detection_manager.load_detection_lists()
+
+    # Init fbx patcher
+    core.fbx_patcher.start_fbx_patch_timer()
+
+    print("### Loaded Rokoko Studio Live for Blender successfully!\n")
 
 
 def unregister():
-    print("### Unloading Rokoko Studio Live...")
+    print("### Unloading Rokoko Studio Live for Blender...")
 
     # Unregister updater
     updater_ops.unregister()
@@ -115,13 +154,16 @@ def unregister():
         operators.receiver.ReceiverStart.force_disable()
 
     # Unregister all classes
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
+    for cls in reversed(classes_login + classes + classes_always_enable):
+        try:
+            bpy.utils.unregister_class(cls)
+        except RuntimeError:
+            pass
 
     # Unload all custom icons
     core.icon_manager.unload_icons()
 
-    print("### Unloaded Rokoko Studio Live successfully!\n")
+    print("### Unloaded Rokoko Studio Live for Blender successfully!\n")
 
 
 if __name__ == '__main__':

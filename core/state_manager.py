@@ -117,22 +117,23 @@ def load_face(obj):
 def save_armature(obj):
     global armatures
 
-    # Return if no actor is assigned to this armature
+    # Return if no actor and no glove is assigned to this armature
     # if not obj.rsl_animations_actors or obj.rsl_animations_actors == 'None':  # <-- This should work but for some reason it doesn't
-    if obj.rsl_animations_actors == 'None':
-        print('NO ASSIGNED DATA:', obj.rsl_animations_actors)
+    if obj.rsl_animations_actors == 'None' and obj.rsl_animations_gloves == 'None':
+        print('NO ASSIGNED DATA:', obj.rsl_animations_actors, obj.rsl_animations_gloves)
         return
 
     bones = {}
 
     for bone in obj.pose.bones:
-        rotation_mode = bone.rotation_mode
+        # Fix rotation mode
+        if bone.rotation_mode == 'QUATERNION':
+            bone.rotation_mode = 'XYZ'
 
-        bone.rotation_mode = 'QUATERNION'
         bones[bone.name] = {
             'location': bone.location,
-            'rotation': bone.rotation_quaternion,
-            'rotation_mode': rotation_mode,
+            'rotation': bone.rotation_euler,
+            'rotation_mode': bone.rotation_mode,
             'inherit_rotation': obj.data.bones.get(bone.name).use_inherit_rotation
         }
 
@@ -162,10 +163,13 @@ def load_armature(obj):
         rotation_mode = bone_data['rotation_mode']
         inherit_rotation = bone_data['inherit_rotation']
 
-        bone.rotation_mode = 'QUATERNION'
+        # Fix rotation mode
+        if rotation_mode == 'QUATERNION':
+            rotation_mode = 'XYZ'
+
         bone.location = location
-        bone.rotation_quaternion = rotation
         bone.rotation_mode = rotation_mode
+        bone.rotation_euler = rotation
         obj.data.bones.get(bone_name).use_inherit_rotation = inherit_rotation
 
     # Remove element from dictionary
@@ -200,12 +204,26 @@ def update_face(self, context):
         load_face(obj)
 
 
-def update_armature(self, context):
+def update_actor(self, context):
     if not receiver.receiver_enabled:
         return
 
     obj = context.object
     new_state = obj.rsl_animations_actors
+
+    if new_state != 'None':
+        if not armatures.get(obj.name):
+            save_armature(obj)
+    else:
+        load_armature(obj)
+
+
+def update_glove(self, context):
+    if not receiver.receiver_enabled:
+        return
+
+    obj = context.object
+    new_state = obj.rsl_animations_gloves
 
     if new_state != 'None':
         if not armatures.get(obj.name):
