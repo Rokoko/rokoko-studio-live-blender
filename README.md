@@ -14,23 +14,25 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
  - Done!
  
 ### Usage
- - Please visit this link for the full documentation: https://rokoko.freshdesk.com/support/solutions/articles/47001110858
+ - Please visit this link for the full documentation: https://rokoko.freshdesk.com/support/solutions/folders/47000761699
 
 #### Retargeting Guide:
    [<img src="https://img.youtube.com/vi/Od8Ecr70A4Q/maxresdefault.jpg" width="50%">](https://youtu.be/Od8Ecr70A4Q)
  
 ### Changelog
 
-#### 1.1.0
+#### 1.1.1
 - Added Retargeting panel
     - This allows you to easily retarget any animation from one character to another
-    - It uses the auto detect system to automatically find matching bones between the two characters
+    - It uses our auto detect system to automatically find matching bones between the two characters
 - Added the functionality to save, import and export custom naming schemes
 - Added recording timer
 - Reworked saving of recordings
-    - This resulted in greatly improved processing speed of recorded animations and they don't need to be split anymore
-    - Recorded animations are now using euler angles instead of quaternion for easier editing and better continuity of the animation
-- Added patch to fix slow import of FBX animations in Blender 2.80 to 2.82
+    - This resulted in heavily improved processing speeds of recorded animations
+    - Recordings no longer need to be split
+    - Recorded animations are now using euler angles instead of quaternion
+      - This allows for easier editing and better continuity of the animation
+- Added patch that fixes the slow import of FBX animations in Blender 2.80 to 2.82
     - This means that as long as you have this plugin enabled, you will get very fast FBX animation imports
     - We submitted this patch to Blender officially and it got accepted, so it is included by default in Blender 2.83 and higher (fast imports for everyone, hooray!)
 
