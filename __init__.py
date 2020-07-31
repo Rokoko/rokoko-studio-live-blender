@@ -5,12 +5,12 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 1, 0),
+    'version': (1, 1, 1),
     'blender': (2, 80, 0),
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-beta_branch = True
+beta_branch = False
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
@@ -88,19 +88,6 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
 
 
 def check_unsupported_blender_versions():
-    # Don't allow Blender versions older than 2.80
-    print(platform.system())
-    if platform.system() != "Windows":
-        unregister()
-        sys.tracebacklimit = 0
-        raise ImportError('\n\nThis beta version of Rokoko Studio Live does currently only work on Windows.                                                    '
-                          '\nWe will release the full version for Linux and Mac very soon.'
-                          '\n'
-                          '\nYou can download the previous version here and you will get a notification in the plugin when the update is released:'
-                          '\n  https://github.com/Rokoko/rokoko-studio-live-blender/releases'
-                          '\n\n\n'
-                          )
-
     # Don't allow Blender versions older than 2.80
     if bpy.app.version < (2, 80):
         unregister()

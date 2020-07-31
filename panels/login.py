@@ -44,3 +44,11 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.operator(RegisterButton.bl_idname, icon='URL')
+
+        separator(layout, 0.1)
+        row = layout.row(align=True)
+        row.scale_y = 0.6
+        row.label(text='The sign in is required once.', icon='INFO')
+        row = layout.row(align=True)
+        row.scale_y = 0.4
+        row.label(text='It can then be used offline.', icon='BLANK1')
