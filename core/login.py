@@ -57,6 +57,13 @@ def load():
         # path = os.environ['PATH'].split(os.pathsep)[0]
         # print('DLLs:', os.listdir(path))
         # print()
+
+        print(1, os.getcwd())
+        os.chdir(os_libs_dir)
+        print(2, os.getcwd())
+        print(3, os_libs_dir)
+        print(4, lib_file)
+
         lib = ctypes.CDLL(lib_file)
 
     # Set the cache path
