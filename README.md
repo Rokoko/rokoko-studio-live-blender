@@ -1,4 +1,4 @@
-# Rokoko Studio Live for Blender
+# Rokoko Studio Live Plugin for Blender
 
 This plugin lets you stream your animation data from Rokoko Studio directly into Blender. It also allows you to easily record and retarget animations.
 
