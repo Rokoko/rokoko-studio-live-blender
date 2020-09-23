@@ -54,8 +54,6 @@ class LiveData:
     def _process_data(self):
         self.version = self.data.get('version')
 
-        print(self.actors)
-
         if not self.version or self.version < 2:
             raise TypeError
 
