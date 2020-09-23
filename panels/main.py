@@ -98,6 +98,10 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     row.label(text=error, icon='BLANK1')
             return
 
+        # TODO Make version 3 compatible
+        if animations.live_data.version > 2:
+            return
+
         # Show all inputs
         global paired_inputs
         paired_inputs = {}
@@ -107,7 +111,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         # Get all paired inputs. Paired inputs are paired to an object in the scene
         for obj in bpy.data.objects:
             # Get paired props and trackers
-            if animations.props or animations.trackers:
+            if animations.live_data.props or animations.live_data.trackers:
                 if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
                     paired = paired_inputs.get(obj.rsl_animations_props_trackers.split('|')[1])
                     if not paired:
@@ -116,7 +120,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                         paired.append(obj.name)
 
             # Get paired faces
-            if animations.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+            if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
                 paired = paired_inputs.get(obj.rsl_animations_faces)
                 if not paired:
                     paired_inputs[obj.rsl_animations_faces] = [obj.name]
@@ -124,18 +128,10 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     paired.append(obj.name)
 
             # Get paired actors
-            if animations.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
                 paired = paired_inputs.get(obj.rsl_animations_actors)
                 if not paired:
                     paired_inputs[obj.rsl_animations_actors] = [obj.name]
-                else:
-                    paired.append(obj.name)
-
-            # Get paired actors
-            if animations.gloves and obj.rsl_animations_gloves and obj.rsl_animations_gloves != 'None':
-                paired = paired_inputs.get(obj.rsl_animations_gloves)
-                if not paired:
-                    paired_inputs[obj.rsl_animations_gloves] = [obj.name]
                 else:
                     paired.append(obj.name)
 
@@ -145,7 +141,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
         row.label(text=' ')
 
         # Display all paired and unpaired inputs
-        for actor in animations.actors:
+        for actor in animations.live_data.actors:
             if actor['profileName']:
                 row = layout.row(align=True)
                 row.scale_y = row_scale
@@ -156,8 +152,8 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 add_indent(split)
                 show_actor(split, actor)
 
-                for tracker in animations.trackers:
-                    if tracker['connectionId'] == actor['id']:
+                for tracker in animations.live_data.trackers:
+                    if tracker['connectionId'] == actor['name']:
                         split = layout.row(align=True)
                         split.scale_y = row_scale
                         add_indent(split, empty=True)
@@ -165,7 +161,7 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                         show_tracker(split, tracker)
                         used_trackers.append(tracker['name'])
 
-                for face in animations.faces:
+                for face in animations.live_data.faces:
                     if face.get('profileName') and face.get('profileName') == actor['profileName']:
                         split = layout.row(align=True)
                         split.scale_y = row_scale
@@ -178,10 +174,10 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                 # row = split.row(align=True)
                 # row.label(text='faceId', icon_value=Icons.FACE.get_icon())
 
-        for prop in animations.props:
+        for prop in animations.live_data.props:
             show_prop(layout, prop, scale=True)
 
-            for tracker in animations.trackers:
+            for tracker in animations.live_data.trackers:
                 if tracker['connectionId'] == prop['id']:
                     split = layout.row(align=True)
                     split.scale_y = row_scale
@@ -189,22 +185,23 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     show_tracker(split, tracker)
                     used_trackers.append(tracker['name'])
 
-        for tracker in animations.trackers:
+        for tracker in animations.live_data.trackers:
             if tracker['name'] not in used_trackers:
                 show_tracker(layout, tracker, scale=True)
 
         # row = layout.row(align=True)
         # row.label(text='5', icon_value=Icons.VP.get_icon())
 
-        for face in animations.faces:
+        for face in animations.live_data.faces:
             if face['faceId'] not in used_faces:
                 show_face(layout, face, scale=True)
 
         # row = layout.row(align=True)
         # row.label(text='faceId2', icon_value=Icons.FACE.get_icon())
 
-        for glove in animations.gloves:
-            show_glove(layout, glove, scale=True)
+        # TODO Add gloves in v3
+        # for glove in animations.live_data.gloves:
+        #     show_glove(layout, glove, scale=True)
 
 
 def add_indent(split, empty=False):
@@ -221,8 +218,8 @@ def show_actor(layout, actor, scale=False):
     if scale:
         row.scale_y = row_scale
 
-    if paired_inputs.get(actor['id']):
-        row.label(text=actor['name'] + '  --> ' + ', '.join(paired_inputs.get(actor['id'])), icon_value=Icons.SUIT.get_icon())
+    if paired_inputs.get(actor['name']):
+        row.label(text=actor['name'] + '  --> ' + ', '.join(paired_inputs.get(actor['name'])), icon_value=Icons.SUIT.get_icon())
     else:
         row.enabled = False
         row.label(text=actor['name'], icon_value=Icons.SUIT.get_icon())
