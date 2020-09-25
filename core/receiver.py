@@ -55,8 +55,9 @@ class Receiver:
         except ValueError:
             print('Packet contained no data')
             return ['Packets contain no data!'], False
-        except (UnicodeDecodeError, TypeError):
+        except (UnicodeDecodeError, TypeError) as e:
             print('Wrong live data format! Use JSON v2!')
+            print(e)
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
 
         animations.animate()

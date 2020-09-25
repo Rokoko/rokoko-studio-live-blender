@@ -23,12 +23,6 @@ class LiveData:
     # JSON v3
     fps = 60
 
-    # def __init__(self, data):
-    #     self.data = data
-    #     self.decode_data()
-    #     self.clear_data()
-    #     self.process_data()
-
     def init(self, data):
         self.data = data
         self._decode_data()
@@ -87,6 +81,10 @@ class LiveData:
                 if actor['meta']["hasFace"]:
                     actor['face']['parentName'] = actor['name']
                     self.faces.append(actor['face'])
+
+        print()
+        print('JSON v' + str(self.version))
+        print(self.actors)
 
     def has_gloves(self, actor):
         # TODO Remove v2 support for this
