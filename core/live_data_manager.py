@@ -1,5 +1,12 @@
 import json
-from ..packages.lz4 import frame
+import platform
+
+if platform.system() == "Windows":
+    from ..packages.win.lz4 import frame
+elif platform.system() == "Darwin":
+    from ..packages.mac.lz4 import frame
+elif platform.system() == "Darwin":
+    from ..packages.linux.lz4 import frame
 
 
 class LiveData:
@@ -65,7 +72,12 @@ class LiveData:
             self.actors = self.data['actors']
 
         else:
-            self.data = self.data['playback']
+            if self.data.get('scene'):
+                self.data = self.data['scene']
+            elif self.data['live']['actors'] or self.data['live']['props']:
+                self.data = self.data['live']
+            else:
+                self.data = self.data['playback']
 
             self.timestamp = self.data['timestamp']
             self.actors = self.data['actors']
