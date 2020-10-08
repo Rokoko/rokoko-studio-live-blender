@@ -66,12 +66,7 @@ class LiveData:
             self.actors = self.data['actors']
 
         else:
-            if self.data.get('scene'):
-                self.data = self.data['scene']
-            elif self.data['live']['actors'] or self.data['live']['props']:
-                self.data = self.data['live']
-            else:
-                self.data = self.data['playback']
+            self.data = self.data['scene']
 
             self.timestamp = self.data['timestamp']
             self.actors = self.data['actors']
@@ -81,10 +76,6 @@ class LiveData:
                 if actor['meta']["hasFace"]:
                     actor['face']['parentName'] = actor['name']
                     self.faces.append(actor['face'])
-
-        print()
-        print('JSON v' + str(self.version))
-        print(self.actors)
 
     def has_gloves(self, actor):
         # TODO Remove v2 support for this

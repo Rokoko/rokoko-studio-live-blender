@@ -1,9 +1,7 @@
 import bpy
-import json
 import socket
 
 from . import animations, utils
-from .live_data_manager import LiveData
 
 error_temp = ''
 show_error = []
@@ -59,6 +57,9 @@ class Receiver:
             print('Wrong live data format! Use JSON v2!')
             print(e)
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
+        except KeyError as e:
+            print('KeyError:', e)
+            return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
 
         animations.animate()
 
