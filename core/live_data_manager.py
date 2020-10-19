@@ -14,7 +14,7 @@ class LiveData:
     version = 0
 
     # JSON v2
-    timestamp = None
+    timestamp = 0
     props = []
     trackers = []
     faces = []
@@ -22,6 +22,8 @@ class LiveData:
 
     # JSON v3
     fps = 60
+    timestamp_prev = 0
+    timedelta_prev = 0
 
     def init(self, data):
         self.data = data
@@ -33,7 +35,7 @@ class LiveData:
         self.version = 0
 
         # JSON v2
-        self.timestamp = None
+        # self.timestamp = 0
         self.props = []
         self.trackers = []
         self.faces = []
@@ -41,6 +43,8 @@ class LiveData:
 
         # JSON v3
         self.fps = 60
+        # self.timestamp_prev = 0
+        # self.timedelta_prev = 0
 
     def _decode_data(self):
         try:
@@ -66,16 +70,29 @@ class LiveData:
             self.actors = self.data['actors']
 
         else:
-            self.data = self.data['scene']
+            self.fps = self.data['fps']
 
-            self.timestamp = self.data['timestamp']
-            self.actors = self.data['actors']
-            self.props = self.data['props']
+            self.actors = self.data['scene']['actors']
+            self.props = self.data['scene']['props']
 
             for actor in self.actors:
                 if actor['meta']["hasFace"]:
                     actor['face']['parentName'] = actor['name']
                     self.faces.append(actor['face'])
+
+            self._calc_timestamp()
+
+    def _calc_timestamp(self):
+        timestamp_new = self.data['scene']['timestamp']
+        delta = timestamp_new - self.timestamp_prev
+
+        if delta >= 0:
+            self.timestamp += delta
+            self.timestamp_prev = timestamp_new
+            self.timedelta_prev = delta
+        else:
+            self.timestamp += self.timedelta_prev
+            self.timestamp_prev = timestamp_new
 
     def has_gloves(self, actor):
         # TODO Remove v2 support for this

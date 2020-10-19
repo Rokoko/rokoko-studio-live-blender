@@ -79,13 +79,13 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
             row.operator(recorder.RecorderStart.bl_idname, icon_value=Icons.START_RECORDING.get_icon())
         else:
             row.operator(recorder.RecorderStop.bl_idname, icon='SNAP_FACE', depress=True)
-            timestamps = list(recorder_manager.recorded_timestamps.keys())
-            if not timestamps:
-                return
 
-            time_recorded = int(timestamps[-1] - timestamps[0])
-            row = layout.row(align=True)
-            row.label(text='Recording time: ' + str(datetime.timedelta(seconds=time_recorded)))
+            # Calculate recording time
+            timestamps = list(recorder_manager.recorded_timestamps.keys())
+            if timestamps:
+                time_recorded = int(timestamps[-1] - timestamps[0])
+                row = layout.row(align=True)
+                row.label(text='Recording time: ' + str(datetime.timedelta(seconds=time_recorded)))
 
         if receiver.receiver_enabled and receiver_cls.show_error:
             for i, error in enumerate(receiver_cls.show_error):
@@ -98,15 +98,40 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     row.label(text=error, icon='BLANK1')
             return
 
-        # TODO Make version 3 compatible
-        if animations.live_data.version > 2:
-            return
-
         # Show all inputs
         global paired_inputs
         paired_inputs = {}
         used_trackers = []
         used_faces = []
+
+        paired_inputs_2 = {}
+        for obj in bpy.data.objects:
+            # Get props and trackers
+            if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+                if animations.live_data.props:
+                    prop = animations.live_data.get_prop_by_obj(obj)
+                    if prop:
+                        prop_id = animations.live_data.get_prop_id(prop)
+                        paired_inputs_2[prop_id] = [obj.name]
+                if animations.live_data.trackers:
+                    tracker = animations.live_data.get_prop_by_obj(obj)
+                    if tracker:
+                        tracker_id = animations.live_data.get_prop_id(tracker, is_tracker=True)
+                        paired_inputs_2[tracker_id] = [obj.name]
+
+            # Get faces
+            if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+                face = animations.live_data.get_face_by_obj(obj)
+                if face:
+                    face_id = animations.live_data.get_face_id(face)
+                    paired_inputs_2[face_id] = [obj.name]
+
+            # Get actors
+            if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+                actor = animations.live_data.get_actor_by_obj(obj)
+                if actor:
+                    actor_id = animations.live_data.get_actor_id(actor)
+                    paired_inputs_2[actor_id] = [obj.name]
 
         # Get all paired inputs. Paired inputs are paired to an object in the scene
         for obj in bpy.data.objects:
@@ -134,6 +159,16 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     paired_inputs[obj.rsl_animations_actors] = [obj.name]
                 else:
                     paired.append(obj.name)
+
+        # print()
+        # print(paired_inputs)
+        # print(paired_inputs_2)
+        # print(used_trackers)
+        # print(used_faces)
+        # print()
+
+        if animations.live_data.version > 2:
+            return
 
         # This is used as a small spacer
         row = layout.row(align=True)

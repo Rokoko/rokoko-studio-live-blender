@@ -21,6 +21,9 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
  
 ### Changelog
 
+#### 1.2
+- Added support for the new Rokoko Smartgloves
+
 #### 1.1.1
 - Added Retargeting panel
     - This allows you to easily retarget any animation from one character to another
