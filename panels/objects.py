@@ -29,12 +29,14 @@ class ObjectsPanel(bpy.types.Panel):
     def draw_tracker(context, layout):
         obj = context.object
 
+        props_string = 'Prop or Tracker' if animations.live_data.version <= 2 else 'prop'
+
         row = layout.row(align=True)
-        row.label(text='Attach to tracker or prop:')
+        row.label(text=f'Attach to {props_string}:')
 
         if not animations.live_data.trackers and not animations.live_data.props:
             row = layout.row(align=True)
-            row.label(text='No prop or tracker data available.', icon='INFO')
+            row.label(text=f'No {props_string.lower()} data available.', icon='INFO')
             return
 
         row = layout.row(align=True)
@@ -53,7 +55,7 @@ class ObjectsPanel(bpy.types.Panel):
         layout.separator()
 
         row = layout.row(align=True)
-        row.label(text='Attach to face:')
+        row.label(text='Attach to Face:')
 
         if not animations.live_data.faces:
             row = layout.row(align=True)
@@ -89,7 +91,7 @@ class ObjectsPanel(bpy.types.Panel):
         layout.separator()
 
         row = layout.row(align=True)
-        row.label(text='Attach to actor:')
+        row.label(text='Attach to Actor:')
 
         if not animations.live_data.actors:
             row = layout.row(align=True)

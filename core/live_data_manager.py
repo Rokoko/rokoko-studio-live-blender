@@ -111,12 +111,16 @@ class LiveData:
         return actor['name']
 
     def get_face_by_obj(self, obj):
-        face_id = 'faceId' if self.version <= 2 else 'parentName'
+        face_id = 'faceId'  # if self.version <= 2 else 'parentName'
         faces = [face for face in self.faces if face[face_id] == obj.rsl_animations_faces]
         return faces[0] if faces else None
 
     def get_face_id(self, face):
-        face_id = 'faceId' if self.version <= 2 else 'parentName'
+        face_id = 'faceId'  # if self.version <= 2 else 'parentName'
+        return face[face_id]
+
+    def get_face_parent_id(self, face):
+        face_id = 'profileName' if self.version <= 2 else 'parentName'
         return face[face_id]
 
     def get_prop_by_obj(self, obj):
@@ -143,6 +147,9 @@ class LiveData:
     def get_prop_name(self, prop, is_tracker=False):
         if self.version <= 2:
             return ('Tracker: ' if is_tracker else 'Prop: ') + prop['name']
+        return prop['name']
+
+    def get_prop_name_raw(self, prop, is_tracker=False):
         return prop['name']
 
 

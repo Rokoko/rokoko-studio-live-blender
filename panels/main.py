@@ -98,145 +98,163 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
                     row.label(text=error, icon='BLANK1')
             return
 
-        # Show all inputs
-        global paired_inputs
-        paired_inputs = {}
-        used_trackers = []
-        used_faces = []
+        if animations.live_data.version <= 2:
+            show_connetions_v2(layout)
+        else:
+            show_connetions_v3(layout)
 
-        paired_inputs_2 = {}
-        for obj in bpy.data.objects:
-            # Get props and trackers
+
+def show_connetions_v2(layout):
+    # Show all inputs
+    global paired_inputs
+    paired_inputs = {}
+    used_trackers = []
+    used_faces = []
+
+    # Get all paired inputs. Paired inputs are paired to an object in the scene
+    for obj in bpy.data.objects:
+        # Get paired props and trackers
+        if animations.live_data.props or animations.live_data.trackers:
             if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
-                if animations.live_data.props:
-                    prop = animations.live_data.get_prop_by_obj(obj)
-                    if prop:
-                        prop_id = animations.live_data.get_prop_id(prop)
-                        paired_inputs_2[prop_id] = [obj.name]
-                if animations.live_data.trackers:
-                    tracker = animations.live_data.get_prop_by_obj(obj)
-                    if tracker:
-                        tracker_id = animations.live_data.get_prop_id(tracker, is_tracker=True)
-                        paired_inputs_2[tracker_id] = [obj.name]
-
-            # Get faces
-            if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
-                face = animations.live_data.get_face_by_obj(obj)
-                if face:
-                    face_id = animations.live_data.get_face_id(face)
-                    paired_inputs_2[face_id] = [obj.name]
-
-            # Get actors
-            if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-                actor = animations.live_data.get_actor_by_obj(obj)
-                if actor:
-                    actor_id = animations.live_data.get_actor_id(actor)
-                    paired_inputs_2[actor_id] = [obj.name]
-
-        # Get all paired inputs. Paired inputs are paired to an object in the scene
-        for obj in bpy.data.objects:
-            # Get paired props and trackers
-            if animations.live_data.props or animations.live_data.trackers:
-                if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
-                    paired = paired_inputs.get(obj.rsl_animations_props_trackers.split('|')[1])
-                    if not paired:
-                        paired_inputs[obj.rsl_animations_props_trackers.split('|')[1]] = [obj.name]
-                    else:
-                        paired.append(obj.name)
-
-            # Get paired faces
-            if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
-                paired = paired_inputs.get(obj.rsl_animations_faces)
+                paired = paired_inputs.get(obj.rsl_animations_props_trackers.split('|')[1])
                 if not paired:
-                    paired_inputs[obj.rsl_animations_faces] = [obj.name]
+                    paired_inputs[obj.rsl_animations_props_trackers.split('|')[1]] = [obj.name]
                 else:
                     paired.append(obj.name)
 
-            # Get paired actors
-            if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
-                paired = paired_inputs.get(obj.rsl_animations_actors)
-                if not paired:
-                    paired_inputs[obj.rsl_animations_actors] = [obj.name]
-                else:
-                    paired.append(obj.name)
+        # Get paired faces
+        if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+            paired = paired_inputs.get(obj.rsl_animations_faces)
+            if not paired:
+                paired_inputs[obj.rsl_animations_faces] = [obj.name]
+            else:
+                paired.append(obj.name)
 
-        # print()
-        # print(paired_inputs)
-        # print(paired_inputs_2)
-        # print(used_trackers)
-        # print(used_faces)
-        # print()
+        # Get paired actors
+        if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            paired = paired_inputs.get(obj.rsl_animations_actors)
+            if not paired:
+                paired_inputs[obj.rsl_animations_actors] = [obj.name]
+            else:
+                paired.append(obj.name)
 
-        if animations.live_data.version > 2:
-            return
+    # This is used as a small spacer
+    row = layout.row(align=True)
+    row.scale_y = 0.01
+    row.label(text=' ')
 
-        # This is used as a small spacer
-        row = layout.row(align=True)
-        row.scale_y = 0.01
-        row.label(text=' ')
+    # Display all paired and unpaired inputs
+    for actor in animations.live_data.actors:
+        if actor['profileName']:
+            row = layout.row(align=True)
+            row.scale_y = row_scale
+            row.label(text=actor['profileName'], icon='ANTIALIASED')
 
-        # Display all paired and unpaired inputs
-        for actor in animations.live_data.actors:
-            if actor['profileName']:
-                row = layout.row(align=True)
-                row.scale_y = row_scale
-                row.label(text=actor['profileName'], icon='ANTIALIASED')
-
-                split = layout.row(align=True)
-                split.scale_y = row_scale
-                add_indent(split)
-                show_actor(split, actor)
-
-                for tracker in animations.live_data.trackers:
-                    if tracker['connectionId'] == actor['name']:
-                        split = layout.row(align=True)
-                        split.scale_y = row_scale
-                        add_indent(split, empty=True)
-                        add_indent(split)
-                        show_tracker(split, tracker)
-                        used_trackers.append(tracker['name'])
-
-                for face in animations.live_data.faces:
-                    if face.get('profileName') and face.get('profileName') == actor['profileName']:
-                        split = layout.row(align=True)
-                        split.scale_y = row_scale
-                        add_indent(split)
-                        show_face(split, face)
-                        used_faces.append(face['faceId'])
-
-                # split = layout.row(align=True)
-                # add_indent(split)
-                # row = split.row(align=True)
-                # row.label(text='faceId', icon_value=Icons.FACE.get_icon())
-
-        for prop in animations.live_data.props:
-            show_prop(layout, prop, scale=True)
+            split = layout.row(align=True)
+            split.scale_y = row_scale
+            add_indent(split)
+            show_actor(split, actor)
 
             for tracker in animations.live_data.trackers:
-                if tracker['connectionId'] == prop['id']:
+                if tracker['connectionId'] == actor['name']:
                     split = layout.row(align=True)
                     split.scale_y = row_scale
+                    add_indent(split, empty=True)
                     add_indent(split)
                     show_tracker(split, tracker)
                     used_trackers.append(tracker['name'])
 
-        for tracker in animations.live_data.trackers:
-            if tracker['name'] not in used_trackers:
-                show_tracker(layout, tracker, scale=True)
+            for face in animations.live_data.faces:
+                if face.get('profileName') and face.get('profileName') == actor['profileName']:
+                    split = layout.row(align=True)
+                    split.scale_y = row_scale
+                    add_indent(split)
+                    show_face(split, face)
+                    used_faces.append(face['faceId'])
 
-        # row = layout.row(align=True)
-        # row.label(text='5', icon_value=Icons.VP.get_icon())
+            # split = layout.row(align=True)
+            # add_indent(split)
+            # row = split.row(align=True)
+            # row.label(text='faceId', icon_value=Icons.FACE.get_icon())
+
+    for prop in animations.live_data.props:
+        show_prop(layout, prop, scale=True)
+
+        for tracker in animations.live_data.trackers:
+            if tracker['connectionId'] == prop['id']:
+                split = layout.row(align=True)
+                split.scale_y = row_scale
+                add_indent(split)
+                show_tracker(split, tracker)
+                used_trackers.append(tracker['name'])
+
+    for tracker in animations.live_data.trackers:
+        if tracker['name'] not in used_trackers:
+            show_tracker(layout, tracker, scale=True)
+
+    # row = layout.row(align=True)
+    # row.label(text='5', icon_value=Icons.VP.get_icon())
+
+    for face in animations.live_data.faces:
+        if face['faceId'] not in used_faces:
+            show_face(layout, face, scale=True)
+
+
+def show_connetions_v3(layout):
+    # Show all inputs
+    global paired_inputs
+    paired_inputs = {}
+
+    for obj in bpy.data.objects:
+        # Get props
+        if obj.rsl_animations_props_trackers and obj.rsl_animations_props_trackers != 'None':
+            if animations.live_data.props:
+                prop = animations.live_data.get_prop_by_obj(obj)
+                if prop:
+                    prop_id = animations.live_data.get_prop_id(prop)
+                    if not paired_inputs.get(prop_id):
+                        paired_inputs[prop_id] = [obj.name]
+                    else:
+                        paired_inputs[prop_id].append(obj.name)
+
+        # Get faces
+        if animations.live_data.faces and obj.rsl_animations_faces and obj.rsl_animations_faces != 'None':
+            face = animations.live_data.get_face_by_obj(obj)
+            if face:
+                face_id = animations.live_data.get_face_id(face)
+                if not paired_inputs.get(face_id):
+                    paired_inputs[face_id] = [obj.name]
+                else:
+                    paired_inputs[face_id].append(obj.name)
+
+        # Get actors
+        if animations.live_data.actors and obj.rsl_animations_actors and obj.rsl_animations_actors != 'None':
+            actor = animations.live_data.get_actor_by_obj(obj)
+            if actor:
+                actor_id = animations.live_data.get_actor_id(actor)
+                if not paired_inputs.get(actor_id):
+                    paired_inputs[actor_id] = [obj.name]
+                else:
+                    paired_inputs[actor_id].append(obj.name)
+
+    # This is used as a small spacer
+    row = layout.row(align=True)
+    row.scale_y = 0.01
+    row.label(text=' ')
+
+    # Display all paired and unpaired inputs
+    for actor in animations.live_data.actors:
+        show_actor(layout, actor)
 
         for face in animations.live_data.faces:
-            if face['faceId'] not in used_faces:
-                show_face(layout, face, scale=True)
+            if animations.live_data.get_face_parent_id(face) == animations.live_data.get_actor_id(actor):
+                split = layout.row(align=True)
+                split.scale_y = row_scale
+                add_indent(split)
+                show_face(split, face)
 
-        # row = layout.row(align=True)
-        # row.label(text='faceId2', icon_value=Icons.FACE.get_icon())
-
-        # TODO Add gloves in v3
-        # for glove in animations.live_data.gloves:
-        #     show_glove(layout, glove, scale=True)
+    for prop in animations.live_data.props:
+        show_prop(layout, prop, scale=True)
 
 
 def add_indent(split, empty=False):
@@ -253,11 +271,12 @@ def show_actor(layout, actor, scale=False):
     if scale:
         row.scale_y = row_scale
 
-    if paired_inputs.get(actor['name']):
-        row.label(text=actor['name'] + '  --> ' + ', '.join(paired_inputs.get(actor['name'])), icon_value=Icons.SUIT.get_icon())
+    actor_id = animations.live_data.get_actor_id(actor)
+    if paired_inputs.get(actor_id):
+        row.label(text=actor_id + '  --> ' + ', '.join(paired_inputs.get(actor_id)), icon_value=Icons.SUIT.get_icon())
     else:
         row.enabled = False
-        row.label(text=actor['name'], icon_value=Icons.SUIT.get_icon())
+        row.label(text=actor_id, icon_value=Icons.SUIT.get_icon())
 
 
 def show_glove(layout, glove, scale=False):
@@ -277,11 +296,12 @@ def show_face(layout, face, scale=False):
     if scale:
         row.scale_y = row_scale
 
-    if paired_inputs.get(face['faceId']):
-        row.label(text=face['faceId'] + '  --> ' + ', '.join(paired_inputs.get(face['faceId'])), icon_value=Icons.FACE.get_icon())
+    face_id = animations.live_data.get_face_id(face)
+    if paired_inputs.get(face_id):
+        row.label(text=face_id + '  --> ' + ', '.join(paired_inputs.get(face_id)), icon_value=Icons.FACE.get_icon())
     else:
         row.enabled = False
-        row.label(text=face['faceId'], icon_value=Icons.FACE.get_icon())
+        row.label(text=face_id, icon_value=Icons.FACE.get_icon())
 
 
 def show_tracker(layout, tracker, scale=False):
@@ -301,8 +321,9 @@ def show_prop(layout, prop, scale=False):
     if scale:
         row.scale_y = row_scale
 
-    if paired_inputs.get(prop['id']):
-        row.label(text=prop['name'] + '  --> ' + ', '.join(paired_inputs.get(prop['id'])), icon='FILE_3D')
+    prop_id = animations.live_data.get_prop_name_raw(prop)
+    if paired_inputs.get(prop_id):
+        row.label(text=prop_id + '  --> ' + ', '.join(paired_inputs.get(prop_id)), icon='FILE_3D')
     else:
         row.enabled = False
-        row.label(text=prop['name'], icon='FILE_3D')
+        row.label(text=prop_id, icon='FILE_3D')
