@@ -119,8 +119,8 @@ def save_armature(obj):
 
     # Return if no actor and no glove is assigned to this armature
     # if not obj.rsl_animations_actors or obj.rsl_animations_actors == 'None':  # <-- This should work but for some reason it doesn't
-    if obj.rsl_animations_actors == 'None' and obj.rsl_animations_gloves == 'None':
-        print('NO ASSIGNED DATA:', obj.rsl_animations_actors, obj.rsl_animations_gloves)
+    if obj.rsl_animations_actors == 'None':
+        print('NO ASSIGNED DATA:', obj.rsl_animations_actors)
         return
 
     bones = {}

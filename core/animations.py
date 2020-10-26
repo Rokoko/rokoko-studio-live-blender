@@ -2,88 +2,63 @@ import bpy
 from mathutils import Quaternion, Matrix
 
 from . import animation_lists, recorder
+from .live_data_manager import LiveData
 
-
-version = 0
-# playbacktimestamp = None
-timestamp = None
-props = []
-trackers = []
-faces = []
-actors = []
-gloves = []
+live_data: LiveData = LiveData()
 
 
 def clear_animations():
-    global props, trackers, faces, actors, gloves
-    props = []
-    trackers = []
-    faces = []
-    actors = []
-    gloves = []
+    live_data.clear_data()
 
 
 def animate():
+
     for obj in bpy.data.objects:
         # Animate all trackers and props
-        if props or trackers:
+        if live_data.props or live_data.trackers:
             animate_tracker_prop(obj)
 
         # Animate all faces
-        if obj.type == 'MESH' and faces:
+        if obj.type == 'MESH' and live_data.faces:
             animate_face(obj)
 
         # Animate all actors
         elif obj.type == 'ARMATURE':
-            if actors:
+            if live_data.actors:
                 animate_actor(obj)
-            if gloves:
-                animate_glove(obj)
 
 
 def animate_tracker_prop(obj):
     if not obj.rsl_animations_props_trackers or obj.rsl_animations_props_trackers == 'None':
         return
 
-    # Get obj id from selected item
-    obj_id = obj.rsl_animations_props_trackers.split('|')
-    obj_type = obj_id[0]
-    obj_name = obj_id[1]
+    # Get prop
+    prop = live_data.get_prop_by_obj(obj)
+    if not prop:
+        return
 
     # Get the scene scaling
     scene_scale = bpy.context.scene.rsl_scene_scaling
     if obj.rsl_use_custom_scale:
         scene_scale = obj.rsl_custom_scene_scale
 
-    def set_obj_data(data):
-        obj.rotation_mode = 'QUATERNION'
-        obj.location = pos_studio_to_blender(
-            data['position']['x'] * scene_scale,
-            data['position']['y'] * scene_scale,
-            data['position']['z'] * scene_scale,
-        )
-        obj.rotation_quaternion = rot_studio_to_blender(
-            data['rotation']['w'],
-            data['rotation']['x'],
-            data['rotation']['y'],
-            data['rotation']['z'],
-        )
-
-    # If object is a prop, get the live data
-    if obj_type == 'PR':
-        prop = [prop for prop in props if prop['id'] == obj_name]
-        if prop:
-            set_obj_data(prop[0])
-
-    # If object is a tracker, get the live data
-    elif obj_type == 'TR':
-        tracker = [tracker for tracker in trackers if tracker['name'] == obj_name]
-        if tracker:
-            set_obj_data(tracker[0])
+    # Set the transforms of the object
+    obj.rotation_mode = 'QUATERNION'
+    obj.location = pos_studio_to_blender(
+        prop['position']['x'] * scene_scale,
+        prop['position']['y'] * scene_scale,
+        prop['position']['z'] * scene_scale,
+    )
+    obj.rotation_quaternion = rot_studio_to_blender(
+        prop['rotation']['w'],
+        prop['rotation']['x'],
+        prop['rotation']['y'],
+        prop['rotation']['z'],
+    )
 
     # Record data
     if bpy.context.scene.rsl_recording:
-        recorder.record_object(timestamp, obj.name, obj.rotation_quaternion, obj.location)
+        recorder.record_object(live_data.timestamp, obj.name, obj.rotation_quaternion, obj.location)
 
 
 def animate_face(obj):
@@ -93,10 +68,9 @@ def animate_face(obj):
         return
 
     # Get the face live data
-    face = [face for face in faces if face['faceId'] == obj.rsl_animations_faces]
+    face = live_data.get_face_by_obj(obj)
     if not face:
         return
-    face = face[0]
 
     # Set each assigned shapekey to the value of it's according live data value
     for shapekey_name in animation_lists.face_shapes:
@@ -108,7 +82,7 @@ def animate_face(obj):
 
             if bpy.context.scene.rsl_recording:
                 # shapekey.keyframe_insert(data_path='value', group=obj.name)
-                recorder.record_face(timestamp, obj.name, shapekey_name, shapekey.value)
+                recorder.record_face(live_data.timestamp, obj.name, shapekey_name, shapekey.value)
 
 
 def animate_actor(obj):
@@ -117,10 +91,9 @@ def animate_actor(obj):
         return
 
     # Get the actor data assigned to the object
-    actor = [actor for actor in actors if actor['id'] == obj.rsl_animations_actors]
+    actor = live_data.get_actor_by_obj(obj)
     if not actor:
         return
-    actor = actor[0]
 
     # Get current custom data from this object
     # The models t-pose bone rotations and locations, which are set by the user, are stored inside this custom data
@@ -148,6 +121,8 @@ def animate_actor(obj):
         bone_data = obj.data.bones.get(bone_name_assigned)
         bone_tpose_data = tpose_bones.get(bone_name_assigned)
 
+        actor_bone_data = actor[bone_name] if live_data.version <= 2 else actor['body'][bone_name]
+
         # Skip if there is no bone assigned to this live data or if there is no tpose data for this bone
         if not bone or not bone_tpose_data:
             continue
@@ -162,10 +137,10 @@ def animate_actor(obj):
 
         # The new pose in which the bone should be (still in Studio space)
         studio_new_pose = Quaternion((
-            actor[bone_name]['rotation']['w'],
-            actor[bone_name]['rotation']['x'],
-            actor[bone_name]['rotation']['y'],
-            actor[bone_name]['rotation']['z'],
+            actor_bone_data['rotation']['w'],
+            actor_bone_data['rotation']['x'],
+            actor_bone_data['rotation']['y'],
+            actor_bone_data['rotation']['z'],
         ))
 
         # Function to convert from Studio to Blender space
@@ -223,22 +198,22 @@ def animate_actor(obj):
                 multiplier = mat_obj[2][2]
 
             # Get scale of studio model
-            studio_hip_height = actor.get('hipHeight')
+            studio_hip_height = actor.get('hipHeight') if live_data.version <= 2 else actor.get('dimensions').get('hipHeight')
             if not studio_hip_height:
                 studio_hip_height = 1
 
             tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
 
             location_new = pos_hips_studio_to_blender(
-                actor[bone_name]['position']['x'] * tpose_hip_location_y / studio_hip_height,
-                actor[bone_name]['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
-                actor[bone_name]['position']['z'] * tpose_hip_location_y / studio_hip_height)
+                actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height,
+                actor_bone_data['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
+                actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height)
 
             bone.location = location_new
 
         # Record the data
         if bpy.context.scene.rsl_recording:
-            recorder.record_bone(timestamp, obj.name, bone_name_assigned, bone.rotation_euler, location=bone.location if bone_name == 'hip' else None)
+            recorder.record_bone(live_data.timestamp, obj.name, bone_name_assigned, bone.rotation_euler, location=bone.location if bone_name == 'hip' else None)
 
 
 def animate_glove(obj):

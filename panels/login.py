@@ -39,7 +39,11 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
         row.alignment = 'RIGHT'
         row.operator(ShowPassword.bl_idname, text="", icon='HIDE_OFF' if login.show_password else 'HIDE_ON')
 
-        if login.show_wrong_auth:
+        if login.error_show_no_connection:
+            row = layout.row(align=True)
+            row.label(text='No internet connection!', icon='ERROR')
+
+        elif login.error_show_wrong_auth:
             row = layout.row(align=True)
             row.label(text='Wrong email or password!', icon='ERROR')
 
