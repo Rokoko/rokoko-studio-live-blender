@@ -8,9 +8,13 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Requirements
 - Blender **2.80** or higher
+- For live stream data: Rokoko Studio 1.18.0b
 
 ## Features
-- Stream and record motion capture animations from Rokoko Studio into Blender
+- Live stream data:
+    - Up to five actors that can all include both body, face (52 blendshapes) and finger data at the same time
+    - Camera data
+    - Props data
 - Control Rokoko Studio from within Blender
 - Easily retarget motion capture animations
  
