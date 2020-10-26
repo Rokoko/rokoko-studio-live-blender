@@ -95,8 +95,7 @@ class LiveData:
             self.timestamp_prev = timestamp_new
 
     def has_gloves(self, actor):
-        # TODO Remove v2 support for this
-        return self.version <= 2 or (self.version >= 3 and actor.get('meta') and actor.get('meta').get('hasGloves'))
+        return self.version >= 3 and actor.get('meta') and actor.get('meta').get('hasGloves')
 
     def supports_trackers(self):
         return self.version <= 2

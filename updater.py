@@ -459,9 +459,8 @@ def clean_addon_dir():
             file_rel = os.path.join(root_rel, file)
             file_abs = os.path.join(root, file)
 
-            if file_rel.startswith('.\\'):
+            if file_rel.startswith('.\\') or file_rel.startswith('./'):
                 file_rel = file_rel[2:]
-                # TODO Check if this is true on linux
 
             # Keep the file if its exact name is on the ignore list
             if file_rel in paths_to_keep:
