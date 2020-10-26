@@ -6,32 +6,32 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ---
 
-### Requirements
+## Requirements
 - Blender **2.80** or higher
 
-### Features
+## Features
 - Stream and record motion capture animations from Rokoko Studio into Blender
 - Control Rokoko Studio from within Blender
 - Easily retarget motion capture animations
  
 ---
 
-### Getting Started for Streaming
+## Getting Started for Streaming
 
-#### Enabling Rokoko Studio Live
+### Enabling Rokoko Studio Live
 - In Rokoko Studio go to settings and click on **Studio Live** in the dropdown menu and enable the Blender data stream. You can customize the streaming address and port by clicking the wrench icon at the top left
 
   <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47009137268/original/iUPhbfdu2-FVfsBHs_RlWeqyhekQX9_Lbw.png" height="500" /> &nbsp;&nbsp;&nbsp;
   <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47011953744/original/CxBalqeKrhgesFhgEf69gr4fVNxx3p0ZcQ.gif"/>
 
-#### Receiving the Data in Blender
+### Receiving the Data in Blender
 - In the 3D view press N or the little arrow on the right side, then select the "Rokoko" tab and press "Start Receiver" to start receiving data from Rokoko Studio
 
   <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47010394035/original/F9BVdJ-P3GjPAqGsOno-it18A0lvyF3n3A.png"/> &nbsp;&nbsp;&nbsp;
   <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47010394045/original/1E4Pt708FhhoGngovjP7V3CYVaNgNG_J_w.png"/> &nbsp;&nbsp;&nbsp;
   <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47010394056/original/Um5r_amKNoEJaF8vjF1JgQwVyjztGDtJ5w.png"/>
 
-#### Streaming Character Data
+### Streaming Character Data
 - After starting the receiver select the armature that you want to animate
 - Go into the object category and open the "Rokoko Studio Live Setup" panel
 - In the actor field select the Smartsuit that you want to use for this armature
@@ -50,7 +50,7 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 - If you experience any lag while using the plugin, close the window that shows key frames (e.g. timeline or action editor). Blender will run much smoother as the panel takes a lot of resources.
 
-#### Streaming Face and Prop Data
+### Streaming Face and Prop Data
 - This uses the exact same workflow as streaming character data
 - Just select the face mesh for face data or the object for prop data and then follow the steps above
 - Done! Your face mesh or prop should now be animated by the live data
@@ -64,7 +64,7 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ---
 
-### Retargeting
+## Retargeting
 In order to retarget an animation in Blender you will need to do the following:
 
 - Open the Retargeting panel
@@ -89,7 +89,7 @@ In order to retarget an animation in Blender you will need to do the following:
 
 ---
  
-### Changelog
+## Changelog
 
 #### 1.2
 - Added support for the new [Rokoko Smartgloves](https://www.rokoko.com/products/smartgloves)
