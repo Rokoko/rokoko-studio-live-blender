@@ -145,12 +145,6 @@ def register():
         items=animation_lists.get_actors,
         update=state_manager.update_actor
     )
-    Object.rsl_animations_gloves = EnumProperty(
-        name='Glove',
-        description='Select the glove that you want to attach this armature to',
-        items=animation_lists.get_gloves,
-        update=state_manager.update_glove
-    )
     Object.rsl_use_custom_scale = BoolProperty(
         name='Use Custom Scale',
         description='Select this if the objects scene scaling should be overwritten',
@@ -176,11 +170,4 @@ def register():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'
-        ))
-
-    # Glove bones
-    for bone in animation_lists.glove_bones.keys():
-        setattr(Object, 'rsl_glove_' + bone, StringProperty(
-            name=bone,
-            description='Select the bone that corresponds to the gloves bone'
         ))

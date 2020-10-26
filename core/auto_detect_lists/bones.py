@@ -616,6 +616,7 @@ bone_list['leftToe'] = [
 ]
 
 bone_list['leftThumbProximal'] = [
+    'Thumb0_\L',
     '\LThumb1',
     '\LThumb1N',
     'Thumb_01_\L',
@@ -647,6 +648,7 @@ bone_list['leftThumbProximal'] = [
     '\LFinger1Metacarpal',
 ]
 bone_list['leftThumbMedial'] = [
+    'Thumb1_\L',
     '\LThumb2',
     '\LThumb2N',
     'Thumb_02_\L',
@@ -678,6 +680,7 @@ bone_list['leftThumbMedial'] = [
     '\LFinger1Proximal',
 ]
 bone_list['leftThumbDistal'] = [
+    'Thumb2_\L',
     '\LThumb3',
     '\LThumb3N',
     'Thumb_03_\L',
@@ -709,6 +712,7 @@ bone_list['leftThumbDistal'] = [
     '\LFinger1Distal',
 ]
 bone_list['leftIndexProximal'] = [
+    'IndexFinger1_\L',
     'Fore1_\L',
     '\LIndex1',
     '\LIndex1N',
@@ -743,6 +747,7 @@ bone_list['leftIndexProximal'] = [
     '\LFinger2Proximal',
 ]
 bone_list['leftIndexMedial'] = [
+    'IndexFinger2_\L',
     'Fore2_\L',
     '\LIndex2',
     '\LIndex2N',
@@ -777,6 +782,7 @@ bone_list['leftIndexMedial'] = [
     '\LFinger2Medial',
 ]
 bone_list['leftIndexDistal'] = [
+    'IndexFinger3_\L',
     'Fore3_\L',
     '\LIndex3',
     '\LIndex3N',
@@ -812,6 +818,7 @@ bone_list['leftIndexDistal'] = [
     '\LFinger2Distal',
 ]
 bone_list['leftMiddleProximal'] = [
+    'MiddleFinger1_\L',
     'Middle1_\L',
     '\LMid1',
     '\LMiddle1N',
@@ -847,6 +854,7 @@ bone_list['leftMiddleProximal'] = [
     '\LFinger3Proximal',
 ]
 bone_list['leftMiddleMedial'] = [
+    'MiddleFinger2_\L',
     'Middle2_\L',
     '\LMid2',
     '\LMiddle2N',
@@ -881,6 +889,7 @@ bone_list['leftMiddleMedial'] = [
     '\LFinger3Medial',
 ]
 bone_list['leftMiddleDistal'] = [
+    'MiddleFinger3_\L',
     'Middle3_\L',
     '\LMid3',
     '\LMiddle3N',
@@ -915,6 +924,7 @@ bone_list['leftMiddleDistal'] = [
     '\LFinger3Distal',
 ]
 bone_list['leftRingProximal'] = [
+    'RingFinger1_\L',
     'Third1_\L',
     '\LRing1',
     '\LRing1N',
@@ -950,6 +960,7 @@ bone_list['leftRingProximal'] = [
     '\LFinger4Proximal',
 ]
 bone_list['leftRingMedial'] = [
+    'RingFinger2_\L',
     'Third2_\L',
     '\LRing2',
     '\LRing2N',
@@ -985,6 +996,7 @@ bone_list['leftRingMedial'] = [
     '\LFinger4Medial',
 ]
 bone_list['leftRingDistal'] = [
+    'RingFinger3_\L',
     'Third3_\L',
     '\LRing3',
     '\LRing3N',
@@ -1020,6 +1032,7 @@ bone_list['leftRingDistal'] = [
     '\LFinger4Distal',
 ]
 bone_list['leftLittleProximal'] = [
+    'LittleFinger1_\L',
     'Little1_\L',
     '\LPinky1',
     '\LPinky1N',
@@ -1056,6 +1069,7 @@ bone_list['leftLittleProximal'] = [
     '\LFinger5Proximal',
 ]
 bone_list['leftLittleMedial'] = [
+    'LittleFinger2_\L',
     'Little2_\L',
     '\LPinky2',
     '\LPinky2N',
@@ -1092,6 +1106,7 @@ bone_list['leftLittleMedial'] = [
     '\LFinger5Medial',
 ]
 bone_list['leftLittleDistal'] = [
+    'LittleFinger3_\L',
     'Little3_\L',
     '\LPinky3',
     '\LPinky3N',

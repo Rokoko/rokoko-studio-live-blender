@@ -1,19 +1,22 @@
 import os
-import platform
-from threading import Thread
-
 import bpy
 import ctypes
 import pathlib
+import platform
+import requests
+from threading import Thread
+
 
 if platform.system() == "Windows":
     from ctypes import wintypes
 
 lib = None
 show_password = False
-show_wrong_auth = False
 credentials_updated = True
 logged_in_email = ''
+
+error_show_wrong_auth = False
+error_show_no_connection = False
 
 main_dir = pathlib.Path(os.path.dirname(__file__)).parent.resolve()
 resources_dir = os.path.join(main_dir, "resources")
@@ -57,6 +60,13 @@ def load():
         # path = os.environ['PATH'].split(os.pathsep)[0]
         # print('DLLs:', os.listdir(path))
         # print()
+
+        # print(1, os.getcwd())
+        # os.chdir(os_libs_dir)
+        # print(2, os.getcwd())
+        # print(3, os_libs_dir)
+        # print(4, lib_file)
+
         lib = ctypes.CDLL(lib_file)
 
     # Set the cache path
@@ -113,7 +123,7 @@ def login_from_cache(classes_list, classes_login_list):
 
 
 def login(email, password):
-    global show_wrong_auth, credentials_updated
+    global error_show_wrong_auth, error_show_no_connection, credentials_updated
     load()
 
     # If nothing was changed in the fields, don't try to login in order to reduce spam
@@ -132,11 +142,21 @@ def login(email, password):
 
     if logged_in:
         register_classes()
-        show_wrong_auth = False
+        error_show_wrong_auth = False
+        error_show_no_connection = False
         return True
 
-    show_wrong_auth = True
     credentials_updated = False
+
+    # If the login failed, test if Blender has access to the internet
+    try:
+        _ = requests.get('http://www.rokoko.com/', timeout=5)
+    except requests.ConnectionError:
+        print("No internet connection available.")
+        error_show_no_connection = True
+        credentials_updated = True
+
+    error_show_wrong_auth = True
     return False
 
 

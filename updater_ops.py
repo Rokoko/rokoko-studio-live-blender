@@ -489,6 +489,9 @@ def register(bl_info, beta_branch):
     if count < len(to_register):
         print('Skipped', len(to_register) - count, 'Rokoko Studio Live updater classes.')
 
+    # Delete and renamed files that didn't get deleted during the update process
+    updater.delete_and_rename_files_on_startup()
+
 
 def unregister():
     # Unregister all Updater classes
