@@ -10,7 +10,7 @@ bl_info = {
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-beta_branch = False
+beta_branch = True
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules

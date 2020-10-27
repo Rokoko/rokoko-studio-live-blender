@@ -95,7 +95,10 @@ In order to retarget an animation in Blender you will need to do the following:
  
 ## Changelog
 
-#### 1.2
+#### 1.2.1
+- Fixed login issue when using a Blender UI language other than English
+
+#### 1.2.0
 - Added support for the new [Rokoko Smartgloves](https://www.rokoko.com/products/smartgloves)
 - Fixed an issue with the auto-updater which caused updates to fail
  
