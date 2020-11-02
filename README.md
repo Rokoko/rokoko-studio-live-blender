@@ -22,8 +22,7 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Getting Started for Streaming
 
-###Make sure the model is ready for Studio Live
-
+### Make sure the model is ready for Studio Live
 The character in Blender has to be in T-pose:
 
   <img src="https://i.imgur.com/p4uVZBx.png" height="450"/>
