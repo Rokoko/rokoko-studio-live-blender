@@ -5,7 +5,7 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 2, 0),
+    'version': (1, 2, 1),
     'blender': (2, 80, 0),
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
@@ -16,7 +16,6 @@ beta_branch = False
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
 import sys
-import platform
 if "bpy" not in locals():
     import bpy
     from . import core

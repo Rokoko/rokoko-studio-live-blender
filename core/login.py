@@ -126,9 +126,14 @@ def login(email, password):
     global error_show_wrong_auth, error_show_no_connection, credentials_updated
     load()
 
+    # Change language to english temporarily to fix login issues when using japanese
+    language_tmp = bpy.context.preferences.view.language
+    if language_tmp != 'en_US':
+        bpy.context.preferences.view.language = 'en_US'
+
     # If nothing was changed in the fields, don't try to login in order to reduce spam
-    if not credentials_updated:
-        return False
+    # if not credentials_updated:  # TODO Maybe add timer to reset this? Maybe it's not even needed anymore?
+    #     return False
 
     # Check if already signed in
     if lib.isSignedIn():
@@ -139,6 +144,10 @@ def login(email, password):
     # Sign in with email and password
     lib.signIn.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
     logged_in = lib.signIn(email.encode(), password.encode())
+
+    # Change back language to previous
+    if language_tmp != 'en_US':
+        bpy.context.preferences.view.language = language_tmp
 
     if logged_in:
         register_classes()
@@ -157,6 +166,7 @@ def login(email, password):
         credentials_updated = True
 
     error_show_wrong_auth = True
+    print('Login failed!')
     return False
 
 

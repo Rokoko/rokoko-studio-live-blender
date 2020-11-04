@@ -22,6 +22,16 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Getting Started for Streaming
 
+### Make sure the model is ready for Studio Live
+The character in Blender has to be in T-pose:
+
+  <img src="https://i.imgur.com/p4uVZBx.png" height="450"/>
+
+**For SmartGloves:** Make sure that the character's hands and fingers are posed as close as possible to the following pose to get the best 
+possible retargeting of finger animation. All fingers should be straight and the thumb should be rotated 45 degrees away from the other fingers.
+
+  <img src="https://i.imgur.com/9I13bHI.png"/>
+
 ### Enabling Rokoko Studio Live
 - In Rokoko Studio go to settings and click on **Studio Live** in the dropdown menu and enable the Blender data stream. You can customize the streaming address and port by clicking the wrench icon at the top left
 
@@ -95,7 +105,10 @@ In order to retarget an animation in Blender you will need to do the following:
  
 ## Changelog
 
-#### 1.2
+#### 1.2.1
+- Fixed login issue when using a Blender UI language other than English
+
+#### 1.2.0
 - Added support for the new [Rokoko Smartgloves](https://www.rokoko.com/products/smartgloves)
 - Fixed an issue with the auto-updater which caused updates to fail
  
