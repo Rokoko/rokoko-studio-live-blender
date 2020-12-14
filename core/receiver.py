@@ -1,5 +1,4 @@
 import bpy
-import json
 import socket
 
 from . import animations, utils
@@ -12,7 +11,6 @@ show_error = []
 class Receiver:
 
     sock = None
-    data_raw = None
 
     # Redraw counters
     i = -1    # Number of continuous received packets
@@ -23,6 +21,7 @@ class Receiver:
     error_count = 0
 
     def run(self):
+        data_raw = None
         received = True
         error = []
         force_error = False
@@ -31,51 +30,36 @@ class Receiver:
         try:
             data_raw, address = self.sock.recvfrom(65536)
         except BlockingIOError:
-            received = False
             error = ['Receiving no data!']
         except OSError as e:
-            received = False
             print('Packet error:', e.strerror)
             error = ['Packets too big!']
             force_error = True
         except AttributeError as e:
-            received = False
             print('Socket error:', e)
             error = ['Socket not running!']
             force_error = True
 
-        if received:
+        if data_raw:
             # Process animation data
-            self.data_raw = data_raw
-            error, force_error = self.process_data()
+            error, force_error = self.process_data(data_raw)
 
         self.handle_ui_updates(received)
         self.handle_error(error, force_error)
 
-    def process_data(self):
-        if not self.data_raw:
+    def process_data(self, data_raw):
+        try:
+            animations.live_data.init(data_raw)
+        except ValueError:
             print('Packet contained no data')
             return ['Packets contain no data!'], False
-
-        try:
-            data = json.loads(self.data_raw)
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, TypeError) as e:
             print('Wrong live data format! Use JSON v2!')
+            print(e)
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
-
-        if data['version'] < 2:
-            print('Old json data version! Please use v2 or higher')
-            return ['Old data format!', 'Use JSON v2 or higher!'], True
-
-        # print(data)
-
-        animations.version = data['version']
-        animations.timestamp = data['timestamp']
-        # animations.playbacktimestamp = data['playbackTimestamp']
-        animations.props = data['props']
-        animations.trackers = data['trackers']
-        animations.faces = data['faces']
-        animations.actors = data['actors']
+        except KeyError as e:
+            print('KeyError:', e)
+            return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
 
         animations.animate()
 

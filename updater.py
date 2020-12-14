@@ -14,6 +14,16 @@ from bpy.app.handlers import persistent
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
 GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/beta.zip'
 
+downloads_dir_name = "updater_downloads"
+
+path_names_to_keep = [
+    downloads_dir_name,
+    'resources/no_auto_ver_check.txt',
+    'resources/cache',
+    'resources/custom_bones',
+]
+
+
 no_ver_check = False
 fake_update = False
 
@@ -34,11 +44,15 @@ confirm_update_to = ''
 
 show_error = ''
 
+file_replacement_extension = '.renamed'
+
+
 main_dir = os.path.dirname(__file__)
-downloads_dir = os.path.join(main_dir, "downloads")
+downloads_dir = os.path.join(main_dir, downloads_dir_name)
 resources_dir = os.path.join(main_dir, "resources")
 ignore_ver_file = os.path.join(resources_dir, "ignore_version.txt")
 no_auto_ver_check_file = os.path.join(resources_dir, "no_auto_ver_check.txt")
+delete_files_on_startup_file = os.path.join(main_dir, "delete_files_on_startup.txt")
 
 # Get package name, important for panel in user preferences
 package_name = ''
@@ -368,21 +382,38 @@ def download_file(update_url):
         print('MOVE FILES TO DIR:', to_dir)
         files = os.listdir(from_dir)
         for file in files:
-            file_dir = os.path.join(from_dir, file)
-            target_dir = os.path.join(to_dir, file)
-            print('MOVE', file_dir)
+            source_path = os.path.join(from_dir, file)
+            target_path = os.path.join(to_dir, file)
+            print('MOVE', source_path)
 
-            # If file exists
-            if os.path.isfile(file_dir) and os.path.isfile(target_dir):
-                os.remove(target_dir)
-                shutil.move(file_dir, to_dir)
+            # If file exists, delete the target and move the new file over
+            if os.path.isfile(source_path) and os.path.isfile(target_path):
+                try:
+                    os.remove(target_path)
+                except PermissionError as e:
+                    # If removing the target file failed, rename the new file, add its name to a file and move it over
+                    # It will re renamed on the next Blender startup
+                    print(e)
+                    source_path_renamed = os.path.join(from_dir, file) + file_replacement_extension
+                    os.rename(source_path, source_path_renamed)
+                    source_path = source_path_renamed
+                    print('File was not deleted, it will be replaced on the next startup')
+
+                try:
+                    shutil.move(source_path, to_dir)
+                except shutil.Error as e:
+                    print('Moving still failed:', e)
+
                 print('REMOVED AND MOVED', file)
 
-            elif os.path.isdir(file_dir) and os.path.isdir(target_dir):
-                move_files(file_dir, target_dir)
+            elif os.path.isdir(source_path) and os.path.isdir(target_path):
+                move_files(source_path, target_path)
 
             else:
-                shutil.move(file_dir, to_dir)
+                try:
+                    shutil.move(source_path, to_dir)
+                except shutil.Error as e:
+                    print(e)
                 print('MOVED', file)
 
     move_files(extracted_zip_dir, main_dir)
@@ -410,55 +441,108 @@ def finish_update(error=''):
 def clean_addon_dir():
     print("CLEAN ADDON FOLDER")
 
-    # first remove root files and folders (except update folder, important folders and resource folder)
-    files = [f for f in os.listdir(main_dir) if os.path.isfile(os.path.join(main_dir, f))]
-    folders = [f for f in os.listdir(main_dir) if os.path.isdir(os.path.join(main_dir, f))]
+    # Convert paths to os specific paths
+    paths_to_keep = []
+    for path_name in path_names_to_keep:
+        path_parts = path_name.split('/')
+        paths_to_keep.append(os.path.join(*path_parts))
 
-    for f in files:
-        file = os.path.join(main_dir, f)
-        try:
-            os.remove(file)
-            print("Clean removing file {}".format(file))
-        except OSError:
-            print("Failed to pre-remove file " + file)
+    for root, dirs, files in os.walk(main_dir, topdown=False):
+        root_rel = os.path.relpath(root, main_dir)
 
-    for f in folders:
-        folder = os.path.join(main_dir, f)
-        if f.startswith('.') or f == 'resources' or f == 'downloads':
+        # Ignore folders that start with a dot. If the relative path is a dot only, it means that it's the main path which shouldn't be ignored
+        if root_rel.startswith('.') and root_rel != '.':
             continue
 
-        try:
-            shutil.rmtree(folder)
-            print("Clean removing folder and contents {}".format(folder))
-        except OSError:
-            print("Failed to pre-remove folder " + folder)
+        # Go over every file and decide whether to delete it or not
+        for file in files:
+            file_rel = os.path.join(root_rel, file)
+            file_abs = os.path.join(root, file)
 
-    # then remove resource files and folders (except settings, custom_bones and cache)
-    resources_folder = os.path.join(main_dir, 'resources')
-    files = [f for f in os.listdir(resources_folder) if os.path.isfile(os.path.join(resources_folder, f))]
-    folders = [f for f in os.listdir(resources_folder) if os.path.isdir(os.path.join(resources_folder, f))]
+            if file_rel.startswith('.\\') or file_rel.startswith('./'):
+                file_rel = file_rel[2:]
 
-    for f in files:
-        if f == 'no_auto_ver_check.txt':
+            # Keep the file if its exact name is on the ignore list
+            if file_rel in paths_to_keep:
+                continue
+
+            # Keep the file if part of its path is on the ignore list
+            keep_file = False
+            for path in paths_to_keep:
+                if file_rel.startswith(path):
+                    keep_file = True
+                    break
+            if keep_file:
+                continue
+
+            # Delete the file
+            try:
+                os.remove(file_abs)
+                print('Removed file', file_abs)
+            except OSError:
+                print('Failed to remove file', file_abs)
+                add_file_to_delete_on_startup(file_abs)
+
+        # Go over every folder and decide whether to delete it or not
+        for folder in dirs:
+            folder_rel = os.path.join(root_rel, folder)
+            folder_abs = os.path.join(root, folder)
+            if folder_rel.startswith('.\\'):
+                folder_rel = folder_rel[2:]
+
+            # Keep the folder if its exact name is on the ignore list
+            if folder_rel in paths_to_keep:
+                continue
+
+            # Delete the folder. It won't get deleted if it's not empty and that is on purpose.
+            # All files in the folder should be deleted already, so keep it if there are still files in it
+            try:
+                os.rmdir(folder_abs)
+                print('Removed folder', folder_abs)
+            except OSError:
+                print('Failed to remove folder', folder_abs)
+
+
+def add_file_to_delete_on_startup(file_path):
+    # w = create and write
+    # a = append to end of file
+    write_type = 'a' if os.path.isfile(delete_files_on_startup_file) else 'w'
+
+    # Create or append "delete on startup" file
+    with open(delete_files_on_startup_file, write_type, encoding="utf8") as outfile:
+        outfile.write(file_path + '\n')
+
+
+def delete_and_rename_files_on_startup():
+    if not os.path.isfile(delete_files_on_startup_file):
+        return
+
+    with open(delete_files_on_startup_file, 'r', encoding="utf8") as outfile:
+        lines = outfile.readlines()
+
+    # Delete the file immediately to allow it to be recreated if something fails
+    os.remove(delete_files_on_startup_file)
+
+    for path in lines:
+        if not path:
             continue
 
-        file = os.path.join(resources_folder, f)
-        try:
-            os.remove(file)
-            print("Clean removing file {}".format(file))
-        except OSError:
-            print("Failed to pre-remove " + file)
+        # Remove the line separator from the end of the path
+        path = path[:-1]
 
-    for f in folders:
-        if f == 'custom_bones' or f == 'cache':
-            continue
+        if os.path.isfile(path):
+            try:
+                os.remove(path)
+                print('Removed file on startup', path)
+            except OSError:
+                print('Failed to remove file on startup', path)
+                add_file_to_delete_on_startup(path)
+                continue
 
-        folder = os.path.join(resources_folder, f)
-        try:
-            shutil.rmtree(folder)
-            print("Clean removing folder and contents {}".format(folder))
-        except OSError:
-            print("Failed to pre-remove folder " + folder)
+        path_renamed = path + file_replacement_extension
+        if os.path.isfile(path_renamed):
+            os.rename(path_renamed, path)
+            print('Renamed', path_renamed, 'to', path)
 
 
 def set_ignored_version():

@@ -29,12 +29,14 @@ class ObjectsPanel(bpy.types.Panel):
     def draw_tracker(context, layout):
         obj = context.object
 
-        row = layout.row(align=True)
-        row.label(text='Attach to tracker or prop:')
+        props_string = 'Prop or Tracker' if animations.live_data.version <= 2 else 'prop'
 
-        if not animations.trackers and not animations.props:
+        row = layout.row(align=True)
+        row.label(text=f'Attach to {props_string}:')
+
+        if not animations.live_data.trackers and not animations.live_data.props:
             row = layout.row(align=True)
-            row.label(text='No prop or tracker data available.', icon='INFO')
+            row.label(text=f'No {props_string.lower()} data available.', icon='INFO')
             return
 
         row = layout.row(align=True)
@@ -53,9 +55,9 @@ class ObjectsPanel(bpy.types.Panel):
         layout.separator()
 
         row = layout.row(align=True)
-        row.label(text='Attach to face:')
+        row.label(text='Attach to Face:')
 
-        if not animations.faces:
+        if not animations.live_data.faces:
             row = layout.row(align=True)
             row.label(text='No face data available.', icon='INFO')
             row = layout.row(align=True)
@@ -89,9 +91,9 @@ class ObjectsPanel(bpy.types.Panel):
         layout.separator()
 
         row = layout.row(align=True)
-        row.label(text='Attach to actor:')
+        row.label(text='Attach to Actor:')
 
-        if not animations.actors:
+        if not animations.live_data.actors:
             row = layout.row(align=True)
             row.label(text='No actor data available.', icon='INFO')
         else:
@@ -128,7 +130,7 @@ class ObjectsPanel(bpy.types.Panel):
 
                 # Make a split after right toe to separate hands
                 if actor_bone == 'rightToe':
-                    if animations.version < 3:  # Stop showing glove bones if they are not supported by the JSON version
+                    if not animations.live_data.has_gloves(animations.live_data.get_actor_by_obj(obj)):  # Stop showing glove bones if they are not supported by the JSON version
                         show_gloves = False
                         continue
                     col.separator()

@@ -11,6 +11,7 @@ if "bpy" not in locals():
     from . import detection_manager
     from . import fbx_patcher
     from . import login
+    from . import live_data_manager
 else:
     import importlib
 
@@ -25,3 +26,4 @@ else:
     importlib.reload(detection_manager)
     importlib.reload(fbx_patcher)
     importlib.reload(login)
+    importlib.reload(live_data_manager)

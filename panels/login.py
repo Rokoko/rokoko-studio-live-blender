@@ -3,6 +3,7 @@ from .main import ToolPanel, separator
 from ..operators.login import LoginButton, RegisterButton, ShowPassword
 from ..core import login
 from ..core.icon_manager import Icons
+from .. import updater, updater_ops
 
 
 class LoginPanel(ToolPanel, bpy.types.Panel):
@@ -11,6 +12,9 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+
+        updater.check_for_update_background(check_on_startup=True)
+        updater_ops.draw_update_notification_panel(layout)
 
         row = layout.row(align=True)
         row.label(text='Sign in with your Rokoko ID:', icon_value=Icons.STUDIO_LIVE_LOGO.get_icon())
@@ -35,7 +39,11 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
         row.alignment = 'RIGHT'
         row.operator(ShowPassword.bl_idname, text="", icon='HIDE_OFF' if login.show_password else 'HIDE_ON')
 
-        if login.show_wrong_auth:
+        if login.error_show_no_connection:
+            row = layout.row(align=True)
+            row.label(text='No internet connection!', icon='ERROR')
+
+        elif login.error_show_wrong_auth:
             row = layout.row(align=True)
             row.label(text='Wrong email or password!', icon='ERROR')
 

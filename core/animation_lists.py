@@ -197,14 +197,16 @@ glove_bones['rightLittleDistal'] = Quaternion((0.5, 0.5, -0.5, 0.5))
 def get_props_trackers(self, context):
     choices = [('None', '-None-', 'None')]
 
-    for prop in animations.props:
+    for prop in animations.live_data.props:
         # 1. Will be returned by context.scene
         # 2. Will be shown in lists
         # 3. will be shown in the hover description (below description)
-        choices.append(('PR|' + prop['id'] + '|' + prop['name'], 'Prop: ' + prop['name'], 'Prop: ' + prop['name']))
+        prop_name = animations.live_data.get_prop_name(prop)
+        choices.append((animations.live_data.get_prop_id(prop), prop_name, prop_name))
 
-    for tracker in animations.trackers:
-        choices.append(('TR|' + tracker['name'], 'Tracker: ' + tracker['name'], 'Tracker: ' + tracker['name']))
+    for tracker in animations.live_data.trackers:
+        tracker_name = animations.live_data.get_prop_name(tracker, is_tracker=True)
+        choices.append((animations.live_data.get_prop_id(tracker, is_tracker=True), tracker_name, tracker_name))
 
     return choices
 
@@ -213,11 +215,12 @@ def get_props_trackers(self, context):
 def get_faces(self, context):
     choices = [('None', '-None-', 'None')]
 
-    for face in animations.faces:
+    for face in animations.live_data.faces:
         # 1. Will be returned by context.scene
         # 2. Will be shown in lists
         # 3. will be shown in the hover description (below description)
-        choices.append((face['faceId'], face['faceId'], face['faceId']))
+        face_id = animations.live_data.get_face_id(face)
+        choices.append((face_id, face_id, face_id))
 
     return choices
 
@@ -226,23 +229,11 @@ def get_faces(self, context):
 def get_actors(self, context):
     choices = [('None', '-None-', 'None')]
 
-    for actor in animations.actors:
+    for actor in animations.live_data.actors:
         # 1. Will be returned by context.scene
         # 2. Will be shown in lists
         # 3. will be shown in the hover description (below description)
-        choices.append((actor['id'], actor['name'], actor['id']))
-
-    return choices
-
-
-# Creates the list of actors for the objects panel
-def get_gloves(self, context):
-    choices = [('None', '-None-', 'None')]
-
-    for glove in animations.gloves:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append((glove['gloveID'], glove['gloveID'], glove['gloveID']))
+        actor_id = animations.live_data.get_actor_id(actor)
+        choices.append((actor_id, actor_id, actor_id))
 
     return choices
