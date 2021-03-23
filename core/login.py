@@ -44,7 +44,6 @@ def load():
 
     # Add the libs dir to the paths
     if os_libs_dir not in os.environ['PATH']:
-        # print("ADDED")
         os.environ['PATH'] = os_libs_dir + os.pathsep + os.environ['PATH']
 
     # Create cache folder if it doesn't exist
@@ -53,19 +52,23 @@ def load():
 
     # Load in the library
     if not lib:
-        # print()
-        # print('LIB EXISTS 1?', os.path.isfile(lib_file), lib_file)
-        # print('LIB EXISTS 2?', os.path.isfile(lib_file.replace("\\", "/")), lib_file.replace("\\", "/"))
-        # print('ENVIRONMENT:', os.environ['PATH'])
-        # path = os.environ['PATH'].split(os.pathsep)[0]
-        # print('DLLs:', os.listdir(path))
-        # print()
+        # TODO: Improve this
+        lib_files_required = ['aws-cpp-sdk-cognito-idp.dll', 'aws-cpp-sdk-core.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'rokoko-id.dll', 'vcruntime140.dll', 'vcruntime140_1.dll']
+        lib_files_found = os.listdir(os_libs_dir)
+        lib_files_missing = []
 
-        # print(1, os.getcwd())
-        # os.chdir(os_libs_dir)
-        # print(2, os.getcwd())
-        # print(3, os_libs_dir)
-        # print(4, lib_file)
+        for file in lib_files_required:
+            if file not in lib_files_found:
+                lib_files_missing.append(file)
+
+        if lib_files_missing:
+            raise FileNotFoundError("The following library files are missing:\n"
+                                    + ", ".join(lib_files_missing))
+
+        print("All library files were found!")
+
+        os.chdir(os_libs_dir)
+
 
         lib = ctypes.CDLL(lib_file)
 
