@@ -52,6 +52,20 @@ def load():
 
     # Load in the library
     if not lib:
+        # print()
+        # print('LIB EXISTS 1?', os.path.isfile(lib_file), lib_file)
+        # print('LIB EXISTS 2?', os.path.isfile(lib_file.replace("\\", "/")), lib_file.replace("\\", "/"))
+        # print('ENVIRONMENT:', os.environ['PATH'])
+        # path = os.environ['PATH'].split(os.pathsep)[0]
+        # print('DLLs:', os.listdir(path))
+        # print()
+
+        # print(1, os.getcwd())
+        # os.chdir(os_libs_dir)
+        # print(2, os.getcwd())
+        # print(3, os_libs_dir)
+        # print(4, lib_file)
+
         # TODO: Improve this
         lib_files_required = ['aws-cpp-sdk-cognito-idp.dll', 'aws-cpp-sdk-core.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'rokoko-id.dll', 'vcruntime140.dll', 'vcruntime140_1.dll']
         lib_files_found = os.listdir(os_libs_dir)
@@ -69,8 +83,13 @@ def load():
 
         os.chdir(os_libs_dir)
 
+        try:
+            lib = ctypes.CDLL(lib_file)
+        except:
+            print("Couldn't load lib on first try")
 
-        lib = ctypes.CDLL(lib_file)
+        if not lib:
+            lib = ctypes.CDLL(lib_file.replace("\\", "/"))
 
     # Set the cache path
     # print('IS FILE', os.path.isfile(cache_file), cache_file)
