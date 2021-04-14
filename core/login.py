@@ -67,7 +67,12 @@ def load():
         # print(4, lib_file)
 
         # TODO: Improve this
-        lib_files_required = ['aws-cpp-sdk-cognito-idp.dll', 'aws-cpp-sdk-core.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'rokoko-id.dll', 'vcruntime140.dll', 'vcruntime140_1.dll']
+        if platform.system() == "Windows":
+            lib_files_required = ['aws-cpp-sdk-cognito-idp.dll', 'aws-cpp-sdk-core.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'rokoko-id.dll', 'vcruntime140.dll', 'vcruntime140_1.dll']
+        elif platform.system() == "Darwin":
+            lib_files_required = ['libcpr.1.5.1.dylib', 'libcrypto.1.1.dylib', 'libcurl.dylib', 'librokoko-id.dylib', 'libssl.1.1.dylib']
+        else:
+            lib_files_required = ['libcpr.so.1.5.1', 'libcrypto.so.1.1', 'libcurl.so', 'librokoko-id.so', 'libssl.so.1.1']
         lib_files_found = os.listdir(os_libs_dir)
         lib_files_missing = []
 
