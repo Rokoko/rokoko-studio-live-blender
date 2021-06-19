@@ -170,7 +170,7 @@ def login(email, password):
 
     # Sign in with email and password
     lib.signIn.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-    logged_in = lib.signIn(email.encode(), password.encode())
+    logged_in = lib.signIn(email.lower().encode(), password.encode())
 
     # Change back language to previous
     if language_tmp != 'en_US':
