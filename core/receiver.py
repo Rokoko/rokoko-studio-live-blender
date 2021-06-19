@@ -1,4 +1,5 @@
 import bpy
+import time
 import socket
 
 from . import animations, utils
@@ -60,10 +61,14 @@ class Receiver:
         except KeyError as e:
             print('KeyError:', e)
             return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
+        except ImportError:
+            # This error occurs, when the LZ4 package could not be loaded while it was needed
+            print('Unsupported Blender version or operating system! Use older Blender or JSON v2.')
+            return ['Unsupported Blender version', 'or operating system!', 'Use older Blender or JSON v2.'], True
 
         animations.animate()
 
-        return '', False
+        return None, False
 
     def handle_ui_updates(self, received):
         # Update UI every 5 seconds when packets are received continuously

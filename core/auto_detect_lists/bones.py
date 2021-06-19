@@ -374,7 +374,8 @@ bone_list['leftUpperArm'] = [
     '\L_Shldr',
     '\LShldrBend',
     'Arm_Stretch_\L',
-    'J_Ude_A_\L'
+    'J_Ude_A_\L',
+    '\LShoulder',
 ]
 bone_list['leftLowerArm'] = [
     '\L_Elbow',
