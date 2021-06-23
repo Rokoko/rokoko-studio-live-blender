@@ -30,7 +30,8 @@ class Receiver:
         # Try to receive a packet
         try:
             data_raw, address = self.sock.recvfrom(65536)
-        except BlockingIOError:
+        except BlockingIOError as e:
+            print('Blocking error:', e)
             error = ['Receiving no data!']
         except OSError as e:
             print('Packet error:', e.strerror)
@@ -55,7 +56,7 @@ class Receiver:
             print('Packet contained no data')
             return ['Packets contain no data!'], False
         except (UnicodeDecodeError, TypeError) as e:
-            print('Wrong live data format! Use JSON v2!')
+            print('Wrong live data format! Use JSON v2 or higher!')
             print(e)
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
         except KeyError as e:
@@ -63,8 +64,8 @@ class Receiver:
             return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
         except ImportError:
             # This error occurs, when the LZ4 package could not be loaded while it was needed
-            print('Unsupported Blender version or operating system! Use older Blender or JSON v2.')
-            return ['Unsupported Blender version', 'or operating system!', 'Use older Blender or JSON v2.'], True
+            print('Unsupported Blender version or operating system! Use older Blender or JSON v2/v3.')
+            return ['Unsupported Blender version', 'or operating system!', 'Use older Blender or JSON v2/v3.'], True
 
         animations.animate()
 
