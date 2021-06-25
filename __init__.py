@@ -80,6 +80,8 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.login.RegisterButton,
     operators.login.ShowPassword,
     operators.login.LogoutButton,
+    operators.login.InstallMissingLibsPopup,
+    operators.login.InstallLibsButtonButton,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,

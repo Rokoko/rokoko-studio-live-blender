@@ -84,7 +84,7 @@ def load():
             raise FileNotFoundError("The following library files are missing:\n"
                                     + ", ".join(lib_files_missing))
 
-        print("All library files were found!")
+        # print("All library files were found!")
 
         os.chdir(os_libs_dir)
 
@@ -94,12 +94,18 @@ def load():
             print("Couldn't load lib on first try")
 
         if not lib:
-            lib = ctypes.CDLL(lib_file.replace("\\", "/"))
+            try:
+                lib = ctypes.CDLL(lib_file.replace("\\", "/"))
+            except FileNotFoundError:
+                print("Libraries not found!")
+                bpy.ops.rsl.login_popup_install_missing_libs("INVOKE_DEFAULT")
+                return False
 
     # Set the cache path
     # print('IS FILE', os.path.isfile(cache_file), cache_file)
     lib.setCachePath.argtypes = [ctypes.c_char_p]
     lib.setCachePath(cache_file.encode())
+    return True
 
 
 def unload():
@@ -126,7 +132,10 @@ def login_from_cache(classes_list, classes_login_list):
         load()
     except OSError as e:
         print(e)
-        return
+        return False
+    except AttributeError:
+        print("Couldn't show popup on startup")
+        return False
 
     # lib.getCachePath.restype = ctypes.c_char_p
     # print("Current cache path:", lib.getCachePath(), lib.getCachePath().decode())
@@ -151,7 +160,9 @@ def login_from_cache(classes_list, classes_login_list):
 
 def login(email, password):
     global error_show_wrong_auth, error_show_no_connection, credentials_updated
-    load()
+
+    if not load():
+        return False
 
     # Change language to english temporarily to fix login issues when using japanese
     language_tmp = bpy.context.preferences.view.language
@@ -198,9 +209,9 @@ def login(email, password):
 
 
 def logout():
-    load()
-    lib.signOut()
-    unload()
+    if load():
+        lib.signOut()
+        unload()
     unregister_classes()
 
 
