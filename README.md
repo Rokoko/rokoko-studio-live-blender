@@ -105,6 +105,11 @@ In order to retarget an animation in Blender you will need to do the following:
  
 ## Changelog
 
+#### 1.3.0
+- Added support for Blender 2.93
+- Fixed login email being case-sensitive
+- Added a popup with a download link in case the user is missing a Windows library
+
 #### 1.2.1
 - Fixed login issue when using a Blender UI language other than English
 

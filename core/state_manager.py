@@ -1,6 +1,7 @@
 import bpy
 import copy
 
+from . import utils
 from ..operators import receiver
 
 objects = {}
@@ -122,6 +123,9 @@ def save_armature(obj):
     if obj.rsl_animations_actors == 'None':
         print('NO ASSIGNED DATA:', obj.rsl_animations_actors)
         return
+
+    utils.set_active(obj)
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     bones = {}
 

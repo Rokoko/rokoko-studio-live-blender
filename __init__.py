@@ -5,17 +5,44 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 2, 1),
+    'version': (1, 3, 0),
     'blender': (2, 80, 0),
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
 beta_branch = False
 
+import os
+import sys
+import pathlib
+import platform
+
+# Add lz4 as an importable module
+# First get the directory of the package folder
+main_dir = pathlib.Path(os.path.dirname(__file__)).resolve()
+lz4_dir = os.path.join(str(main_dir), "packages")
+
+# Then add the correct platform tag
+if platform.system() == "Windows":
+    lz4_dir = os.path.join(str(lz4_dir), "win")
+elif platform.system() == "Darwin":
+    lz4_dir = os.path.join(str(lz4_dir), "mac")
+else:
+    lz4_dir = os.path.join(str(lz4_dir), "linux")
+
+# And then add the CPython version, which is the python version that Blender is using
+if sys.version_info < (3, 9):
+    lz4_dir = os.path.join(str(lz4_dir), "CP37")
+else:
+    lz4_dir = os.path.join(str(lz4_dir), "CP39")
+
+# And finally add it to the modules
+if lz4_dir not in sys.path:
+    sys.path.append(lz4_dir)
+
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
 # This lets you do adjustments to the plugin on the fly without having to restart Blender
-import sys
 if "bpy" not in locals():
     import bpy
     from . import core
@@ -53,6 +80,8 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.login.RegisterButton,
     operators.login.ShowPassword,
     operators.login.LogoutButton,
+    operators.login.InstallMissingLibsPopup,
+    operators.login.InstallLibsButtonButton,
     operators.receiver.ReceiverStart,
     operators.receiver.ReceiverStop,
     operators.recorder.RecorderStart,

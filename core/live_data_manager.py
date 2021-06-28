@@ -1,12 +1,11 @@
 import json
-import platform
 
-if platform.system() == "Windows":
-    from ..packages.win.lz4 import frame
-elif platform.system() == "Darwin":
-    from ..packages.mac.lz4 import frame
-elif platform.system() == "Darwin":
-    from ..packages.linux.lz4 import frame
+loaded_lz4 = False
+try:
+    from lz4 import frame
+    loaded_lz4 = True
+except ModuleNotFoundError:
+    print("Error: LZ4 module didn't load. Unsupported Python version!")
 
 
 class LiveData:
@@ -49,10 +48,16 @@ class LiveData:
     def _decode_data(self):
         try:
             self.data = frame.decompress(self.data)
-        except RuntimeError:
+        except (RuntimeError, NameError):
             pass
 
-        self.data = json.loads(self.data)
+        try:
+            self.data = json.loads(self.data)
+        except UnicodeDecodeError:
+            if loaded_lz4:
+                raise UnicodeDecodeError
+            raise ImportError
+
         if not self.data:
             raise ValueError
 

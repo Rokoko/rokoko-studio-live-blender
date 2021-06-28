@@ -44,7 +44,6 @@ def load():
 
     # Add the libs dir to the paths
     if os_libs_dir not in os.environ['PATH']:
-        # print("ADDED")
         os.environ['PATH'] = os_libs_dir + os.pathsep + os.environ['PATH']
 
     # Create cache folder if it doesn't exist
@@ -67,12 +66,46 @@ def load():
         # print(3, os_libs_dir)
         # print(4, lib_file)
 
-        lib = ctypes.CDLL(lib_file)
+        # TODO: Improve this
+        if platform.system() == "Windows":
+            lib_files_required = ['aws-cpp-sdk-cognito-idp.dll', 'aws-cpp-sdk-core.dll', 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'rokoko-id.dll', 'vcruntime140.dll', 'vcruntime140_1.dll']
+        elif platform.system() == "Darwin":
+            lib_files_required = ['libcpr.1.5.1.dylib', 'libcrypto.1.1.dylib', 'libcurl.dylib', 'librokoko-id.dylib', 'libssl.1.1.dylib']
+        else:
+            lib_files_required = ['libcpr.so.1.5.1', 'libcrypto.so.1.1', 'libcurl.so', 'librokoko-id.so', 'libssl.so.1.1']
+        lib_files_found = os.listdir(os_libs_dir)
+        lib_files_missing = []
+
+        for file in lib_files_required:
+            if file not in lib_files_found:
+                lib_files_missing.append(file)
+
+        if lib_files_missing:
+            raise FileNotFoundError("The following library files are missing:\n"
+                                    + ", ".join(lib_files_missing))
+
+        # print("All library files were found!")
+
+        os.chdir(os_libs_dir)
+
+        try:
+            lib = ctypes.CDLL(lib_file)
+        except:
+            print("Couldn't load lib on first try")
+
+        if not lib:
+            try:
+                lib = ctypes.CDLL(lib_file.replace("\\", "/"))
+            except FileNotFoundError:
+                print("Libraries not found!")
+                bpy.ops.rsl.login_popup_install_missing_libs("INVOKE_DEFAULT")
+                return False
 
     # Set the cache path
     # print('IS FILE', os.path.isfile(cache_file), cache_file)
     lib.setCachePath.argtypes = [ctypes.c_char_p]
     lib.setCachePath(cache_file.encode())
+    return True
 
 
 def unload():
@@ -99,7 +132,10 @@ def login_from_cache(classes_list, classes_login_list):
         load()
     except OSError as e:
         print(e)
-        return
+        return False
+    except AttributeError:
+        print("Couldn't show popup on startup")
+        return False
 
     # lib.getCachePath.restype = ctypes.c_char_p
     # print("Current cache path:", lib.getCachePath(), lib.getCachePath().decode())
@@ -124,7 +160,9 @@ def login_from_cache(classes_list, classes_login_list):
 
 def login(email, password):
     global error_show_wrong_auth, error_show_no_connection, credentials_updated
-    load()
+
+    if not load():
+        return False
 
     # Change language to english temporarily to fix login issues when using japanese
     language_tmp = bpy.context.preferences.view.language
@@ -143,7 +181,7 @@ def login(email, password):
 
     # Sign in with email and password
     lib.signIn.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
-    logged_in = lib.signIn(email.encode(), password.encode())
+    logged_in = lib.signIn(email.lower().encode(), password.encode())
 
     # Change back language to previous
     if language_tmp != 'en_US':
@@ -171,9 +209,9 @@ def login(email, password):
 
 
 def logout():
-    load()
-    lib.signOut()
-    unload()
+    if load():
+        lib.signOut()
+        unload()
     unregister_classes()
 
 
