@@ -10,7 +10,7 @@ bl_info = {
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-beta_branch = False
+beta_branch = True
 
 import os
 import sys

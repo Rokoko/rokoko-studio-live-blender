@@ -106,9 +106,11 @@ class RetargetAnimation(bpy.types.Operator):
             pose_source = self.get_and_reset_pose_rotations(armature_source)
             pose_target = self.get_and_reset_pose_rotations(armature_target)
 
+        # Auto scaling
         source_scale = None
         if context.scene.rsl_retargeting_auto_scaling:
             # Clean source animation
+            # TODO: This causes issues when all Hip bone data is on the armature itself
             self.clean_animation(armature_source)
 
             # Scale the source armature to fit the target armature

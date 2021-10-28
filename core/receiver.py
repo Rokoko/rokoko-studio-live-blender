@@ -42,9 +42,15 @@ class Receiver:
             error = ['Socket not running!']
             force_error = True
 
+        # start_time = time.time()
+
+        # Process the packet
         if data_raw:
+            # print('SIZE:', len(data_raw))
             # Process animation data
             error, force_error = self.process_data(data_raw)
+
+            # print(round((time.time() - start_time) * 1000, 4), 'ms')
 
         self.handle_ui_updates(received)
         self.handle_error(error, force_error)

@@ -455,12 +455,17 @@ def register(bl_info, beta_branch):
         updater.fake_update = False
         updater.no_ver_check = False
 
-    # Get current version
+    # Set current version
     current_version = []
     for i in bl_info['version']:
         current_version.append(str(i))
         updater.current_version.append(i)
+
+    # Set current version string (and add beta tag and increase version number if true)
     updater.current_version_str = '.'.join(current_version)
+    if beta_branch:
+        current_version[2] = str(int(current_version[2]) + 1)
+        updater.current_version_str = '.'.join(current_version) + ".beta"
 
     bpy.types.Scene.rsl_updater_version_list = bpy.props.EnumProperty(
         name='Version',

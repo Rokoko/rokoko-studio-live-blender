@@ -23,10 +23,11 @@ path_names_to_keep = [
     'resources/custom_bones',
 ]
 
-
+# Dev testing variables
 no_ver_check = False
 fake_update = False
 
+# Updater variables
 version_list = []
 is_checking_for_update = False
 checked_on_startup = False
