@@ -4,6 +4,7 @@ import bpy_extras
 
 from ..core import animation_lists
 from ..core import detection_manager
+from ..core import custom_schemes_manager
 
 
 class DetectFaceShapes(bpy.types.Operator):
@@ -60,10 +61,10 @@ class SaveCustomShapes(bpy.types.Operator):
             if shape_name_detected == shape_name_selected:  # This means that the user changed nothing, so don't save this
                 continue
 
-            detection_manager.save_live_data_shape_to_list(shape_name_key, shape_name_selected, shape_name_detected)
+            custom_schemes_manager.save_live_data_shape_to_list(shape_name_key, shape_name_selected, shape_name_detected)
 
         # At the end save all custom shapes to the file
-        detection_manager.save_to_file_and_update()
+        custom_schemes_manager.save_to_file_and_update()
 
         return {'FINISHED'}
 
@@ -88,10 +89,10 @@ class SaveCustomBones(bpy.types.Operator):
             if bone_name_detected == bone_name_selected:  # This means that the user changed nothing, so don't save this
                 continue
 
-            detection_manager.save_live_data_bone_to_list(bone_name_key, bone_name_selected, bone_name_detected)
+            custom_schemes_manager.save_live_data_bone_to_list(bone_name_key, bone_name_selected, bone_name_detected)
 
         # At the end save all custom bones to the file
-        detection_manager.save_to_file_and_update()
+        custom_schemes_manager.save_to_file_and_update()
 
         return {'FINISHED'}
 
@@ -104,7 +105,7 @@ class SaveCustomBonesRetargeting(bpy.types.Operator):
 
     def execute(self, context):
         # Save the bone list if the user changed anything
-        detection_manager.save_retargeting_to_list()
+        custom_schemes_manager.save_retargeting_to_list()
 
         return {'FINISHED'}
 
@@ -126,15 +127,15 @@ class ImportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
                 file_name = f.name
                 if not file_name.endswith('.json'):
                     continue
-                detection_manager.import_custom_list(self.directory, file_name)
+                custom_schemes_manager.import_custom_list(self.directory, file_name)
                 import_count += 1
 
         # If this operator is called with no directory but a filepath argument, import that
         elif self.filepath:
-            detection_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
+            custom_schemes_manager.import_custom_list(os.path.dirname(self.filepath), os.path.basename(self.filepath))
             import_count += 1
 
-        detection_manager.save_to_file_and_update()
+        custom_schemes_manager.save_to_file_and_update()
 
         if not import_count:
             self.report({'ERROR'}, 'No files were imported.')
@@ -154,7 +155,7 @@ class ExportCustomBones(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
     filter_glob: bpy.props.StringProperty(default='*.json;', options={'HIDDEN'})
 
     def execute(self, context):
-        file_name = detection_manager.export_custom_list(self.filepath)
+        file_name = custom_schemes_manager.export_custom_list(self.filepath)
 
         if not file_name:
             self.report({'ERROR'}, 'You don\'t have any custom naming schemes!')
@@ -189,7 +190,7 @@ class ClearCustomBones(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self, width=400)
 
     def execute(self, context):
-        detection_manager.delete_custom_bone_list()
+        custom_schemes_manager.delete_custom_bone_list()
 
         self.report({'INFO'}, 'Cleared all custom bone naming schemes!')
         return {'FINISHED'}
@@ -220,7 +221,7 @@ class ClearCustomShapes(bpy.types.Operator):
         return context.window_manager.invoke_props_dialog(self, width=400)
 
     def execute(self, context):
-        detection_manager.delete_custom_shape_list()
+        custom_schemes_manager.delete_custom_shape_list()
 
         self.report({'INFO'}, 'Cleared all custom shape naming schemes!')
         return {'FINISHED'}

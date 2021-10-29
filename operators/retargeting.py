@@ -3,9 +3,9 @@ import copy
 
 from . import detector
 from ..core import utils
-from ..core.auto_detect_lists import bones
 from ..core.retargeting import get_source_armature, get_target_armature
 from ..core import detection_manager as detector
+from ..core import custom_schemes_manager
 from ..panels.retargeting import BoneListItem
 
 RETARGET_ID = '_RSL_RETARGET'
@@ -125,7 +125,7 @@ class RetargetAnimation(bpy.types.Operator):
             return {'CANCELLED'}
 
         # Save the bone list if the user changed anything
-        detector.save_retargeting_to_list()
+        custom_schemes_manager.save_retargeting_to_list()
 
         # Prepare armatures
         utils.set_active(armature_target)

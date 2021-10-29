@@ -29,8 +29,6 @@ class InitTPose(bpy.types.Operator):
         for bone in obj.pose.bones:
             # Save rotation mode
             rotation_mode = bone.rotation_mode
-            if rotation_mode == 'QUATERNION':
-                rotation_mode = 'XYZ'
 
             # Save bone pose data
             bone.rotation_mode = 'QUATERNION'
