@@ -104,6 +104,7 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.command_api.StartRecording,
     operators.command_api.StopRecording,
     operators.retargeting.BuildBoneList,
+    operators.retargeting.AddBoneListItem,
     operators.retargeting.ClearBoneList,
     operators.retargeting.RetargetAnimation,
     panels.retargeting.RSL_UL_BoneList,
