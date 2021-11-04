@@ -1,11 +1,15 @@
 import json
 
 loaded_lz4 = False
+unsupported_os = False
 try:
     from lz4 import frame
     loaded_lz4 = True
 except ModuleNotFoundError:
     print("Error: LZ4 module didn't load. Unsupported Python version!")
+except ImportError:
+    print("Error: LZ4 module didn't load. Unsupported OS!")
+    unsupported_os = True
 
 
 class LiveData:
@@ -56,7 +60,7 @@ class LiveData:
         except UnicodeDecodeError:
             if loaded_lz4:
                 raise UnicodeDecodeError
-            raise ImportError
+            raise ImportError("os" if unsupported_os else "")
 
         if not self.data:
             raise ValueError

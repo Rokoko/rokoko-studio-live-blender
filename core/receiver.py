@@ -55,7 +55,13 @@ class Receiver:
         self.handle_ui_updates(received)
         self.handle_error(error, force_error)
 
-    def process_data(self, data_raw):
+    def process_data(self, data_raw) -> ([str], bool):
+        """
+        Processes the received data. If there was an error it returns a list of strings creating the error message
+        and if the error should be forced to show immediately instead of after a couple of packages
+        :param data_raw:
+        :return:
+        """
         try:
             animations.live_data.init(data_raw)
         except ValueError:
@@ -68,10 +74,15 @@ class Receiver:
         except KeyError as e:
             print('KeyError:', e)
             return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
-        except ImportError:
+        except ImportError as e:
+            # This error is specifically when the operating system isn't supported
+            if "os" in e.msg:
+                print('Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.')
+                return ['Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.'], True
+
             # This error occurs, when the LZ4 package could not be loaded while it was needed
             print('Unsupported Blender version or operating system! Use older Blender or JSON v2/v3.')
-            return ['Unsupported Blender version', 'or operating system!', 'Use older Blender or JSON v2/v3.'], True
+            return ['Unsupported Blender version', 'or operating system! Use', 'older Blender or JSON v2/v3.'], True
 
         animations.animate()
 
