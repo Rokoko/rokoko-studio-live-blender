@@ -67,6 +67,8 @@ class LiveData:
 
     def _process_data(self):
         self.version = self.data.get('version')
+        if ',' in self.version:
+            self.version = int(self.version.split(',')[0])
 
         if not self.version or self.version < 2:
             raise TypeError

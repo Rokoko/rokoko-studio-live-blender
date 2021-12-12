@@ -47,6 +47,8 @@ class Receiver:
         # Process the packet
         if data_raw:
             # print('SIZE:', len(data_raw))
+            # print('DATA:', data_raw)
+
             # Process animation data
             error, force_error = self.process_data(data_raw)
 
@@ -64,8 +66,9 @@ class Receiver:
         """
         try:
             animations.live_data.init(data_raw)
-        except ValueError:
+        except ValueError as e:
             print('Packet contained no data')
+            print(e)
             return ['Packets contain no data!'], False
         except (UnicodeDecodeError, TypeError) as e:
             print('Wrong live data format! Use JSON v2 or higher!')
@@ -82,6 +85,7 @@ class Receiver:
 
             # This error occurs, when the LZ4 package could not be loaded while it was needed
             print('Unsupported Blender version or operating system! Use older Blender or JSON v2/v3.')
+            print(e)
             return ['Unsupported Blender version', 'or operating system! Use', 'older Blender or JSON v2/v3.'], True
 
         animations.animate()

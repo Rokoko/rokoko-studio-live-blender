@@ -166,7 +166,7 @@ def register():
         ))
 
     # Actor bones
-    for bone in animation_lists.actor_bones.keys():
+    for bone in animation_lists.get_bones().keys():
         setattr(Object, 'rsl_actor_' + bone, StringProperty(
             name=bone,
             description='Select the bone that corresponds to the actors bone'
