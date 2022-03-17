@@ -46,12 +46,21 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         if not login.logged_in_email:
             return
 
+        show_id = login.show_rokoko_id_in_info_panel
+
         separator(layout, 0.1)
-        row = layout.row(align=True)
+
+        subrow = layout.row(align=True)
+        row = subrow.row(align=True)
+        row.scale_y = 0.7
         row.label(text='Rokoko ID:')
-        row.scale_y = 0.6
+        row = subrow.row(align=True)
+        row.scale_y = 0.7
+        row.alignment = 'RIGHT'
+        row.operator(info.ToggleRokokoIDButton.bl_idname, text='', icon='HIDE_OFF' if show_id else 'HIDE_ON')
+
         row = layout.row(align=True)
         row.scale_y = 0.3
-        row.label(text=login.logged_in_email)
+        row.label(text=login.logged_in_email if show_id else "***********")
         row = layout.row(align=True)
         row.operator(LogoutButton.bl_idname)

@@ -14,6 +14,7 @@ lib = None
 show_password = False
 credentials_updated = True
 logged_in_email = ''
+show_rokoko_id_in_info_panel = False
 
 error_show_wrong_auth = False
 error_show_no_connection = False

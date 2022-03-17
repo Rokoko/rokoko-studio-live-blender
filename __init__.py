@@ -113,6 +113,7 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.info.RokokoButton,
     operators.info.DocumentationButton,
     operators.info.ForumButton,
+    operators.info.ToggleRokokoIDButton,
 ]
 
 
