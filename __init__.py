@@ -15,30 +15,31 @@ beta_branch = True
 import os
 import sys
 import pathlib
-import platform
+import pkgutil
+import subprocess
 
-# Add lz4 as an importable module
-# First get the directory of the package folder
-main_dir = pathlib.Path(os.path.dirname(__file__)).resolve()
-lz4_dir = os.path.join(str(main_dir), "packages")
+# Install missing libraries
+required = ["lz4", "websockets", "gql", "cryptography"]
+missing = [mod for mod in required if not pkgutil.find_loader(mod)]
 
-# Then add the correct platform tag
-if platform.system() == "Windows":
-    lz4_dir = os.path.join(str(lz4_dir), "win")
-elif platform.system() == "Darwin":
-    lz4_dir = os.path.join(str(lz4_dir), "mac")
-else:
-    lz4_dir = os.path.join(str(lz4_dir), "linux")
+if missing:
+    print("Missing libaries:", missing)
+    python = sys.executable
 
-# And then add the CPython version, which is the python version that Blender is using
-if sys.version_info < (3, 9):
-    lz4_dir = os.path.join(str(lz4_dir), "CP37")
-else:
-    lz4_dir = os.path.join(str(lz4_dir), "CP39")
+    # Get lib directory
+    lib = os.path.join(pathlib.Path(python).parent.parent, "lib")
+    print(lib)
 
-# And finally add it to the modules
-if lz4_dir not in sys.path:
-    sys.path.append(lz4_dir)
+    print("Ensuring pip")
+    subprocess.call([python, "-m", "ensurepip", "--user"])
+
+    print("Updating pip")
+    subprocess.call([python, "-m", "pip", "install", "--upgrade", "pip"])
+
+    print("Installing missing libaries:", missing)
+    command = [python, '-m', 'pip', 'install', f"--target={str(lib)}", *missing]
+    subprocess.check_call(command, stdout=subprocess.DEVNULL)
+    print("Successfully installed missing libraries:", missing)
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
@@ -78,7 +79,6 @@ classes_login = [  # These panels will only be loaded when the user is logged ou
 classes_always_enable = [  # These non-panels will always be loaded, all non-panel ui should go in here
     operators.login.LoginButton,
     operators.login.RegisterButton,
-    operators.login.ShowPassword,
     operators.login.LogoutButton,
     operators.login.InstallMissingLibsPopup,
     operators.login.InstallLibsButtonButton,
@@ -146,7 +146,8 @@ def register():
     updater_ops.register(bl_info, beta_branch)
 
     # Check if the user is logged in, show the login panel if not
-    logged_in = core.login.login_from_cache(classes, classes_login)
+    # logged_in = core.login.login_from_cache(classes, classes_login)
+    logged_in = core.login_manager.user.auto_login(classes, classes_login)
 
     # Register classes
     if logged_in:
@@ -192,6 +193,9 @@ def unregister():
 
     # Unload all custom icons
     core.icon_manager.unload_icons()
+
+    # Exit the logged-in user
+    core.login_manager.user.quit()
 
     print("### Unloaded Rokoko Studio Live for Blender successfully!\n")
 

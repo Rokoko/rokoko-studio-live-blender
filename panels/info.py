@@ -4,7 +4,7 @@ from .main import ToolPanel, separator
 from .. import updater
 from ..operators import info
 from ..core.icon_manager import Icons
-from ..core import login
+from ..core.login_manager import user
 from ..operators.login import LogoutButton
 
 
@@ -43,10 +43,8 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row.operator(info.ForumButton.bl_idname)
 
         # If there is no email, the user is not logged in yet
-        if not login.logged_in_email:
+        if not user.email:
             return
-
-        show_id = login.show_rokoko_id_in_info_panel
 
         separator(layout, 0.1)
 
@@ -57,10 +55,10 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row = subrow.row(align=True)
         row.scale_y = 0.7
         row.alignment = 'RIGHT'
-        row.operator(info.ToggleRokokoIDButton.bl_idname, text='', icon='HIDE_OFF' if show_id else 'HIDE_ON')
+        row.operator(info.ToggleRokokoIDButton.bl_idname, text='', icon='HIDE_OFF' if user.display_email else 'HIDE_ON')
 
         row = layout.row(align=True)
         row.scale_y = 0.3
-        row.label(text=login.logged_in_email if show_id else "***********")
+        row.label(text=user.email if user.display_email else "***********")
         row = layout.row(align=True)
         row.operator(LogoutButton.bl_idname)
