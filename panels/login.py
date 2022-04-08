@@ -24,9 +24,12 @@ class LoginPanel(ToolPanel, bpy.types.Panel):
         row.scale_y = 0.5
         row.label(text='*Opens your browser')
 
-        if not user.display_error:
+        errors = user.display_error
+        if not errors:
             return
 
-        row = layout.row(align=True)
-        row.scale_y = 1
-        row.label(text=user.display_error, icon="ERROR")
+        separator(layout, scale=0.2)
+        for i, error in enumerate(errors):
+            row = layout.row(align=True)
+            row.scale_y = 0.5
+            row.label(text=error, icon="ERROR" if i == 0 else "BLANK1")

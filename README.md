@@ -8,7 +8,7 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Requirements
 - Blender **2.80** or higher
-- For live stream data: Rokoko Studio 1.18.0b
+- For live streaming data: Rokoko Studio 1.18.0b or higher
 
 ## Features
 - Live stream data:
@@ -104,6 +104,11 @@ In order to retarget an animation in Blender you will need to do the following:
 ---
  
 ## Changelog
+
+#### 1.4.0
+- Added support for Blender 3.0/3.1 and Rokoko Studio 2
+- Fully reworked login
+  - Login now works via browser for easier use
 
 #### 1.3.0
 - Added support for Blender 2.93

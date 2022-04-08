@@ -25,6 +25,8 @@ def ui_refresh_view_3d():
 
 
 def ui_refresh_all():
+    if not hasattr(bpy.data, "window_managers"):
+        return
     # Refreshes all panels
     for windowManager in bpy.data.window_managers:
         for window in windowManager.windows:

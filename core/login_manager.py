@@ -1,8 +1,8 @@
 import os
-import time
-
 import bpy
 import json
+import time
+import boto3
 import pathlib
 import asyncio
 import logging
@@ -23,7 +23,9 @@ from gql.transport.appsync_websockets import AppSyncWebsocketsTransport
 from gql.transport.appsync_auth import AppSyncApiKeyAuthentication
 from gql.transport.websockets import log as websockets_logger
 
-websockets_logger.setLevel(logging.WARNING)
+# Set logging levels
+websockets_logger.setLevel(logging.CRITICAL)
+logging.getLogger('boto').setLevel(logging.CRITICAL)
 
 
 class Login:
@@ -46,8 +48,7 @@ class Login:
         listener.start()
 
         # Start the timeout thread which stops the listener after a few seconds if nothing happened
-        # timeout = Thread(target=self._start_timeout, args=[])
-        timeout = Thread(target=asyncio.run, args=[self._timeout()])
+        timeout = Thread(target=self._timeout, args=[])
         timeout.start()
 
     def stop(self):
@@ -55,25 +56,28 @@ class Login:
 
     def _start_async(self):
         try:
+            # Get the request id from the server and run the listener
             self._get_request_id()
             asyncio.run(self._run_listener())
         except Exception as e:
             print(e)
             user.error("No internet connection..")
 
-    async def _timeout(self):
+    def _timeout(self):
         # Sleep for the timeout duration
         time.sleep(self.timeout)
 
-        # If the user no longer logging in, stop the timeout
+        # If the user no longer logging in, don't timeout
         if not user.logging_in:
             return
 
-        # Stop the login listener and the login process
+        # Stop the login listener
         print("Connection timeout, stopping listener..")
-        await cancel_gen(self.results)
+        asyncio.run(cancel_gen(self.results))
+
+        # Stopping login and updating UI to show timeout error
         user.error("Timeout, please try again.")
-        print("Connection timeout!")
+        print("Stopped login listener")
 
     def _get_request_id(self):
         headers = {"x-api-key": self.api_key}
@@ -171,6 +175,58 @@ class Login:
                     break
 
 
+class LoginSilent:
+    region = 'us-east-1'
+    client_id = "5p8idgrqi7lvq09di4rknhf2bp"
+
+    def __init__(self):
+        logging.getLogger('boto').setLevel(logging.ERROR)
+        self.login()
+
+    def login(self):
+        # Start the listener in a new thread so Blender can continue running
+        thread = Thread(target=self._login_async, args=[])
+        thread.start()
+
+    def _login_async(self):
+        print("SILENT LOGIN")
+        if not user.refresh_token:
+            return
+
+        response = None
+
+        try:
+            client = boto3.client("cognito-idp", region_name=self.region)
+            response = client.initiate_auth(
+                AuthFlow='REFRESH_TOKEN',
+                AuthParameters={
+                    'REFRESH_TOKEN': user.refresh_token
+                },
+                ClientId=self.client_id
+            )
+        except Exception as e:
+            error_msg = str(e)
+            print("\nERROR:", error_msg, "\n")
+            if "NotAuthorizedException" in error_msg:
+                user.logout()
+                user.error("Logged out: Invalid user")
+
+        # print("RESPONSE:", response)
+        if not response:
+            return
+
+        # Check response for challenge, logout if challenge detected
+        # See here for challenges:
+        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp.html#CognitoIdentityProvider.Client.initiate_auth
+        challenge_name = response.get("ChallengeName")
+        challenge_params = response.get("ChallengeParameters")
+
+        if challenge_name or challenge_params:
+            print("ERROR: Further account managing needed!")
+            user.logout()
+            user.error("Logged out:", challenge_name)
+
+
 class User:
     classes = []
     classes_login = []
@@ -182,8 +238,6 @@ class User:
         self.logged_in = False
         self.email = None
         self.username = None  # This is a unique id
-        self.id_token = None
-        self.access_token = None
         self.refresh_token = None
 
         self.display_email = False
@@ -192,15 +246,12 @@ class User:
         self.login_time = None
 
     def login(self, data, register_classes=True):
-        # print("Data:", data)
         self.email = data.get("email")
         self.username = data.get("username")
-        self.id_token = data.get("id_token")
-        self.access_token = data.get("access_token")
         self.refresh_token = data.get("refresh_token")
 
         self.logging_in = False
-        self.logged_in = self.email and self.access_token
+        self.logged_in = self.email and self.username and self.refresh_token
         if not self.logged_in:
             raise KeyError("Login not successful!")
 
@@ -213,8 +264,10 @@ class User:
             self.register_classes()
 
     def logout(self):
+        if not self.logged_in:
+            return
         self.logged_in = False
-        self.email = self.id_token = self.access_token = self.refresh_token = None
+        self.email = self.username = self.refresh_token = None
 
         self.unregister_classes()
         self.login_cache.delete_cache()
@@ -228,14 +281,19 @@ class User:
         self.classes = classes
         self.classes_login = classes_login
 
+        # Check the login cache
         data = self.login_cache.get_login_cache()
         if not data:
             return False
 
         self.login(data, register_classes=False)
+
+        if self.logged_in:
+            LoginSilent()
+
         return self.logged_in
 
-    def error(self, msg):
+    def error(self, *msg):
         # Update the UI if the user is still logging in or of the error message changes
         update_ui = self.logging_in or msg != self.display_error
 
@@ -296,14 +354,34 @@ class LoginCache:
         data_str = encoded_data.decode()
         data = json.loads(data_str)
 
-        print("DECRYPTED:", data)
+        if not self.is_valid(data):
+            return None
 
         return data
 
     def delete_cache(self):
-        if not os.path.isfile(self.cache_file):
-            return None
-        os.remove(self.cache_file)
+        if os.path.isfile(self.cache_file):
+            os.remove(self.cache_file)
+
+    def is_valid(self, data):
+        if not data:
+            return False
+
+        # Check if the cache is too old
+        creation_date = data.get("created_at")
+        if not creation_date:
+            return False
+
+        duration_timestamp = int(datetime.datetime.now().timestamp()) - creation_date
+        duration = datetime.timedelta(seconds=duration_timestamp)
+
+        if duration.days > 90:
+            print("Cache too old, please login again")
+            self.delete_cache()
+            user.error("Login expired (90 days)")
+            return False
+
+        return True
 
 
 class MixPanel:

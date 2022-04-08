@@ -19,7 +19,7 @@ import pkgutil
 import subprocess
 
 # Install missing libraries
-required = ["lz4", "websockets", "gql", "cryptography"]
+required = ["lz4", "websockets", "gql", "cryptography", "boto3"]
 missing = [mod for mod in required if not pkgutil.find_loader(mod)]
 
 if missing:
@@ -40,6 +40,9 @@ if missing:
     command = [python, '-m', 'pip', 'install', f"--target={str(lib)}", *missing]
     subprocess.check_call(command, stdout=subprocess.DEVNULL)
     print("Successfully installed missing libraries:", missing)
+
+    # Reset console color
+    print('\033[39m')
 
 # If first startup of this plugin, load all modules normally
 # If reloading the plugin, use importlib to reload modules
