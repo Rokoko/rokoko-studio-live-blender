@@ -270,13 +270,14 @@ class User:
     def logout(self):
         if not self.logged_in:
             return
+
+        MixPanel.send_logout_event()
+
         self.logged_in = False
         self.email = self.username = self.refresh_token = self.access_token = None
 
         self.unregister_classes()
         self.login_cache.delete_cache()
-
-        MixPanel.send_logout_event()
 
     def quit(self):
         MixPanel.send_logout_event()
@@ -402,8 +403,8 @@ class MixPanel:
 
     @staticmethod
     def _send_event(event_name, event_properties):
-        # Convert dict to json
-        event_properties = json.dumps(event_properties).replace("\"", "'")
+        # Convert dict to json and quotes to escaped quotes, because the API requires it
+        event_properties = json.dumps(event_properties).replace("\"", "\\\"")
 
         headers = {"Authorization": user.access_token}
         query = f"""
@@ -421,7 +422,7 @@ class MixPanel:
         try:
             request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
         except Exception as e:
-            # print(e)
+            # print("ERROR:", e)
             return
 
         if request.status_code != 200:
@@ -429,7 +430,7 @@ class MixPanel:
             return
 
         # data = request.json()
-        # print(data)
+        # print(event_name, data)
 
     @staticmethod
     def send_login_event():
