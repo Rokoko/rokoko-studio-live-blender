@@ -14,7 +14,7 @@ from .. import updater
 from .utils import ui_refresh_all, cancel_gen
 
 from gql import Client, gql
-from threading import Thread
+from threading import Thread, Timer
 from contextlib import suppress
 from typing import AsyncGenerator
 from urllib.parse import urlparse
@@ -32,12 +32,13 @@ class Login:
     url = "https://rmp-gql-public.rokoko.ninja/graphql"
     aws_url = "wss://z55v4xbwa5cfplrbnupw7bgn2u.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
     api_key = "da2-o3nnjsj67rhvbfhmvf6zkrsvxq"
-    timeout = 60  # In seconds, how long the listener is waiting for the login event after opening the browser
+    timeout_duration = 60  # In seconds, how long the listener is waiting for the login event after opening the browser
 
     def __init__(self):
         self.request_id = None
         self.session: Client
         self.results: AsyncGenerator
+        self.timeout: Timer
 
     def start(self):
         user.logging_in = True
@@ -48,8 +49,8 @@ class Login:
         listener.start()
 
         # Start the timeout thread which stops the listener after a few seconds if nothing happened
-        timeout = Thread(target=self._timeout, args=[])
-        timeout.start()
+        self.timeout = Timer(self.timeout_duration, self._timeout)
+        self.timeout.start()
 
     def stop(self):
         pass
@@ -64,9 +65,6 @@ class Login:
             user.error("No internet connection..")
 
     def _timeout(self):
-        # Sleep for the timeout duration
-        time.sleep(self.timeout)
-
         # If the user no longer logging in, don't timeout
         if not user.logging_in:
             return
@@ -173,6 +171,9 @@ class Login:
                     user.error("Server error, please try again.")
                     print("Server error:", result)
                     break
+
+                # If the connection is closing by itself, cancel the timeout timer
+                self.timeout.cancel()
 
 
 class LoginSilent:
