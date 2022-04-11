@@ -238,6 +238,7 @@ class User:
         self.logged_in = False
         self.email = None
         self.username = None  # This is a unique id
+        self.access_token = None
         self.refresh_token = None
 
         self.display_email = False
@@ -248,12 +249,15 @@ class User:
     def login(self, data, register_classes=True):
         self.email = data.get("email")
         self.username = data.get("username")
+        self.access_token = data.get("access_token")
         self.refresh_token = data.get("refresh_token")
 
         self.logging_in = False
-        self.logged_in = self.email and self.username and self.refresh_token
+        self.logged_in = self.email and self.username and self.refresh_token and self.access_token
         if not self.logged_in:
-            raise KeyError("Login not successful!")
+            print("ERROR: Not all fields are filled:", self.email, self.username, self.refresh_token, self.access_token)
+            self.error("Login failed, please try again")
+            return
 
         self.display_error = None
         self.login_time = datetime.datetime.utcnow().timestamp()
@@ -267,7 +271,7 @@ class User:
         if not self.logged_in:
             return
         self.logged_in = False
-        self.email = self.username = self.refresh_token = None
+        self.email = self.username = self.refresh_token = self.access_token = None
 
         self.unregister_classes()
         self.login_cache.delete_cache()
@@ -385,6 +389,8 @@ class LoginCache:
 
 
 class MixPanel:
+    url = "https://rmp-team-gql.rokoko.ninja/graphql"
+
     @staticmethod
     def _send_mixpanel_event(event_name, event_properties, send_async=True):
         if send_async:
@@ -399,14 +405,13 @@ class MixPanel:
         # Convert dict to json
         event_properties = json.dumps(event_properties).replace("\"", "'")
 
-        headers = {"x-api-key": Login.api_key}
+        headers = {"Authorization": user.access_token}
         query = f"""
             mutation {{
-              trackInMixpanel(
-                input: {{ 
-                  event_name: "{event_name}", 
+              addMixPanelEventTracking(
+                input: {{
+                  event_name: "{event_name}",
                   event_properties: "{event_properties}",
-                  distinct_id: "{user.username}",
                   client_id: BLENDER
                 }}
               )
@@ -414,7 +419,7 @@ class MixPanel:
         """
         # print("SEND MIXPANEL:", query)
         try:
-            request = requests.post(Login.url, json={'query': query}, headers=headers)
+            request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
         except Exception as e:
             # print(e)
             return
@@ -441,7 +446,7 @@ class MixPanel:
         session_duration = datetime.datetime.utcnow().timestamp() - user.login_time
         session_duration = round(session_duration, 2)
 
-        event_name = "session_stop"
+        event_name = "session_end"
         event_properties = {
             "action": "logout",
             "blender_version": ".".join(map(str, bpy.app.version)),

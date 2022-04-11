@@ -16,6 +16,7 @@ class LoginButton(bpy.types.Operator):
     def execute(self, context):
         login = login_manager.Login()
         login.start()
+        self.report({'INFO'}, 'Opened Rokoko ID website in your browser.')
         return {'FINISHED'}
 
 
@@ -27,6 +28,7 @@ class LogoutButton(bpy.types.Operator):
 
     def execute(self, context):
         login_manager.user.logout()
+        self.report({'INFO'}, 'Logout successful.')
         return {'FINISHED'}
 
 
