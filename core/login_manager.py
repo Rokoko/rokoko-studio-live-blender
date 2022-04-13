@@ -2,13 +2,13 @@ import os
 import bpy
 import ssl
 import json
-import time
 import boto3
 import pathlib
 import asyncio
 import logging
 import datetime
 import requests
+import traceback
 import webbrowser
 
 from .. import updater
@@ -27,6 +27,9 @@ from gql.transport.websockets import log as websockets_logger
 # Set logging levels
 websockets_logger.setLevel(logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
+
+# Disable SSL
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class Login:
@@ -62,7 +65,7 @@ class Login:
             self._get_request_id()
             asyncio.run(self._run_listener())
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             user.error("No internet connection..")
 
     def _timeout(self):
@@ -120,9 +123,7 @@ class Login:
         host = str(urlparse(self.aws_url).netloc)
         auth = AppSyncApiKeyAuthentication(host=host, api_key=self.api_key)
 
-        # Disable SSL check
-        ssl._create_default_https_context = ssl._create_unverified_context
-        transport = AppSyncWebsocketsTransport(url=self.aws_url, auth=auth, ssl=False)
+        transport = AppSyncWebsocketsTransport(url=self.aws_url, auth=auth, ssl=ssl._create_unverified_context())
 
         async with Client(transport=transport) as session:
             self.session = session
