@@ -343,10 +343,10 @@ def draw_updater_panel(context, layout, user_preferences=False):
         col.separator()
         row = col.row(align=True)
         row.scale_y = 0.75
-        row.label(text='Restart Blender to complete', icon='ERROR')
+        row.label(text='Restart Blender to', icon='ERROR')
         row = col.row(align=True)
         row.scale_y = 0.75
-        row.label(text='the update!', icon='BLANK1')
+        row.label(text='complete the update!', icon='BLANK1')
         col.separator()
         return
 

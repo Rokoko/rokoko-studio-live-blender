@@ -28,9 +28,6 @@ from gql.transport.websockets import log as websockets_logger
 websockets_logger.setLevel(logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
 
-# Disable SSL check
-ssl._create_default_https_context = ssl._create_unverified_context
-
 
 class Login:
     url = "https://rmp-gql-public.rokoko.ninja/graphql"
@@ -123,7 +120,9 @@ class Login:
         host = str(urlparse(self.aws_url).netloc)
         auth = AppSyncApiKeyAuthentication(host=host, api_key=self.api_key)
 
-        transport = AppSyncWebsocketsTransport(url=self.aws_url, auth=auth)
+        # Disable SSL check
+        ssl._create_default_https_context = ssl._create_unverified_context
+        transport = AppSyncWebsocketsTransport(url=self.aws_url, auth=auth, ssl=False)
 
         async with Client(transport=transport) as session:
             self.session = session
