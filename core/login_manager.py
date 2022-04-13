@@ -1,5 +1,6 @@
 import os
 import bpy
+import ssl
 import json
 import time
 import boto3
@@ -26,6 +27,9 @@ from gql.transport.websockets import log as websockets_logger
 # Set logging levels
 websockets_logger.setLevel(logging.CRITICAL)
 logging.getLogger('boto').setLevel(logging.CRITICAL)
+
+# Disable SSL check
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class Login:
