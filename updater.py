@@ -13,6 +13,7 @@ from bpy.app.handlers import persistent
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
 GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/beta.zip'
+GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/login_rework.zip'  # TODO REMOVE
 
 downloads_dir_name = "updater_downloads"
 

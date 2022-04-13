@@ -350,6 +350,13 @@ def draw_updater_panel(context, layout, user_preferences=False):
         col.separator()
         return
 
+    # If the plugin didn't load correctly, don't show the current version
+    if "error" in updater.current_version_str:
+        row = col.row(align=True)
+        row.scale_y = 0.85
+        row.label(text="Failed to load the plugin. Try updating to latest or beta version:", icon='ERROR')
+        col.separator()
+
     if updater.show_error:
         errors = updater.show_error.split('\n')
         for i, error in enumerate(errors):
@@ -419,6 +426,10 @@ def draw_updater_panel(context, layout, user_preferences=False):
     row.scale_y = scale_small
     row.operator(UpdateToBetaButton.bl_idname, text='Install Beta Version')
 
+    # If version is default, don't show the current version
+    if "error" in updater.current_version_str:
+        return
+
     col.separator()
     row = col.row(align=True)
     row.scale_y = 0.65
@@ -449,23 +460,17 @@ to_register = [
 ]
 
 
-def register(bl_info, beta_branch):
-    # If not beta branch, always disable fake updates and no version checks!
-    if not beta_branch:
-        updater.fake_update = False
-        updater.no_ver_check = False
-
-    # Set current version
+def register():
+    # Set initial version
     current_version = []
-    for i in bl_info['version']:
+    for i in (1, 0, 0):
         current_version.append(str(i))
         updater.current_version.append(i)
 
-    # Set current version string (and add beta tag and increase version number if true)
+    # Set current version string and add beta tag and increase version number
     updater.current_version_str = '.'.join(current_version)
-    if beta_branch:
-        current_version[2] = str(int(current_version[2]) + 1)
-        updater.current_version_str = '.'.join(current_version) + ".beta"
+    current_version[2] = str(int(current_version[2]) + 1)
+    updater.current_version_str = '.'.join(current_version) + ".error"
 
     bpy.types.Scene.rsl_updater_version_list = bpy.props.EnumProperty(
         name='Version',
@@ -494,8 +499,30 @@ def register(bl_info, beta_branch):
     if count < len(to_register):
         print('Skipped', len(to_register) - count, 'Rokoko Studio Live updater classes.')
 
-    # Delete and renamed files that didn't get deleted during the update process
+    # Delete and rename files that didn't get deleted during the update process
     updater.delete_and_rename_files_on_startup()
+
+    print("LOADED UPDATER!")
+
+
+def update_info(bl_info, beta_branch):
+    # If not beta branch, always disable fake updates and no version checks!
+    if not beta_branch:
+        updater.fake_update = False
+        updater.no_ver_check = False
+
+    # Set current version
+    current_version = []
+    updater.current_version = []
+    for i in bl_info['version']:
+        current_version.append(str(i))
+        updater.current_version.append(i)
+
+    # Set current version string (and add beta tag and increase version number if true)
+    updater.current_version_str = '.'.join(current_version)
+    if beta_branch:
+        current_version[2] = str(int(current_version[2]) + 1)
+        updater.current_version_str = '.'.join(current_version) + ".beta"
 
 
 def unregister():

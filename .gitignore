@@ -10,3 +10,4 @@ resources/ignore_version.txt
 resources/no_auto_ver_check.txt
 resources/custom_bones
 resources/cache
+resources/libraries

@@ -319,11 +319,11 @@ class User:
             bpy.utils.register_class(cls)
 
     def unregister_classes(self):
-        # Unregister login classes
+        # Unregister normal classes
         for cls in reversed(self.classes):
             bpy.utils.unregister_class(cls)
 
-        # Register normal classes
+        # Register login classes
         for cls in self.classes_login:
             bpy.utils.register_class(cls)
 
@@ -445,8 +445,10 @@ class MixPanel:
 
     @staticmethod
     def send_logout_event():
-        session_duration = datetime.datetime.utcnow().timestamp() - user.login_time
-        session_duration = round(session_duration, 2)
+        session_duration = 0
+        if user.login_time:
+            session_duration = datetime.datetime.utcnow().timestamp() - user.login_time
+            session_duration = round(session_duration, 2)
 
         event_name = "session_end"
         event_properties = {
