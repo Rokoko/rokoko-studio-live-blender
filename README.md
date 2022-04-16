@@ -115,6 +115,7 @@ In order to retarget an animation in Blender you will need to do the following:
 - Added support for Blender 3.0/3.1 and Rokoko Studio 2
 - Fully reworked login
   - Login now works via browser for easier use
+- Retargeting: Added support for multiple target bones per source bone
 
 #### 1.3.0
 - Added support for Blender 2.93
