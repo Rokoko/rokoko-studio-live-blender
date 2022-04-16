@@ -1,3 +1,4 @@
+
 # Important plugin info for Blender
 bl_info = {
     'name': 'Rokoko Studio Live for Blender',
@@ -14,48 +15,103 @@ beta_branch = True
 
 import os
 import sys
+import json
+import shutil
 import pathlib
 import pkgutil
+import platform
 import traceback
 import subprocess
 
 first_startup = "bpy" not in locals()
 import bpy
 
-# Get library directory
-main_dir = pathlib.Path(os.path.dirname(__file__)).resolve()
-resources_dir = os.path.join(main_dir, "resources")
-lib_dir = os.path.join(resources_dir, "libraries")
-if not os.path.isdir(lib_dir):
-    os.mkdir(lib_dir)
 
-# Add the library path to the modules, so they can be loaded from the plugin
-if lib_dir not in sys.path:
-    sys.path.append(lib_dir)
+class LibraryManager:
+    system_info = {
+        "operating_system": platform.system(),
+    }
 
-# Install missing libraries
-required = ["lz4", "websockets", "gql", "cryptography", "boto3"]
-missing = [mod for mod in required if not pkgutil.find_loader(mod)]
+    def __init__(self, libs, libs_main_dir):
+        self.required = libs
+        self.libs_main_dir = libs_main_dir
+        self.libs_info_file = os.path.join(self.libs_main_dir, ".lib_info")
 
-if missing:
-    print("Missing libaries:", missing)
-    python = sys.executable
+        python_ver_str = "".join([str(ver) for ver in sys.version_info[:2]])
+        self.libs_dir = os.path.join(self.libs_main_dir, "python" + python_ver_str)
 
-    # Ensure and update pip
-    print("Ensuring pip")
-    subprocess.call([python, "-m", "ensurepip", "--user"])
+        self.check_libs_info()
+        self.install_libraries()
 
-    print("Updating pip")
-    subprocess.call([python, "-m", "pip", "install", "--upgrade", "pip"])
+    def install_libraries(self):
+        # Create main library directory
+        if not os.path.isdir(self.libs_main_dir):
+            os.mkdir(self.libs_main_dir)
+        # Create python specific library directory
+        if not os.path.isdir(self.libs_dir):
+            os.mkdir(self.libs_dir)
 
-    # Install the missing libraries into the library path
-    print("Installing missing libaries:", missing)
-    command = [python, '-m', 'pip', 'install', f"--target={str(lib_dir)}", *missing]
-    subprocess.check_call(command, stdout=subprocess.DEVNULL)
-    print("Successfully installed missing libraries:", missing)
+        # Add the library path to the modules, so they can be loaded from the plugin
+        if self.libs_dir not in sys.path:
+            sys.path.append(self.libs_dir)
 
-    # Reset console color
-    print('\033[39m')
+        # Install missing libraries
+        missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
+        if missing:
+            print("Missing libaries:", missing)
+            python = sys.executable
+
+            # Ensure and update pip
+            print("Ensuring pip")
+            subprocess.call([python, "-m", "ensurepip", "--user"])
+
+            print("Updating pip")
+            subprocess.call([python, "-m", "pip", "install", "--upgrade", "pip"])
+
+            # Install the missing libraries into the library path
+            print("Installing missing libraries:", missing)
+            command = [python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+            subprocess.check_call(command, stdout=subprocess.DEVNULL)
+            print("Successfully installed missing libraries:", missing)
+
+            # Reset console color, because it's still colored after running pip
+            print('\033[39m')
+
+        # Create library info file after all libraries are installed to ensure everything is installed correctly
+        self.create_libs_info()
+
+    def check_libs_info(self):
+        if not os.path.isdir(self.libs_dir):
+            return
+
+        # If the library info file doesn't exist, delete the libs folder
+        if not os.path.isfile(self.libs_info_file):
+            print("Library info is missing, deleting library folder.")
+            shutil.rmtree(self.libs_main_dir)
+            return
+
+        # Read data from info file
+        current_data = self.system_info
+        with open(self.libs_info_file, 'r', encoding="utf8") as file:
+            loaded_data = json.load(file)
+
+        # Compare info and delete libs folder if it doesn't match
+        for key, val_current in current_data.items():
+            val_loaded = loaded_data.get(key)
+            if not val_loaded == val_current:
+                print("Current info:", current_data)
+                print("Loaded info: ", loaded_data)
+                print("Library info is not matching, deleting library folder.")
+                shutil.rmtree(self.libs_main_dir)
+                return
+
+    def create_libs_info(self):
+        if not os.path.isdir(self.libs_dir) or os.path.isfile(self.libs_info_file):
+            return
+
+        # Write the current data to the info file
+        with open(self.libs_info_file, 'w', encoding="utf8") as file:
+            json.dump(self.system_info, file)
 
 
 def show_error(message="", title="Unable to load Rokoko plugin!"):
@@ -103,38 +159,52 @@ def register():
     # Check for unsupported Blender versions
     check_unsupported_blender_versions()
 
-    # If first startup of this plugin, load all modules normally
-    # If reloading the plugin, use importlib to reload modules
-    # This lets you do adjustments to the plugin on the fly without having to restart Blender
+    # Register the updater
+    # Important to do early, so it is always loaded even in case of an error
+    from . import updater_ops
+    from . import updater
+    if not first_startup:
+        import importlib
+        importlib.reload(updater_ops)
+        importlib.reload(updater)
+    updater_ops.register()
+
+    # Now that the updater is loaded, do the rest of the registration safely
     try:
-        from . import updater_ops
-        from . import updater
-
-        # Always register the updater
-        updater_ops.register()
-
-        from . import core
-        from . import panels
-        from . import operators
-        from . import properties
-        if first_startup:
-            pass
-            # print("\nFirst STARTUP!")
-        else:
-            # print("\nRELOAD!")
-            import importlib
-            importlib.reload(updater_ops)
-            importlib.reload(updater)
-            importlib.reload(core)
-            importlib.reload(panels)
-            importlib.reload(operators)
-            importlib.reload(properties)
-    except Exception as e:
+        register_late()
+    except Exception:
         print("\nERROR: Rokoko plugin failed to load:")
         trace = traceback.format_exc()
         print(trace)
         show_error("Expand the plugin module to access the updater to check for a newer version.\n\n" + trace)
         return
+
+
+def register_late():
+    # Install the missing libraries
+    main_dir = pathlib.Path(os.path.dirname(__file__)).resolve()
+    resources_dir = os.path.join(main_dir, "resources")
+    libs_dir = os.path.join(resources_dir, "libraries")
+    libs = ["lz4", "websockets", "gql", "cryptography", "boto3"]
+    LibraryManager(libs, libs_dir)
+
+    # If first startup of this plugin, load all modules normally
+    # If reloading the plugin, use importlib to reload modules
+    # This lets you do adjustments to the plugin on the fly without having to restart Blender
+    from . import core
+    from . import panels
+    from . import operators
+    from . import properties
+    if first_startup:
+        pass
+        # print("\nFirst STARTUP!")
+    else:
+        # print("\nRELOAD!")
+        import importlib
+        importlib.reload(core)
+        importlib.reload(panels)
+        importlib.reload(operators)
+        importlib.reload(properties)
 
     global classes, classes_login, classes_always_enable
 
@@ -190,9 +260,6 @@ def register():
         operators.info.ToggleRokokoIDButton,
     ]
 
-    # Register updater and check for Rokoko Studio Live updates
-    updater_ops.update_info(bl_info, beta_branch)
-
     # Check if the user is logged in, show the login panel if not
     # logged_in = core.login.login_from_cache(classes, classes_login)
     logged_in = core.login_manager.user.auto_login(classes, classes_login)
@@ -226,6 +293,10 @@ def register():
 
     # Init fbx patcher
     core.fbx_patcher.start_fbx_patch_timer()
+
+    # Update updater info as late as possible, to ensure that errors are shown instead of being overwritten
+    from . import updater_ops
+    updater_ops.update_info(bl_info, beta_branch)
 
     print("### Loaded Rokoko Studio Live for Blender successfully!\n")
 
