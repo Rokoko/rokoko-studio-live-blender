@@ -1,6 +1,8 @@
+
 import os
 import bpy
 import ssl
+import sys
 import json
 import boto3
 import pathlib
@@ -199,8 +201,8 @@ class LoginSilent:
             return
 
         response = None
-
         try:
+            sys.tracebacklimit = 0
             client = boto3.client("cognito-idp", region_name=self.region)
             response = client.initiate_auth(
                 AuthFlow='REFRESH_TOKEN',
@@ -215,6 +217,8 @@ class LoginSilent:
             if "NotAuthorizedException" in error_msg:
                 user.logout()
                 user.error("Logged out: Invalid user")
+        finally:
+            del sys.tracebacklimit
 
         # print("RESPONSE:", response)
         if not response:
