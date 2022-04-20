@@ -21,6 +21,7 @@ import pathlib
 import pkgutil
 import platform
 import traceback
+import ensurepip
 import subprocess
 
 first_startup = "bpy" not in locals()
@@ -59,11 +60,17 @@ class LibraryManager:
         missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
         if missing:
             print("Missing libaries:", missing)
-            python = sys.executable
+            try:
+                # Set python path on older Blender versions
+                python = bpy.app.binary_path_python
+            except AttributeError:
+                python = sys.executable
+            if not python.lower().endswith("python.exe"):
+                print("WARNING: Could not find correct python executable:", python)
 
             # Ensure and update pip
             print("Ensuring pip")
-            subprocess.call([python, "-m", "ensurepip", "--user"])
+            ensurepip.bootstrap()
 
             print("Updating pip")
             subprocess.call([python, "-m", "pip", "install", "--upgrade", "pip"])
