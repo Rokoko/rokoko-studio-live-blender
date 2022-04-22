@@ -73,13 +73,23 @@ class LibraryManager:
             ensurepip.bootstrap()
 
             print("Updating pip")
-            subprocess.call([python, "-m", "pip", "install", "--upgrade", "pip"])
+            try:
+                subprocess.check_call([python, "-m", "pip", "install", "--upgrade", "pip"])
+            except subprocess.CalledProcessError:
+                subprocess.call(["sudo", python, "-m", "pip", "install", "--upgrade", "pip"])
 
             # Install the missing libraries into the library path
             print("Installing missing libraries:", missing)
             command = [python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
-            subprocess.check_call(command, stdout=subprocess.DEVNULL)
-            print("Successfully installed missing libraries:", missing)
+            subprocess.call(command, stdout=subprocess.DEVNULL)
+
+            # Check if all libraries installations were successful
+            still_missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
+            installed_libs = [lib for lib in missing if lib not in still_missing]
+            if still_missing:
+                print("WARNING: Could not install the following libraries:", still_missing)
+            if installed_libs:
+                print("Successfully installed missing libraries:", installed_libs)
 
             # Reset console color, because it's still colored after running pip
             print('\033[39m')

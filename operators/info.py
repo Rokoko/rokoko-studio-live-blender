@@ -35,7 +35,7 @@ class DocumentationButton(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        webbrowser.open('https://rokoko.freshdesk.com/support/solutions/folders/47000761699')
+        webbrowser.open('https://github.com/Rokoko/rokoko-studio-live-blender#readme')
         self.report({'INFO'}, 'Opened documentation.')
         return {'FINISHED'}
 

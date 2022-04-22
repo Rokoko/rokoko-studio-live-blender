@@ -39,8 +39,8 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row.operator(info.RokokoButton.bl_idname)
         row = col.row(align=True)
         row.operator(info.DocumentationButton.bl_idname)
-        row = col.row(align=True)
-        row.operator(info.ForumButton.bl_idname)
+        # row = col.row(align=True)
+        # row.operator(info.ForumButton.bl_idname)  # TODO: Add forums back with correct link
 
         # If there is no email, the user is not logged in yet
         if not user.email:
