@@ -65,8 +65,6 @@ class LibraryManager:
                 python = bpy.app.binary_path_python
             except AttributeError:
                 python = sys.executable
-            if not python.lower().endswith("python.exe"):
-                print("WARNING: Could not find correct python executable:", python)
 
             # Ensure and update pip
             print("Ensuring pip")
