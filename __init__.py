@@ -74,14 +74,20 @@ class LibraryManager:
             try:
                 subprocess.check_call([python, "-m", "pip", "install", "--upgrade", "pip"])
             except subprocess.CalledProcessError:
+                print("Updating pip failed, retrying with sudo")
                 subprocess.call(["sudo", python, "-m", "pip", "install", "--upgrade", "pip"])
 
             # Install the missing libraries into the library path
             print("Installing missing libraries:", missing)
-            command = [python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
-            subprocess.call(command, stdout=subprocess.DEVNULL)
+            try:
+                command = [python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+                subprocess.check_call(command, stdout=subprocess.DEVNULL)
+            except subprocess.CalledProcessError:
+                print("Installing libraries failed, retrying with sudo")
+                command = ["sudo", python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+                subprocess.call(command, stdout=subprocess.DEVNULL)
 
-            # Check if all libraries installations were successful
+            # Check if all library installations were successful
             still_missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
             installed_libs = [lib for lib in missing if lib not in still_missing]
             if still_missing:
