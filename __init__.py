@@ -32,19 +32,25 @@ class LibraryManager:
     system_info = {
         "operating_system": platform.system(),
     }
+    pip_is_updated = False
 
-    def __init__(self, libs, libs_main_dir):
-        self.required = libs
+    def __init__(self, libs_main_dir):
         self.libs_main_dir = libs_main_dir
         self.libs_info_file = os.path.join(self.libs_main_dir, ".lib_info")
 
         python_ver_str = "".join([str(ver) for ver in sys.version_info[:2]])
         self.libs_dir = os.path.join(self.libs_main_dir, "python" + python_ver_str)
 
-        self.check_libs_info()
-        self.install_libraries()
+        # Set python path on older Blender versions
+        try:
+            self.python = bpy.app.binary_path_python
+        except AttributeError:
+            self.python = sys.executable
 
-    def install_libraries(self):
+        self.check_libs_info()
+        self._prepare_libraries()
+
+    def _prepare_libraries(self):
         # Create main library directory
         if not os.path.isdir(self.libs_main_dir):
             os.mkdir(self.libs_main_dir)
@@ -56,42 +62,30 @@ class LibraryManager:
         if self.libs_dir not in sys.path:
             sys.path.append(self.libs_dir)
 
+        # Ensure and update pip
+        self._update_pip()
+
+    def install_libraries(self, required):
+        missing_after_install = []
+
         # Install missing libraries
-        missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
+        missing = [mod for mod in required if not pkgutil.find_loader(mod)]
         if missing:
-            print("Missing libaries:", missing)
-            try:
-                # Set python path on older Blender versions
-                python = bpy.app.binary_path_python
-            except AttributeError:
-                python = sys.executable
-
-            # Ensure and update pip
-            print("Ensuring pip")
-            ensurepip.bootstrap()
-
-            print("Updating pip")
-            try:
-                subprocess.check_call([python, "-m", "pip", "install", "--upgrade", "pip"])
-            except subprocess.CalledProcessError:
-                print("Updating pip failed, retrying with sudo")
-                subprocess.call(["sudo", python, "-m", "pip", "install", "--upgrade", "pip"])
-
             # Install the missing libraries into the library path
             print("Installing missing libraries:", missing)
             try:
-                command = [python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+                command = [self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
                 subprocess.check_call(command, stdout=subprocess.DEVNULL)
             except subprocess.CalledProcessError:
                 print("Installing libraries failed, retrying with sudo")
-                command = ["sudo", python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+                command = ["sudo", self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
                 subprocess.call(command, stdout=subprocess.DEVNULL)
 
             # Check if all library installations were successful
-            still_missing = [mod for mod in self.required if not pkgutil.find_loader(mod)]
-            installed_libs = [lib for lib in missing if lib not in still_missing]
-            if still_missing:
-                print("WARNING: Could not install the following libraries:", still_missing)
+            missing_after_install = [mod for mod in required if not pkgutil.find_loader(mod)]
+            installed_libs = [lib for lib in missing if lib not in missing_after_install]
+            if missing_after_install:
+                print("WARNING: Could not install the following libraries:", missing_after_install)
             if installed_libs:
                 print("Successfully installed missing libraries:", installed_libs)
 
@@ -100,6 +94,8 @@ class LibraryManager:
 
         # Create library info file after all libraries are installed to ensure everything is installed correctly
         self.create_libs_info()
+
+        return missing_after_install
 
     def check_libs_info(self):
         if not os.path.isdir(self.libs_dir):
@@ -127,12 +123,29 @@ class LibraryManager:
                 return
 
     def create_libs_info(self):
+        # If the path doesn't exist or the info file already exists, don't create it
         if not os.path.isdir(self.libs_dir) or os.path.isfile(self.libs_info_file):
             return
 
         # Write the current data to the info file
         with open(self.libs_info_file, 'w', encoding="utf8") as file:
             json.dump(self.system_info, file)
+
+    def _update_pip(self):
+        if self.pip_is_updated:
+            return
+
+        print("Ensuring pip")
+        ensurepip.bootstrap()
+
+        print("Updating pip")
+        try:
+            subprocess.check_call([self.python, "-m", "pip", "install", "--upgrade", "pip"])
+        except subprocess.CalledProcessError:
+            print("Updating pip failed, retrying with sudo")
+            subprocess.call(["sudo", self.python, "-m", "pip", "install", "--upgrade", "pip"])
+
+        self.pip_is_updated = True
 
 
 def show_error(message="", title="Unable to load Rokoko plugin!"):
@@ -202,12 +215,18 @@ def register():
 
 
 def register_late():
-    # Install the missing libraries
+    # Library path
     main_dir = pathlib.Path(os.path.dirname(__file__)).resolve()
     resources_dir = os.path.join(main_dir, "resources")
     libs_dir = os.path.join(resources_dir, "libraries")
-    libs = ["lz4", "websockets", "gql", "cryptography", "boto3"]
-    LibraryManager(libs, libs_dir)
+
+    # Install the missing libraries
+    # Throw error when a login library is missing, but not when the LZ4 module is missing
+    lib_manager = LibraryManager(libs_dir)
+    missing = lib_manager.install_libraries(["websockets", "gql", "cryptography", "boto3"])
+    if missing:
+        raise ImportError("The following libraries could not be installed: " + str(missing))
+    lib_manager.install_libraries(["lz4"])
 
     # If first startup of this plugin, load all modules normally
     # If reloading the plugin, use importlib to reload modules

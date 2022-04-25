@@ -23,7 +23,7 @@ class LoginButton(bpy.types.Operator):
 class LogoutButton(bpy.types.Operator):
     bl_idname = "rsl.login_logout"
     bl_label = "Sign out"
-    bl_description = "Sign ouf of your Rokoko account"
+    bl_description = "Sign out of your Rokoko account"
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
