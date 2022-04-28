@@ -35,9 +35,10 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class Login:
-    url = "https://rmp-gql-public.rokoko.ninja/graphql"
-    aws_url = "wss://z55v4xbwa5cfplrbnupw7bgn2u.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
-    api_key = "da2-o3nnjsj67rhvbfhmvf6zkrsvxq"
+    url = "https://rmp-gql-public.rokoko.com/graphql"
+    aws_url = "wss://a4rau2yngvb7hn3y6m37e3b53u.appsync-realtime-api.us-east-1.amazonaws.com/graphql"
+    api_key = "da2-pa7tlmpnvbcpdhe7l46q3eodvu"
+    login_url = "https://id.rokoko.com/?request_id="
     timeout_duration = 60  # In seconds, how long the listener is waiting for the login event after opening the browser
 
     def __init__(self):
@@ -118,7 +119,7 @@ class Login:
         self.request_id = data.get("data").get("createRequestToken").get("request_id")
 
     def _open_website(self):
-        webbrowser.open("https://dev-id.rokoko.com/?request_id=" + self.request_id)   # TODO: Change away from dev-id
+        webbrowser.open(self.login_url + self.request_id)
 
     async def _run_listener(self):
         # Extract host from aws_url and create auth
@@ -184,7 +185,7 @@ class Login:
 
 class LoginSilent:
     region = 'us-east-1'
-    client_id = "5p8idgrqi7lvq09di4rknhf2bp"
+    client_id = "39j3527cico5eicbtpjoc6627d"
 
     def __init__(self):
         logging.getLogger('boto').setLevel(logging.ERROR)
@@ -205,11 +206,11 @@ class LoginSilent:
             sys.tracebacklimit = 0
             client = boto3.client("cognito-idp", region_name=self.region)
             response = client.initiate_auth(
+                ClientId=self.client_id,
                 AuthFlow='REFRESH_TOKEN',
                 AuthParameters={
                     'REFRESH_TOKEN': user.refresh_token
                 },
-                ClientId=self.client_id
             )
         except Exception as e:
             error_msg = str(e)
@@ -399,7 +400,7 @@ class LoginCache:
 
 
 class MixPanel:
-    url = "https://rmp-team-gql.rokoko.ninja/graphql"
+    url = "https://rmp-team-gql.rokoko.com/graphql"
 
     @staticmethod
     def _send_mixpanel_event(event_name, event_properties, send_async=True):
@@ -439,7 +440,7 @@ class MixPanel:
             return
 
         # data = request.json()
-        # print(event_name, data)
+        # print("Team API response:", event_name, data)
 
     @staticmethod
     def send_login_event():
@@ -466,7 +467,6 @@ class MixPanel:
             "session_duration": session_duration
         }
         MixPanel._send_mixpanel_event(event_name, event_properties)
-        # print("SESSION DURATION:", session_duration, datetime.timedelta(seconds=session_duration))
 
 
 user: User = User()

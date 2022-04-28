@@ -29,8 +29,9 @@ import bpy
 
 
 class LibraryManager:
+    os_name = platform.system()
     system_info = {
-        "operating_system": platform.system(),
+        "operating_system": os_name,
     }
     pip_is_updated = False
 
@@ -62,24 +63,30 @@ class LibraryManager:
         if self.libs_dir not in sys.path:
             sys.path.append(self.libs_dir)
 
-        # Ensure and update pip
-        self._update_pip()
-
     def install_libraries(self, required):
         missing_after_install = []
 
         # Install missing libraries
         missing = [mod for mod in required if not pkgutil.find_loader(mod)]
         if missing:
+            # Ensure and update pip
+            self._update_pip()
+
             # Install the missing libraries into the library path
             print("Installing missing libraries:", missing)
             try:
                 command = [self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
                 subprocess.check_call(command, stdout=subprocess.DEVNULL)
-            except subprocess.CalledProcessError:
-                print("Installing libraries failed, retrying with sudo")
-                command = ["sudo", self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
-                subprocess.call(command, stdout=subprocess.DEVNULL)
+            except subprocess.CalledProcessError as e:
+                print("PIP Error:", e)
+                print("Installing libraries failed.")
+                if self.os_name != "Windows":
+                    print("Retrying with sudo..")
+                    command = ["sudo", self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
+                    subprocess.call(command, stdout=subprocess.DEVNULL)
+            finally:
+                # Reset console color, because it could still be colored after running pip
+                print('\033[39m')
 
             # Check if all library installations were successful
             missing_after_install = [mod for mod in required if not pkgutil.find_loader(mod)]
@@ -88,9 +95,6 @@ class LibraryManager:
                 print("WARNING: Could not install the following libraries:", missing_after_install)
             if installed_libs:
                 print("Successfully installed missing libraries:", installed_libs)
-
-            # Reset console color, because it's still colored after running pip
-            print('\033[39m')
 
         # Create library info file after all libraries are installed to ensure everything is installed correctly
         self.create_libs_info()
@@ -141,9 +145,15 @@ class LibraryManager:
         print("Updating pip")
         try:
             subprocess.check_call([self.python, "-m", "pip", "install", "--upgrade", "pip"])
-        except subprocess.CalledProcessError:
-            print("Updating pip failed, retrying with sudo")
-            subprocess.call(["sudo", self.python, "-m", "pip", "install", "--upgrade", "pip"])
+        except subprocess.CalledProcessError as e:
+            print("PIP Error:", e)
+            print("Updating pip failed.")
+            if self.os_name != "Windows":
+                print("Retrying with sudo..")
+                subprocess.call(["sudo", self.python, "-m", "pip", "install", "--upgrade", "pip"])
+        finally:
+            # Reset console color, because it could still be colored after running pip
+            print('\033[39m')
 
         self.pip_is_updated = True
 

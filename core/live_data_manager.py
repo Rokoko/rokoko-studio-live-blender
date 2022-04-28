@@ -6,7 +6,7 @@ try:
     from lz4 import frame
     loaded_lz4 = True
 except ModuleNotFoundError:
-    print("Error: LZ4 module didn't load. Unsupported Python version!")
+    print("Error: LZ4 module didn't load. Unsupported OS or Python version!")
 except ImportError:
     print("Error: LZ4 module didn't load. Unsupported OS!")
     unsupported_os = True

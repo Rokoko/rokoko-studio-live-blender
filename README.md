@@ -8,7 +8,8 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Requirements
 - Blender **2.80** or higher
-- For live streaming data: Rokoko Studio 1.18.0b or higher
+- For livestreaming data: Rokoko Studio 1.18.0b or higher or Studio 2
+- An internet connection when installing to get the required libraries
 
 ## Features
 - Live stream data:
