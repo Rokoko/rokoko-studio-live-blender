@@ -6,7 +6,7 @@ try:
     from lz4 import frame
     loaded_lz4 = True
 except ModuleNotFoundError:
-    print("Error: LZ4 module didn't load. Unsupported Python version!")
+    print("Error: LZ4 module didn't load. Unsupported OS or Python version!")
 except ImportError:
     print("Error: LZ4 module didn't load. Unsupported OS!")
     unsupported_os = True
@@ -67,8 +67,14 @@ class LiveData:
 
     def _process_data(self):
         self.version = self.data.get('version')
-        if ',' in self.version:
-            self.version = int(self.version.split(',')[0])
+        ver_str = str(self.version).replace(".", ",")
+        if ',' in ver_str:
+            self.version = int(ver_str.split(',')[0])
+
+        # If the user selected JSON v2.5 in Studio 1, the version number is "3" but it contains the data from version 2
+        # This checks if this is the case and sets the version number accordingly
+        if self.version == 3 and self.data.get('trackers') is not None:
+            self.version = 2
 
         if not self.version or self.version < 2:
             raise TypeError

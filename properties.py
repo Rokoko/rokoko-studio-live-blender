@@ -1,29 +1,11 @@
 from bpy.types import Scene, Object
 from bpy.props import IntProperty, StringProperty, EnumProperty, BoolProperty, FloatProperty, CollectionProperty, PointerProperty
 
-from .core import animation_lists, state_manager, recorder, retargeting, login
+from .core import animation_lists, state_manager, recorder, retargeting
 from .panels import retargeting as retargeting_ui
 
 
 def register():
-    # Login
-    Scene.rsl_login_email = StringProperty(
-        name='Email',
-        description='Input the email address of your Rokoko account',
-        update=login.credentials_update
-    )
-    Scene.rsl_login_password = StringProperty(
-        name='Password',
-        description='Input the password of your Rokoko account',
-        subtype='PASSWORD',
-        update=login.credentials_update
-    )
-    Scene.rsl_login_password_shown = StringProperty(
-        name='Password',
-        description='Input the password of your Rokoko account',
-        update=login.credentials_update
-    )
-
     # Receiver
     Scene.rsl_receiver_port = IntProperty(
         name='Streaming Port',

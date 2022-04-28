@@ -11,8 +11,10 @@ import addon_utils
 from threading import Thread
 from bpy.app.handlers import persistent
 
+beta_branch = "beta"
+
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
-GITHUB_URL_BETA = 'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/beta.zip'
+GITHUB_URL_BETA = f'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip'
 
 downloads_dir_name = "updater_downloads"
 

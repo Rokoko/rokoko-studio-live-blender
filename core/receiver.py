@@ -1,7 +1,8 @@
+
 import bpy
 import time
 import socket
-
+import traceback
 from . import animations, utils
 
 error_temp = ''
@@ -73,6 +74,7 @@ class Receiver:
         except (UnicodeDecodeError, TypeError) as e:
             print('Wrong live data format! Use JSON v2 or higher!')
             print(e)
+            print(traceback.format_exc())
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
         except KeyError as e:
             print('KeyError:', e)

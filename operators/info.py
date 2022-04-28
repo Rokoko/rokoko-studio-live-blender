@@ -1,7 +1,7 @@
 import bpy
 import webbrowser
 
-from ..core import login
+from ..core.login_manager import user
 
 
 class LicenseButton(bpy.types.Operator):
@@ -35,7 +35,7 @@ class DocumentationButton(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        webbrowser.open('https://rokoko.freshdesk.com/support/solutions/folders/47000761699')
+        webbrowser.open('https://github.com/Rokoko/rokoko-studio-live-blender#readme')
         self.report({'INFO'}, 'Opened documentation.')
         return {'FINISHED'}
 
@@ -59,5 +59,5 @@ class ToggleRokokoIDButton(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        login.show_rokoko_id_in_info_panel = not login.show_rokoko_id_in_info_panel
+        user.display_email = not user.display_email
         return {'FINISHED'}
