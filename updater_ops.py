@@ -86,7 +86,7 @@ class RemindMeLaterButton(bpy.types.Operator):
 class IgnoreThisVersionButton(bpy.types.Operator):
     bl_idname = 'rsl_updater.ignore_this_version'
     bl_label = 'Ignore this version'
-    bl_description = 'This ignores this version. You will be reminded again when the next version releases'
+    bl_description = 'Ignores this version. You will be reminded again when the next version releases'
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
@@ -113,7 +113,7 @@ class ShowPatchnotesPanel(bpy.types.Operator):
     def invoke(self, context, event):
         updater.used_updater_panel = True
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 8.2))
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 8.3))
 
     def check(self, context):
         # Important for changing options
@@ -166,7 +166,7 @@ class ConfirmUpdatePanel(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.1))
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.2))
 
     def check(self, context):
         # Important for changing options
@@ -222,7 +222,7 @@ class UpdateCompletePanel(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.1))
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.2))
 
     def check(self, context):
         # Important for changing options
@@ -270,7 +270,7 @@ class UpdateNotificationPopup(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.6))
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.7))
 
     # def invoke(self, context, event):
     #     return context.window_manager.invoke_props_dialog(self)
