@@ -16,6 +16,8 @@ class InitTPose(bpy.types.Operator):
             self.report({'ERROR'}, 'This is not an armature!')
             return {'CANCELLED'}
 
+        bpy.ops.object.mode_set(mode='OBJECT')
+
         # Get current custom data
         custom_data = obj.get('CUSTOM')
         if not custom_data:
@@ -27,9 +29,8 @@ class InitTPose(bpy.types.Operator):
         for bone in obj.pose.bones:
             # Save rotation mode
             rotation_mode = bone.rotation_mode
-            if rotation_mode == 'QUATERNION':
-                rotation_mode = 'XYZ'
 
+            # Save bone pose data
             bone.rotation_mode = 'QUATERNION'
             bones[bone.name] = {
                 'location_local': bone.location,
@@ -38,6 +39,7 @@ class InitTPose(bpy.types.Operator):
                 'rotation_global': bone.matrix.to_quaternion(),
                 'inherit_rotation': obj.data.bones.get(bone.name).use_inherit_rotation,
             }
+
             # Load rotation mode
             bone.rotation_mode = rotation_mode
 

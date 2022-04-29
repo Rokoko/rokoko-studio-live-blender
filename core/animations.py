@@ -111,7 +111,7 @@ def animate_actor(obj):
     # Go over every mapped bone and animate it
     # bone_name:                    Name if the bone
     # studio_reference_tpose_rot:   Studios reference t-pose rotation (still in Studio space)
-    for bone_name, studio_reference_tpose_rot in animation_lists.actor_bones.items():
+    for bone_name, studio_reference_tpose_rot in animation_lists.get_bones(with_gloves=live_data.has_gloves(actor)).items():
 
         # Gets the name of the bone assigned to this bone live data
         bone_name_assigned = getattr(obj, 'rsl_actor_' + bone_name)

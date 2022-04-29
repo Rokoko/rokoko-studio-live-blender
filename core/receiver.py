@@ -1,7 +1,8 @@
+
 import bpy
 import time
 import socket
-
+import traceback
 from . import animations, utils
 
 error_temp = ''
@@ -42,30 +43,52 @@ class Receiver:
             error = ['Socket not running!']
             force_error = True
 
+        # start_time = time.time()
+
+        # Process the packet
         if data_raw:
+            # print('SIZE:', len(data_raw))
+            # print('DATA:', data_raw)
+
             # Process animation data
             error, force_error = self.process_data(data_raw)
+
+            # print(round((time.time() - start_time) * 1000, 4), 'ms')
 
         self.handle_ui_updates(received)
         self.handle_error(error, force_error)
 
-    def process_data(self, data_raw):
+    def process_data(self, data_raw) -> ([str], bool):
+        """
+        Processes the received data. If there was an error it returns a list of strings creating the error message
+        and if the error should be forced to show immediately instead of after a couple of packages
+        :param data_raw:
+        :return:
+        """
         try:
             animations.live_data.init(data_raw)
-        except ValueError:
+        except ValueError as e:
             print('Packet contained no data')
+            print(e)
             return ['Packets contain no data!'], False
         except (UnicodeDecodeError, TypeError) as e:
             print('Wrong live data format! Use JSON v2 or higher!')
             print(e)
+            print(traceback.format_exc())
             return ['Wrong data format!', 'Use JSON v2 or higher!'], True
         except KeyError as e:
             print('KeyError:', e)
             return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
-        except ImportError:
+        except ImportError as e:
+            # This error is specifically when the operating system isn't supported
+            if "os" in e.msg:
+                print('Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.')
+                return ['Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.'], True
+
             # This error occurs, when the LZ4 package could not be loaded while it was needed
             print('Unsupported Blender version or operating system! Use older Blender or JSON v2/v3.')
-            return ['Unsupported Blender version', 'or operating system!', 'Use older Blender or JSON v2/v3.'], True
+            print(e)
+            return ['Unsupported Blender version', 'or operating system! Use', 'older Blender or JSON v2/v3.'], True
 
         animations.animate()
 

@@ -6,6 +6,7 @@ import pathlib
 from . import retargeting
 from .auto_detect_lists.bones import bone_list, ignore_rokoko_retargeting_bones
 from .auto_detect_lists.shapes import shape_list
+from .custom_schemes_manager import load_custom_lists_from_file
 
 bone_detection_list = {}
 bone_detection_list_unmodified = {}
@@ -24,8 +25,8 @@ def load_detection_lists():
     global bone_detection_list, bone_detection_list_unmodified, bone_detection_list_custom, shape_detection_list, shape_detection_list_unmodified, shape_detection_list_custom
 
     # Create the lists from the internal naming lists
-    bone_detection_list_unmodified = create_internal_bone_list()
-    shape_detection_list_unmodified = create_internal_shape_list()
+    bone_detection_list_unmodified = setup_bone_list(bone_list)
+    shape_detection_list_unmodified = setup_shape_list()
 
     # Load the custom naming lists from the file
     bone_detection_list_custom, shape_detection_list_custom = load_custom_lists_from_file()
@@ -38,10 +39,10 @@ def load_detection_lists():
     # print_bone_detection_list()
 
 
-def create_internal_bone_list():
+def setup_bone_list(raw_bone_list):
     new_bone_list = {}
 
-    for bone_key, bone_values in bone_list.items():
+    for bone_key, bone_values in raw_bone_list.items():
         # Add the bones to the list if no side indicator is found
         if 'left' not in bone_key:
             new_bone_list[bone_key] = [bone_value.lower() for bone_value in bone_values]
@@ -79,7 +80,7 @@ def create_internal_bone_list():
     return new_bone_list
 
 
-def create_internal_shape_list():
+def setup_shape_list():
     new_shape_list = {}
 
     for shape_key, shape_names in shape_list.items():
@@ -89,19 +90,22 @@ def create_internal_shape_list():
 
 
 def combine_lists(internal_list, custom_list):
+    """
+        Creates a combined list with the second list put in first but with the structure of the first list
+    """
     combined_list = {}
 
     # Set dictionary structure
     for key in internal_list.keys():
         combined_list[key] = []
 
-    # Load in custom shapes into the dictionary
+    # Load in custom values into the dictionary
     for key, values in custom_list.items():
         combined_list[key] = []
         for value in values:
             combined_list[key].append(value.lower())
 
-    # Load in internal bones
+    # Load in internal values
     for key, values in internal_list.items():
         for value in values:
             combined_list[key].append(value)
@@ -110,10 +114,12 @@ def combine_lists(internal_list, custom_list):
 
 
 def print_bone_detection_list():
-    # for key, values in bone_detection_list.items():
-    #     print(key, values)
-    #     print()
-    print('CUSTOM')
+    print('BONES')
+    for key, values in bone_detection_list.items():
+        print(key, values)
+        print()
+
+    print('CUSTOM BONES')
     for key, values in bone_detection_list_custom.items():
         print(key, values)
         print('--> ', bone_detection_list[key])
@@ -123,7 +129,7 @@ def print_bone_detection_list():
     # for key, values in shape_detection_list.items():
     #     print(key, values)
 
-    print('CUSTOM')
+    print('CUSTOM SHAPES')
     for key, values in shape_detection_list_custom.items():
         print(key, values)
         print('--> ', shape_detection_list[key])
@@ -131,253 +137,20 @@ def print_bone_detection_list():
     print()
 
 
-def save_retargeting_to_list():
-    global bone_detection_list, bone_detection_list_custom
-    armature_target = retargeting.get_target_armature()
-    retargeting_dict = detect_retarget_bones()
-
-    for bone_item in bpy.context.scene.rsl_retargeting_bone_list:
-        if not bone_item.bone_name_source or not bone_item.bone_name_target:
-            continue
-
-        bone_name_key = bone_item.bone_name_key
-        bone_name_source = bone_item.bone_name_source.lower()
-        bone_name_target = bone_item.bone_name_target.lower()
-        bone_name_target_detected, bone_name_key_detected = retargeting_dict[bone_item.bone_name_source]
-
-        if bone_name_target_detected == bone_item.bone_name_target:
-            continue
-
-        if bone_name_key_detected and bone_name_key_detected != 'spine':
-            if not bone_detection_list_custom.get(bone_name_key_detected):
-                bone_detection_list_custom[bone_name_key_detected] = []
-
-            # TODO Idea: If a target bone got detected but was removed and left empty, add it to an ignore list. So if that exact match-up gets detected again, leave it empty
-
-            # If the detected target is in the custom bones list but it got changed, remove it from the list. If the new bone gets detected automatically now, don't add it to the custom list
-            if bone_name_target_detected.lower() in bone_detection_list_custom[bone_name_key_detected]:
-                if bone_name_key_detected.startswith('custom_bone_') and len(bone_detection_list_custom[bone_name_key_detected]) == 2:
-                    bone_detection_list_custom.pop(bone_name_key_detected)
-                else:
-                    bone_detection_list_custom[bone_name_key_detected].remove(bone_name_target_detected.lower())
-
-                # Update the bone detection list in order to correctly figure out if the new selected bone needs to be saved
-                bone_detection_list = combine_lists(bone_detection_list_unmodified, bone_detection_list_custom)
-
-                retargeting_dict = detect_retarget_bones()
-                bone_name_detected_new, _ = retargeting_dict[bone_item.bone_name_source]
-                if bone_name_detected_new.lower() == bone_name_target:
-                    # print('No need to add new bone to save')
-                    continue
-
-            # If the source bone got detected but the target bone got changed, save the target bone into the custom list
-            if bone_name_target not in bone_detection_list_custom[bone_name_key_detected]:
-                bone_detection_list_custom[bone_name_key_detected] = [bone_name_target] + bone_detection_list_custom[bone_name_key_detected]
-            continue
-
-        # If it is a completely new pair of bones or a spine bone, add it as a new bone to the list
-        bone_detection_list_custom['custom_bone_' + bone_name_source] = [bone_name_source, bone_name_target]
-
-    # Save the updated custom list locally and update
-    save_to_file_and_update()
-
-
-def save_live_data_bone_to_list(bone_key, bone_name, bone_name_previous):
-    global bone_detection_list, bone_detection_list_custom
-
-    if not bone_detection_list_custom.get(bone_key):
-        bone_detection_list_custom[bone_key] = []
-
-    # If the previously detected bone name is in the custom bones list but it got changed, remove it from the list. If the new bone gets detected automatically now, don't add it to the custom list
-    if bone_name_previous.lower() in bone_detection_list_custom[bone_key]:
-        bone_detection_list_custom[bone_key].remove(bone_name_previous.lower())
-        # print('Removed:', bone_name_previous)
-
-        # Update the bone detection list in order to correctly figure out if the new selected bone needs to be saved
-        bone_detection_list = combine_lists(bone_detection_list_unmodified, bone_detection_list_custom)
-
-        bone_name_detected_new = detect_bone(bpy.context.active_object, bone_key)
-        if bone_name_detected_new == bone_name:
-            # print('No need to add new bone to save')
-            return
-
-    bone_detection_list_custom[bone_key] = [bone_name] + bone_detection_list_custom[bone_key]
-
-
-def save_live_data_shape_to_list(shape_key, shape_name, shape_name_previous):
-    global shape_detection_list, shape_detection_list_custom
-
-    if not shape_detection_list_custom.get(shape_key):
-        shape_detection_list_custom[shape_key] = []
-
-    # If the previously detected shape name is in the custom shapes list but it got changed, remove it from the list. If the new shapekey gets detected automatically now, don't add it to the custom list
-    if shape_name_previous.lower() in shape_detection_list_custom[shape_key]:
-        shape_detection_list_custom[shape_key].remove(shape_name_previous.lower())
-        # print('Removed:', shape_name_previous)
-
-        # Update the shapekey detection list in order to correctly figure out if the new selected shapekey needs to be saved
-        shape_detection_list = combine_lists(shape_detection_list_unmodified, shape_detection_list_custom)
-
-        shape_name_detected_new = detect_shape(bpy.context.active_object, shape_key)
-        if shape_name_detected_new == shape_name:
-            # print('No need to add new bone to save')
-            return
-
-    shape_detection_list_custom[shape_key] = [shape_name] + shape_detection_list_custom[shape_key]
-
-
-def save_to_file_and_update():
-    save_custom_to_file()
-    load_detection_lists()
-
-
-def save_custom_to_file(file_path=custom_bone_list_file):
-    new_custom_list = clean_custom_list()
-    print('To File:', new_custom_list)
-
-    if not os.path.isdir(custom_bones_dir):
-        os.mkdir(custom_bones_dir)
-
-    with open(file_path, 'w', encoding="utf8") as outfile:
-        json.dump(new_custom_list, outfile, ensure_ascii=False, indent=4)
-
-
-def load_custom_lists_from_file(file_path=custom_bone_list_file):
-    custom_bone_list = {}
-    try:
-        with open(file_path, encoding="utf8") as file:
-            custom_bone_list = json.load(file)
-    except FileNotFoundError:
-        print('Custom bone list not found.')
-    except json.decoder.JSONDecodeError:
-        print("Custom bone list is not a valid json file!")
-
-    if custom_bone_list.get('rokoko_custom_names') is None or custom_bone_list.get('version') is None or custom_bone_list.get('bones') is None or custom_bone_list.get('shapes') is None:
-        print("Custom name list file is not a valid name list file")
-        return {}, {}
-
-    custom_bone_list.pop('rokoko_custom_names')
-    custom_bone_list.pop('version')
-
-    return custom_bone_list.get('bones'), custom_bone_list.get('shapes')
-
-
-def clean_custom_list():
-    new_custom_list = {
-        'rokoko_custom_names':  True,
-        'version': 1,
-        'bones': {},
-        'shapes': {}
-    }
-
-    new_bone_list = {}
-    new_shape_list = {}
-
-    # Remove all empty fields and make all custom fields lowercase
-    for key, values in bone_detection_list_custom.items():
-        if not values:
-            continue
-
-        for i in range(len(values)):
-            values[i] = values[i].lower()
-
-        new_bone_list[key] = values
-
-    # Remove all empty fields and make all custom fields lowercase
-    for key, values in shape_detection_list_custom.items():
-        if not values:
-            continue
-
-        for i in range(len(values)):
-            values[i] = values[i].lower()
-
-        new_shape_list[key] = values
-
-    new_custom_list['bones'] = new_bone_list
-    new_custom_list['shapes'] = new_shape_list
-
-    return new_custom_list
-
-
-def import_custom_list(directory, file_name):
-    global bone_detection_list_custom, shape_detection_list_custom
-
-    file_path = os.path.join(directory, file_name)
-    new_custom_bone_list, new_custom_shape_list = load_custom_lists_from_file(file_path=file_path)
-
-    # Merge the new and old custom bone lists
-    for key, bones in bone_detection_list_custom.items():
-        if not new_custom_bone_list.get(key):
-            new_custom_bone_list[key] = []
-
-        for bone in new_custom_bone_list[key]:
-            if bone in bones:
-                bones.remove(bone)
-
-        new_custom_bone_list[key] += bones
-
-    # Merge the new and old custom shape lists
-    for key, shapes in shape_detection_list_custom.items():
-        if not new_custom_shape_list.get(key):
-            new_custom_shape_list[key] = []
-
-        for shape in new_custom_shape_list[key]:
-            if shape in shapes:
-                shapes.remove(shape)
-
-        new_custom_shape_list[key] += shapes
-
-    bone_detection_list_custom = new_custom_bone_list
-    shape_detection_list_custom = new_custom_shape_list
-
-
-def export_custom_list2(directory):
-    file_path = os.path.join(directory, 'custom_bone_list.json')
-
-    i = 1
-    while os.path.isfile(file_path):
-        file_path = os.path.join(directory, 'custom_bone_list' + str(i) + '.json')
-        i += 1
-
-    save_custom_to_file(file_path=file_path)
-
-    return os.path.basename(file_path)
-
-
-def export_custom_list(file_path):
-    if not bone_detection_list_custom and not shape_detection_list_custom:
-        return None
-
-    save_custom_to_file(file_path=file_path)
-    return os.path.basename(file_path)
-
-
-def delete_custom_bone_list():
-    global bone_detection_list_custom
-    bone_detection_list_custom = {}
-    save_to_file_and_update()
-
-
-def delete_custom_shape_list():
-    global shape_detection_list_custom
-    shape_detection_list_custom = {}
-    save_to_file_and_update()
-
-
-def get_bone_list():
-    return bone_detection_list
-
-
-def get_custom_bone_list():
-    return bone_detection_list_custom
-
-
-def get_shape_list():
-    return shape_detection_list
-
-
-def get_custom_shape_list():
-    return shape_detection_list_custom
+# def get_bone_list():
+#     return bone_detection_list
+#
+#
+# def get_custom_bone_list():
+#     return bone_detection_list_custom
+#
+#
+# def get_shape_list():
+#     return shape_detection_list
+#
+#
+# def get_custom_shape_list():
+#     return shape_detection_list_custom
 
 
 def standardize_bone_name(name):
@@ -510,13 +283,17 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
     return found_bone_name
 
 
-def detect_retarget_bones():
+def detect_retarget_bones() -> {str: (str, str)}:
+    """
+    Detects all matching bones in the target and source armatures
+    :return: A dictionary with the source bone name as key and a tuple of the target bone name and their shared key name as value
+    """
     bone_list_animated = []
     retargeting_dict = {}
     armature_source = retargeting.get_source_armature()
     armature_target = retargeting.get_target_armature()
 
-    # Get all bones from the animation
+    # Get all source bones from the animation and add them to bone_list_animated
     for fc in armature_source.animation_data.action.fcurves:
         bone_name = fc.data_path.split('"')
         if len(bone_name) == 3 and bone_name[1] not in bone_list_animated:
@@ -526,13 +303,12 @@ def detect_retarget_bones():
     is_rokoko_animation = False
     if 'newton' in bone_list_animated and 'RightFinger1Tip' in bone_list_animated and 'HeadVertex' in bone_list_animated and 'LeftFinger2Metacarpal' in bone_list_animated:
         is_rokoko_animation = True
-        # print('Rokoko animation detected')
 
     spines_source = []
     spines_target = []
     found_main_bones = []
 
-    # Then add all the bones to the list
+    # Then add all the bones to the retargeting dictionary
     for bone_name in bone_list_animated:
         if is_rokoko_animation and bone_name in ignore_rokoko_retargeting_bones:
             continue
@@ -542,20 +318,21 @@ def detect_retarget_bones():
         main_bone_name = ''
         standardized_bone_name_source = standardize_bone_name(bone_name)
 
-        # Find the main bone name of the source bone
+        # Find the main bone name (bone name key) of the source bone
         for bone_main, bone_values in bone_detection_list.items():
             if bone_main == 'chest':  # Ignore chest bones, these are only used for live data
                 continue
             if bone_main in found_main_bones:  # Only find main bones once, except for spines
                 continue
+            # If the source bone name is found in the bone detection list, add its main bone name to the list of found main bones
             if bone_name.lower() in bone_values or standardized_bone_name_source in bone_values or standardized_bone_name_source == bone_main.lower():
                 main_bone_name = bone_main
                 if main_bone_name != 'spine':  # Ignore the spine bones for now, so that it can add the custom spine bones first
                     found_main_bones.append(main_bone_name)
                     break
 
-        # Add the bone to the retargeting list
-        retargeting_dict[bone_item_source] = (bone_item_target, main_bone_name)
+        # Add the source bone and the main bone name to the retargeting dict with an empty targeting bone name
+        retargeting_dict[bone_item_source] = ("", main_bone_name)
 
         # If no main bone name was found, continue
         if not main_bone_name:

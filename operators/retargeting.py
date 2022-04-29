@@ -3,9 +3,10 @@ import copy
 
 from . import detector
 from ..core import utils
-from ..core.auto_detect_lists import bones
 from ..core.retargeting import get_source_armature, get_target_armature
 from ..core import detection_manager as detector
+from ..core import custom_schemes_manager
+from ..panels.retargeting import BoneListItem
 
 RETARGET_ID = '_RSL_RETARGET'
 
@@ -46,6 +47,20 @@ class BuildBoneList(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class AddBoneListItem(bpy.types.Operator):
+    bl_idname = "rsl.add_bone_list_item"
+    bl_label = "Add Bone List Item"
+    bl_description = "Adds a customizable bone list item"
+    bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+
+    def execute(self, context):
+        bone_item = context.scene.rsl_retargeting_bone_list.add()
+        bone_item.is_custom = True
+
+        context.scene.rsl_retargeting_bone_list_index = len(context.scene.rsl_retargeting_bone_list) - 1
+        return {'FINISHED'}
+
+
 class ClearBoneList(bpy.types.Operator):
     bl_idname = "rsl.clear_bone_list"
     bl_label = "Clear Bone List"
@@ -64,6 +79,8 @@ class RetargetAnimation(bpy.types.Operator):
     bl_description = "Retargets the animation from the source armature to the target armature"
     bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
 
+    retarget_bone_list: [BoneListItem] = []
+
     def execute(self, context):
         armature_source = get_source_armature()
         armature_target = get_target_armature()
@@ -78,17 +95,37 @@ class RetargetAnimation(bpy.types.Operator):
                                    '\nPlease select different armatures.')
             return {'CANCELLED'}
 
-        # Find root bones
-        root_bones = self.find_root_bones(context, armature_source, armature_target)
+        # Build retargeting bone list
+        self.retarget_bone_list.clear()
+        for item in context.scene.rsl_retargeting_bone_list:
+            if not item.bone_name_source or not item.bone_name_target \
+                    or not armature_source.pose.bones.get(item.bone_name_source) \
+                    or not armature_target.pose.bones.get(item.bone_name_target):
+                continue
+            self.retarget_bone_list.append(item)
 
-        # Cancel if no root bones are found
+        # Find the root bones and cancel if none are found
+        root_bones = self.find_root_bones(context, armature_source, armature_target)
         if not root_bones:
             self.report({'ERROR'}, 'No root bone found!'
                                    '\nCheck if the bones are mapped correctly or try rebuilding the bone list.')
             return {'CANCELLED'}
 
+        # Check for duplicate target bone entries
+        seen = {}
+        for item in self.retarget_bone_list:
+            count = seen.get(item.bone_name_target)
+            if not count:
+                count = 0
+            seen[item.bone_name_target] = count + 1
+        duplicates = [key for key, value in seen.items() if value > 1]
+        if duplicates:
+            self.report({'ERROR'}, 'Duplicate target bone entries found! Please use each target bone only once:'
+                                   f'\n{", ".join(duplicates)}')
+            return {'CANCELLED'}
+
         # Save the bone list if the user changed anything
-        detector.save_retargeting_to_list()
+        custom_schemes_manager.save_retargeting_to_list()
 
         # Prepare armatures
         utils.set_active(armature_target)
@@ -106,9 +143,11 @@ class RetargetAnimation(bpy.types.Operator):
             pose_source = self.get_and_reset_pose_rotations(armature_source)
             pose_target = self.get_and_reset_pose_rotations(armature_target)
 
+        # Auto scaling
         source_scale = None
         if context.scene.rsl_retargeting_auto_scaling:
             # Clean source animation
+            # TODO: This causes issues when all Hip bone data is on the armature itself
             self.clean_animation(armature_source)
 
             # Scale the source armature to fit the target armature
@@ -146,14 +185,8 @@ class RetargetAnimation(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='EDIT')
 
         # Recreate bones from target armature in source armature
-        for item in context.scene.rsl_retargeting_bone_list:
-            if not item.bone_name_source or not item.bone_name_target or item.bone_name_target not in bone_transforms:
-                continue
-
+        for item in self.retarget_bone_list:
             bone_source = armature_source.data.edit_bones.get(item.bone_name_source)
-            if not bone_source:
-                print('Skipped:', item.bone_name_source, item.bone_name_target)
-                continue
 
             # Recreate target bone
             bone_new = armature_source.data.edit_bones.new(item.bone_name_target + RETARGET_ID)
@@ -164,17 +197,8 @@ class RetargetAnimation(bpy.types.Operator):
         bpy.ops.object.select_all(action='DESELECT')
 
         # Add constraints to target armature and select the bones for animation
-        for item in context.scene.rsl_retargeting_bone_list:
-            if not item.bone_name_source or not item.bone_name_target:
-                continue
-
-            bone_source = armature_source.pose.bones.get(item.bone_name_source)
+        for item in self.retarget_bone_list:
             bone_target = armature_target.pose.bones.get(item.bone_name_target)
-            bone_target_data = armature_target.data.bones.get(item.bone_name_target)
-
-            if not bone_source or not bone_target or not bone_target_data:
-                print('Bone mapping not found:', item.bone_name_source, item.bone_name_target)
-                continue
 
             # Add constraints
             constraint = bone_target.constraints.new('COPY_ROTATION')
@@ -246,8 +270,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Find animated root bones
         root_bones_animated = []
-        target_bones = [item.bone_name_target for item in context.scene.rsl_retargeting_bone_list if
-                        armature_target.pose.bones.get(item.bone_name_target) and armature_source.pose.bones.get(item.bone_name_source)]
+        target_bones = [item.bone_name_target for item in self.retarget_bone_list]
         while root_bones:
             for bone in copy.copy(root_bones):
                 root_bones.remove(bone)
@@ -310,14 +333,9 @@ class RetargetAnimation(bpy.types.Operator):
         target_min = None
         target_min_root = None
 
-        for item in context.scene.rsl_retargeting_bone_list:
-            if not item.bone_name_source or not item.bone_name_target:
-                continue
-
+        for item in self.retarget_bone_list:
             bone_source = armature_source.pose.bones.get(item.bone_name_source)
             bone_target = armature_target.pose.bones.get(item.bone_name_target)
-            if not bone_source or not bone_target:
-                continue
 
             bone_source_z = (armature_source.matrix_world @ bone_source.head)[2]
             bone_target_z = (armature_target.matrix_world @ bone_target.head)[2]

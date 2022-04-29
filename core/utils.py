@@ -1,7 +1,9 @@
+import asyncio
 import sys
 import bpy
 import math
 from mathutils import Vector, Matrix
+from contextlib import suppress
 
 
 def ui_refresh_properties():
@@ -23,6 +25,8 @@ def ui_refresh_view_3d():
 
 
 def ui_refresh_all():
+    if not hasattr(bpy.data, "window_managers"):
+        return
     # Refreshes all panels
     for windowManager in bpy.data.window_managers:
         for window in windowManager.windows:
@@ -66,3 +70,16 @@ def vec_roll_to_mat3(vec, roll):
     rMatrix = Matrix.Rotation(roll, 3, nor)
     mat = rMatrix @ bMatrix
     return mat
+
+
+async def cancel_gen(agen):
+    """
+    Stops an asynchronous generator from outside.
+    :param agen: The asynchronous generator
+    :return:
+    """
+    task = asyncio.create_task(agen.__anext__())
+    task.cancel()
+    with suppress(Exception):
+        await task
+    await agen.aclose()

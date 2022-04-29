@@ -9,12 +9,12 @@ if "bpy" not in locals():
     from . import recorder
     from . import retargeting
     from . import detection_manager
+    from . import custom_schemes_manager
     from . import fbx_patcher
-    from . import login
+    from . import login_manager
     from . import live_data_manager
 else:
     import importlib
-
     importlib.reload(receiver)
     importlib.reload(animations)
     importlib.reload(animation_lists)
@@ -24,6 +24,7 @@ else:
     importlib.reload(recorder)
     importlib.reload(retargeting)
     importlib.reload(detection_manager)
+    importlib.reload(custom_schemes_manager)
     importlib.reload(fbx_patcher)
-    importlib.reload(login)
+    importlib.reload(login_manager)
     importlib.reload(live_data_manager)

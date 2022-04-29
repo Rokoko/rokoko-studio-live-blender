@@ -3,10 +3,10 @@ import bpy
 from .main import ToolPanel
 from ..operators import retargeting, detector
 from ..core.icon_manager import Icons
-from ..core.retargeting import get_target_armature
+from ..core.retargeting import get_target_armature, get_source_armature
 
 from bpy.types import PropertyGroup, UIList
-from bpy.props import StringProperty
+from bpy.props import StringProperty, BoolProperty
 
 
 # Retargeting panel
@@ -64,6 +64,9 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
         row.template_list("RSL_UL_BoneList", "Bone List", context.scene, "rsl_retargeting_bone_list", context.scene, "rsl_retargeting_bone_list_index", rows=1, maxrows=10)
 
         row = layout.row(align=True)
+        row.operator(retargeting.AddBoneListItem.bl_idname, text="Add Custom Entry", icon='ADD')
+
+        row = layout.row(align=True)
         row.prop(context.scene, 'rsl_retargeting_auto_scaling')
 
         row = layout.row(align=True)
@@ -81,11 +84,11 @@ class RetargetingPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.label(text='Custom Naming Schemes:')
-        row.operator(detector.SaveCustomBonesRetargeting.bl_idname, text='Save')
 
         subrow = layout.row(align=True)
         row = subrow.row(align=True)
         row.scale_y = 0.9
+        row.operator(detector.SaveCustomBonesRetargeting.bl_idname, text='Save')
         row.operator(detector.ImportCustomBones.bl_idname, text='Import')
         row.operator(detector.ExportCustomBones.bl_idname, text='Export')
         row = subrow.row(align=True)
@@ -99,7 +102,7 @@ class BoneListItem(PropertyGroup):
     bone_name_source: StringProperty(
         name="Source Bone",
         description="The source bone name",
-        default="Undefined")
+        default="")
 
     bone_name_target: StringProperty(
         name="Target Bone",
@@ -111,12 +114,24 @@ class BoneListItem(PropertyGroup):
         description="The automatically detected bone key",
         default="")
 
+    is_custom: BoolProperty(
+        description="This determines if the field is a custom one source bone one",
+        default=False)
+
 
 class RSL_UL_BoneList(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         armature_target = get_target_armature()
+        armature_source = get_source_armature()
 
         layout = layout.split(factor=0.36, align=True)
-        layout.label(text=item.bone_name_source)
+
+        # Displays source bone
+        if item.is_custom:
+            layout.prop_search(item, 'bone_name_source', armature_source.pose, "bones", text='')
+        else:
+            layout.label(text=item.bone_name_source)
+
+        # Displays target bone
         if armature_target:
             layout.prop_search(item, 'bone_name_target', armature_target.pose, "bones", text='')

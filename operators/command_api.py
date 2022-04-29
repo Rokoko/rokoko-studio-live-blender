@@ -1,5 +1,7 @@
+
 import bpy
 import requests
+import traceback
 
 
 class CommandTest(bpy.types.Operator):
@@ -16,8 +18,6 @@ class CommandTest(bpy.types.Operator):
             return {'CANCELLED'}
 
         data = request.json()
-        print(data)
-
         if is_error(self, data):
             return {'CANCELLED'}
 
@@ -35,12 +35,11 @@ class StartCalibration(bpy.types.Operator):
         try:
             request = post_request('/calibrate')
         except requests.exceptions.ConnectionError:
+            print(traceback.format_exc())
             self.report({'ERROR'}, 'Could not connect to Rokoko Studio!')
             return {'CANCELLED'}
 
         data = request.json()
-        print(data)
-
         if is_error(self, data):
             return {'CANCELLED'}
 
@@ -58,12 +57,11 @@ class Restart(bpy.types.Operator):
         try:
             request = post_request('/restart')
         except requests.exceptions.ConnectionError:
+            print(traceback.format_exc())
             self.report({'ERROR'}, 'Could not connect to Rokoko Studio!')
             return {'CANCELLED'}
 
         data = request.json()
-        print(data)
-
         if is_error(self, data):
             return {'CANCELLED'}
 
@@ -81,12 +79,11 @@ class StartRecording(bpy.types.Operator):
         try:
             request = post_request('/recording/start')
         except requests.exceptions.ConnectionError:
+            print(traceback.format_exc())
             self.report({'ERROR'}, 'Could not connect to Rokoko Studio!')
             return {'CANCELLED'}
 
         data = request.json()
-        print(data)
-
         if is_error(self, data):
             return {'CANCELLED'}
 
@@ -104,12 +101,11 @@ class StopRecording(bpy.types.Operator):
         try:
             request = post_request('/recording/stop')
         except requests.exceptions.ConnectionError:
+            print(traceback.format_exc())
             self.report({'ERROR'}, 'Could not connect to Rokoko Studio!')
             return {'CANCELLED'}
 
         data = request.json()
-        print(data)
-
         if is_error(self, data):
             return {'CANCELLED'}
 
@@ -126,10 +122,15 @@ def post_request(additions, json=None):
     if json is None:
         json = {}
     scn = bpy.context.scene
-    return requests.post(f'http://{scn.rsl_command_ip_address}:{scn.rsl_command_ip_port}/v1/{scn.rsl_command_api_key}' + additions, json=json)
+
+    url = f'http://{scn.rsl_command_ip_address}:{scn.rsl_command_ip_port}/v1/{scn.rsl_command_api_key}{additions}'
+    print(url, json)
+    request = requests.post(url, json=json)
+    return request
 
 
 def is_error(self, data):
+    print(data)
     if not data.get('response_code'):
         self.report({'ERROR'}, 'No response from Studio!')
         return True

@@ -119,7 +119,7 @@ class ObjectsPanel(bpy.types.Panel):
 
             col = layout.column()
             show_gloves = True
-            for actor_bone in animation_lists.actor_bones.keys():
+            for actor_bone in animation_lists.get_bones().keys():
                 if not show_gloves:
                     continue
 

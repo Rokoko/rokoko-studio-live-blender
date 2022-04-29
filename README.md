@@ -8,7 +8,8 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 
 ## Requirements
 - Blender **2.80** or higher
-- For live stream data: Rokoko Studio 1.18.0b
+- For livestreaming data: Rokoko Studio 1.18.0b or higher or Studio 2
+- An internet connection when installing to get the required libraries
 
 ## Features
 - Live stream data:
@@ -17,6 +18,12 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
     - Props data
 - Control Rokoko Studio from within Blender
 - Easily retarget motion capture animations
+
+## Installation
+- Download the latest version [here](https://github.com/Rokoko/rokoko-studio-live-blender/archive/refs/heads/master.zip)
+- In Blender go to Edit > Preferences > Addons > Install.. and then select the downloaded zip file
+  - First time installation can take a while
+- To use the plugin, press N and select the Rokoko panel
  
 ---
 
@@ -104,6 +111,12 @@ In order to retarget an animation in Blender you will need to do the following:
 ---
  
 ## Changelog
+
+#### 1.4.0
+- Added support for Blender 3.0/3.1 and Rokoko Studio 2
+- Fully reworked login
+  - Login now works via browser for easier use
+- Retargeting: Added support for multiple target bones per source bone
 
 #### 1.3.0
 - Added support for Blender 2.93

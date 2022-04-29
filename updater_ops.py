@@ -86,7 +86,7 @@ class RemindMeLaterButton(bpy.types.Operator):
 class IgnoreThisVersionButton(bpy.types.Operator):
     bl_idname = 'rsl_updater.ignore_this_version'
     bl_label = 'Ignore this version'
-    bl_description = 'This ignores this version. You will be reminded again when the next version releases'
+    bl_description = 'Ignores this version. You will be reminded again when the next version releases'
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
@@ -113,7 +113,7 @@ class ShowPatchnotesPanel(bpy.types.Operator):
     def invoke(self, context, event):
         updater.used_updater_panel = True
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=dpi_value * 8.2)
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 8.3))
 
     def check(self, context):
         # Important for changing options
@@ -166,7 +166,7 @@ class ConfirmUpdatePanel(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=dpi_value * 4.1)
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.2))
 
     def check(self, context):
         # Important for changing options
@@ -222,7 +222,7 @@ class UpdateCompletePanel(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=dpi_value * 4.1)
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.2))
 
     def check(self, context):
         # Important for changing options
@@ -270,7 +270,7 @@ class UpdateNotificationPopup(bpy.types.Operator):
 
     def invoke(self, context, event):
         dpi_value = updater.get_user_preferences().system.dpi
-        return context.window_manager.invoke_props_dialog(self, width=dpi_value * 4.6)
+        return context.window_manager.invoke_props_dialog(self, width=int(dpi_value * 4.7))
 
     # def invoke(self, context, event):
     #     return context.window_manager.invoke_props_dialog(self)
@@ -343,12 +343,19 @@ def draw_updater_panel(context, layout, user_preferences=False):
         col.separator()
         row = col.row(align=True)
         row.scale_y = 0.75
-        row.label(text='Restart Blender to complete', icon='ERROR')
+        row.label(text='Restart Blender to', icon='ERROR')
         row = col.row(align=True)
         row.scale_y = 0.75
-        row.label(text='the update!', icon='BLANK1')
+        row.label(text='complete the update!', icon='BLANK1')
         col.separator()
         return
+
+    # If the plugin didn't load correctly, don't show the current version
+    if "error" in updater.current_version_str:
+        row = col.row(align=True)
+        row.scale_y = 0.85
+        row.label(text="Failed to load the plugin. Try updating to latest or beta version:", icon='ERROR')
+        col.separator()
 
     if updater.show_error:
         errors = updater.show_error.split('\n')
@@ -419,6 +426,10 @@ def draw_updater_panel(context, layout, user_preferences=False):
     row.scale_y = scale_small
     row.operator(UpdateToBetaButton.bl_idname, text='Install Beta Version')
 
+    # If version is default, don't show the current version
+    if "error" in updater.current_version_str:
+        return
+
     col.separator()
     row = col.row(align=True)
     row.scale_y = 0.65
@@ -449,18 +460,17 @@ to_register = [
 ]
 
 
-def register(bl_info, beta_branch):
-    # If not beta branch, always disable fake updates and no version checks!
-    if not beta_branch:
-        updater.fake_update = False
-        updater.no_ver_check = False
-
-    # Get current version
+def register():
+    # Set initial version
     current_version = []
-    for i in bl_info['version']:
+    for i in (1, 0, 0):
         current_version.append(str(i))
         updater.current_version.append(i)
+
+    # Set current version string and add beta tag and increase version number
     updater.current_version_str = '.'.join(current_version)
+    current_version[2] = str(int(current_version[2]) + 1)
+    updater.current_version_str = '.'.join(current_version) + ".error"
 
     bpy.types.Scene.rsl_updater_version_list = bpy.props.EnumProperty(
         name='Version',
@@ -489,8 +499,30 @@ def register(bl_info, beta_branch):
     if count < len(to_register):
         print('Skipped', len(to_register) - count, 'Rokoko Studio Live updater classes.')
 
-    # Delete and renamed files that didn't get deleted during the update process
+    # Delete and rename files that didn't get deleted during the update process
     updater.delete_and_rename_files_on_startup()
+
+    print("LOADED UPDATER!")
+
+
+def update_info(bl_info, beta_branch):
+    # If not beta branch, always disable fake updates and no version checks!
+    if not beta_branch:
+        updater.fake_update = False
+        updater.no_ver_check = False
+
+    # Set current version
+    current_version = []
+    updater.current_version = []
+    for i in bl_info['version']:
+        current_version.append(str(i))
+        updater.current_version.append(i)
+
+    # Set current version string (and add beta tag and increase version number if true)
+    updater.current_version_str = '.'.join(current_version)
+    if beta_branch:
+        current_version[2] = str(int(current_version[2]) + 1)
+        updater.current_version_str = '.'.join(current_version) + ".beta"
 
 
 def unregister():
