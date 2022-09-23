@@ -20,7 +20,7 @@ This plugin lets you stream your animation data from Rokoko Studio directly into
 - Easily retarget motion capture animations
 
 ## Installation
-- Download the latest version [here](https://github.com/Rokoko/rokoko-studio-live-blender/archive/refs/heads/master.zip)
+- **Download the latest version [here](https://github.com/Rokoko/rokoko-studio-live-blender/archive/refs/heads/master.zip)**
 - In Blender go to Edit > Preferences > Addons > Install.. and then select the downloaded zip file
   - First time installation can take a while
 - To use the plugin, press N and select the Rokoko panel

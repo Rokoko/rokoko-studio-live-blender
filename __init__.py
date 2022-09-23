@@ -11,7 +11,7 @@ bl_info = {
     'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
 }
 
-beta_branch = False
+beta_branch = True
 
 import os
 import sys
@@ -75,6 +75,7 @@ class LibraryManager:
             # Install the missing libraries into the library path
             print("Installing missing libraries:", missing)
             try:
+                # command = [self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", "--index-url=http://pypi.python.org/simple/", "--trusted-host=pypi.python.org", *missing]
                 command = [self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
                 subprocess.check_call(command, stdout=subprocess.DEVNULL)
             except subprocess.CalledProcessError as e:
@@ -82,6 +83,7 @@ class LibraryManager:
                 print("Installing libraries failed.")
                 if self.os_name != "Windows":
                     print("Retrying with sudo..")
+                    # command = ["sudo", self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", "--index-url=http://pypi.python.org/simple/", "--trusted-host=pypi.python.org", *missing]
                     command = ["sudo", self.python, '-m', 'pip', 'install', f"--target={str(self.libs_dir)}", *missing]
                     subprocess.call(command, stdout=subprocess.DEVNULL)
             finally:
@@ -144,12 +146,14 @@ class LibraryManager:
 
         print("Updating pip")
         try:
+            # subprocess.check_call([self.python, "-m", "pip", "install", "--upgrade", "--index-url=http://pypi.python.org/simple/", "--trusted-host=pypi.python.org", "pip"])
             subprocess.check_call([self.python, "-m", "pip", "install", "--upgrade", "pip"])
         except subprocess.CalledProcessError as e:
             print("PIP Error:", e)
             print("Updating pip failed.")
             if self.os_name != "Windows":
                 print("Retrying with sudo..")
+                # subprocess.call(["sudo", self.python, "-m", "pip", "install", "--upgrade", "--index-url=http://pypi.python.org/simple/", "--trusted-host=pypi.python.org", "pip"])
                 subprocess.call(["sudo", self.python, "-m", "pip", "install", "--upgrade", "pip"])
         finally:
             # Reset console color, because it could still be colored after running pip
@@ -312,7 +316,7 @@ def register_late():
 
     # Check if the user is logged in, show the login panel if not
     # logged_in = core.login.login_from_cache(classes, classes_login)
-    logged_in = core.login_manager.user.auto_login(classes, classes_login)
+    logged_in = core.login_manager.user.auto_login(classes, classes_login, bl_info)
 
     # Register classes
     # The classes need to be assigned as list() to create a duplicate
