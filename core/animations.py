@@ -137,10 +137,10 @@ def animate_actor(obj):
 
         # The new pose in which the bone should be (still in Studio space)
         studio_new_pose = Quaternion((
-            actor_bone_data['rotation']['w'],
-            actor_bone_data['rotation']['x'],
-            actor_bone_data['rotation']['y'],
-            actor_bone_data['rotation']['z'],
+            float(actor_bone_data['rotation']['w']),
+            float(actor_bone_data['rotation']['x']),
+            float(actor_bone_data['rotation']['y']),
+            float(actor_bone_data['rotation']['z']),
         ))
 
         # Function to convert from Studio to Blender space
