@@ -30,7 +30,7 @@ class Receiver:
 
         # Try to receive a packet
         try:
-            data_raw, address = self.sock.recvfrom(65536)
+            data_raw, address = self.sock.recvfrom(81920)  # Prev 65536
         except BlockingIOError as e:
             print('Blocking error:', e)
             error = ['Receiving no data!']
