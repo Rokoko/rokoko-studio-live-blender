@@ -485,7 +485,7 @@ class MixPanel:
             user.logging_in = False
             raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
 
-        print("MIXPANEL LOGOUT QUERY:", query)
+        # print("MIXPANEL LOGOUT QUERY:", query)
 
     # @staticmethod
     # def _send_mixpanel_event(event_name, event_properties, send_async=True):
