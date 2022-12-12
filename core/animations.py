@@ -121,7 +121,11 @@ def animate_actor(obj):
         bone_data = obj.data.bones.get(bone_name_assigned)
         bone_tpose_data = tpose_bones.get(bone_name_assigned)
 
-        actor_bone_data = actor[bone_name] if live_data.version <= 2 else actor['body'][bone_name]
+        try:
+            actor_bone_data = actor[bone_name] if live_data.version <= 2 else actor['body'][bone_name]
+        except KeyError:
+            print('Bone not found in live data:', bone_name)
+            continue
 
         # Skip if there is no bone assigned to this live data or if there is no tpose data for this bone
         if not bone or not bone_tpose_data:
@@ -137,10 +141,10 @@ def animate_actor(obj):
 
         # The new pose in which the bone should be (still in Studio space)
         studio_new_pose = Quaternion((
-            actor_bone_data['rotation']['w'],
-            actor_bone_data['rotation']['x'],
-            actor_bone_data['rotation']['y'],
-            actor_bone_data['rotation']['z'],
+            float(actor_bone_data['rotation']['w']),
+            float(actor_bone_data['rotation']['x']),
+            float(actor_bone_data['rotation']['y']),
+            float(actor_bone_data['rotation']['z']),
         ))
 
         # Function to convert from Studio to Blender space
