@@ -153,3 +153,16 @@ def register():
             name=bone,
             description='Select the bone that corresponds to the actors bone'
         ))
+
+
+def register_actor(actor):
+    from .core import live_data_manager
+
+    setattr(Scene, actor.attribute_name, EnumProperty(
+        name=actor.name,
+        description='Select the armature to pair this actor with',
+        items=animation_lists.get_armatures,
+        update=live_data_manager.update_pair,
+    ))
+
+    print("Registered new actor attribute: " + actor.attribute_name)

@@ -2,7 +2,7 @@ import bpy
 import datetime
 
 from .. import updater, updater_ops
-from ..core import animations
+from ..core import animations, live_data_manager
 from ..core import recorder as recorder_manager
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import Icons
@@ -102,6 +102,10 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
             show_connetions_v2(layout)
         else:
             show_connetions_v3(layout)
+
+        live_data: live_data_manager.LiveDataPacket = live_data_manager.LiveDataState.state
+        if live_data and live_data.version >= 3:
+            show_connections_new(layout, live_data)
 
 
 def show_connetions_v2(layout):
@@ -327,3 +331,24 @@ def show_prop(layout, prop, scale=False):
     else:
         row.enabled = False
         row.label(text=prop_id, icon='FILE_3D')
+
+
+def show_connections_new(layout, live_data: live_data_manager.LiveDataPacket):
+    # This is used as a small spacer
+    row = layout.row(align=True)
+    row.scale_y = 0.01
+    row.label(text=' ')
+
+    row = layout.row(align=True)
+    row.label(text="Pair Armature:")
+
+    # Display all paired and unpaired inputs
+    for actor in live_data.actors:
+        show_actor_new(layout, actor)
+
+
+def show_actor_new(layout, actor):
+    row = layout.row(align=True)
+    row.label(text=actor.name, icon_value=Icons.SUIT.get_icon())
+    row.prop(bpy.context.scene, 'rsl_actor_v2_' + actor.name, text='')
+

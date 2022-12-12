@@ -1,7 +1,9 @@
+
+import bpy
 from mathutils import Quaternion
 from collections import OrderedDict
 
-from . import animations
+from . import animations, live_data_manager
 
 
 # Face shapekeys
@@ -232,6 +234,10 @@ def get_bones(with_gloves=True):
     return glove_bones if with_gloves else actor_bones
 
 
+def get_bone_default_rotation(bone_name, with_gloves=True):
+    return glove_bones[bone_name] if with_gloves else actor_bones[bone_name]
+
+
 # Creates the list of props and trackers for the objects panel
 def get_props_trackers(self, context):
     choices = [('None', '-None-', 'None')]
@@ -274,5 +280,21 @@ def get_actors(self, context):
         # 3. will be shown in the hover description (below description)
         actor_id = animations.live_data.get_actor_id(actor)
         choices.append((actor_id, actor_id, actor_id))
+
+    return choices
+
+
+# Creates the list of actors for the objects panel
+def get_armatures(self, context):
+    choices = [('None', '-None-', 'None')]
+
+    for obj in bpy.data.objects:
+        if obj.type != 'ARMATURE':
+            continue
+
+        # 1. Will be returned by context.scene
+        # 2. Will be shown in lists
+        # 3. will be shown in the hover description (below description)
+        choices.append((obj.name, obj.name, obj.name))
 
     return choices

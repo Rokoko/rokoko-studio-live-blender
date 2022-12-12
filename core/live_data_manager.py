@@ -1,15 +1,165 @@
+
+import bpy
 import json
 
 loaded_lz4 = False
 unsupported_os = False
 try:
     from lz4 import frame
+
     loaded_lz4 = True
 except ModuleNotFoundError:
     print("Error: LZ4 module didn't load. Unsupported OS or Python version!")
 except ImportError:
     print("Error: LZ4 module didn't load. Unsupported OS!")
     unsupported_os = True
+
+
+class LiveDataPacket:
+
+    def __init__(self, data):
+        self.data = data
+        self.fps = 60
+        self.actors: [Actor] = []
+        self.props = []
+
+        self._decode_data()
+        self._process_data()
+
+        LiveDataState.update_state(self)
+
+    def _decode_data(self):
+        try:
+            self.data = frame.decompress(self.data)
+        except (RuntimeError, NameError):
+            pass
+
+        try:
+            self.data = json.loads(self.data)
+        except UnicodeDecodeError:
+            if loaded_lz4:
+                raise UnicodeDecodeError
+            raise ImportError("os" if unsupported_os else "")
+
+        if not self.data:
+            raise ValueError
+
+    def _process_data(self):
+        self.version = self.data.get('version')
+        ver_str = str(self.version).replace(".", ",")
+        if ',' in ver_str:
+            self.version = int(ver_str.split(',')[0])
+
+        if not self.version or self.version < 3:
+            raise TypeError
+
+        self.fps = self.data['fps']
+        self.props = self.data['scene']['props']
+
+        for actor_data in self.data['scene']['actors']:
+            actor = Actor(actor_data)
+            self.actors.append(actor)
+
+
+class Actor:
+    def __init__(self, data):
+        self.data = data
+
+        self.name = self.data['name']
+        self.bones = self.data['body']
+
+        self.has_face = self.data['meta']['hasFace']
+        self.has_gloves = self.data['meta']['hasGloves']
+        self.has_left_glove = self.data['meta']['hasLeftGlove']
+        self.has_right_glove = self.data['meta']['hasRightGlove']
+
+        self.hips_height = self.data['dimensions']['hipHeight']
+
+        self.attribute_name = 'rsl_actor_v2_' + self.name
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def get_paired_armature(self):
+        return getattr(bpy.context.scene, self.attribute_name)
+
+
+class LiveDataState:
+    state: LiveDataPacket = None
+    actors = []
+
+    @staticmethod
+    def update_state(packet):
+        from ..properties import register_actor
+        LiveDataState.state = packet
+
+        actors = [actor for actor in packet.actors]
+        actors_new = [actor for actor in packet.actors if actor not in LiveDataState.actors]
+
+        LiveDataState.actors = actors
+
+        for actor in actors_new:
+            register_actor(actor)
+
+
+class ActorPairs:
+    pairs: {Actor: str} = {}
+
+    @staticmethod
+    def update_pairs():
+        for actor in LiveDataState.actors:
+            paired_armature = actor.get_paired_armature()
+            if ActorPairs.pairs.get(actor) == paired_armature:
+                continue
+
+            # TODO: Trigger armature pairing or removing
+            ActorPairs.pairs[actor] = paired_armature
+            print("PAIR ARMATURE:", actor.name, paired_armature)
+            ActorPairs.pair_armature(paired_armature)
+
+    @staticmethod
+    def pair_armature(armature_target_name):
+        from ..operators import receiver
+        from . import detection_manager
+
+        armature_base = receiver.receiver.animator.armature
+        armature_target = bpy.data.objects.get(armature_target_name)
+        if not armature_target:
+            print("ERROR: Armature not found:", armature_target_name)
+            return
+
+        for bone in armature_base.pose.bones:
+            # Detect the corresponding bone in the target armature
+            bone_target_name = detection_manager.detect_bone(armature_target, bone.name)
+            bone_target = armature_target.pose.bones.get(bone_target_name)
+            if not bone_target:
+                print("ERROR: Bone not found:", bone_target_name, "from", bone.name)
+                continue
+
+            if len(bone_target.constraints) > 0:
+                print("ERROR: Bone already has constraints:", bone_target_name, "(tried:", bone.name, ")")
+                continue
+
+            # Mimic the animation of the base bone to the target bone by adding rotation constraints
+            constraint = bone_target.constraints.new('COPY_ROTATION')
+            constraint.name = bone.name
+            constraint.target = armature_base
+            constraint.subtarget = bone.name
+            # constraint.owner_space = "CUSTOM"
+
+            # # Mimic the animation of the base bone to the target bone by adding transform constraints
+            # constraint = bone_target.constraints.new('COPY_TRANSFORMS')
+            # constraint.name = bone.name
+            # constraint.target = armature_base
+            # constraint.subtarget = bone.name
+
+
+
+def update_pair(self, context):
+    ActorPairs.update_pairs()
 
 
 class LiveData:
@@ -167,9 +317,3 @@ class LiveData:
 
     def get_prop_name_raw(self, prop, is_tracker=False):
         return prop['name']
-
-
-
-
-
-

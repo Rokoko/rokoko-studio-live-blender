@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Quaternion, Matrix
+from mathutils import Quaternion, Matrix, Vector
 
 from . import animation_lists, recorder
 from .live_data_manager import LiveData
@@ -22,7 +22,7 @@ def animate():
         if obj.type == 'MESH' and live_data.faces:
             animate_face(obj)
 
-        # Animate all actors
+        # # Animate all actors
         elif obj.type == 'ARMATURE':
             if live_data.actors:
                 animate_actor(obj)
@@ -187,29 +187,55 @@ def animate_actor(obj):
 
         # If hips bone, set its position
         if bone_name == 'hip':
-            # Get correct space of hips location
-            axis = 0
-            multiplier = 1
-            if round(mat_obj[2][0], 0) == round(mat_obj[2][2], 0) == 0:
-                axis = 1
-                multiplier = mat_obj[2][1]
-            if round(mat_obj[2][0], 0) == round(mat_obj[2][1], 0) == 0:
-                axis = 2
-                multiplier = mat_obj[2][2]
+
+            # Set location of the hip
+            pos_data = actor_bone_data['position']
 
             # Get scale of studio model
             studio_hip_height = actor.get('hipHeight') if live_data.version <= 2 else actor.get('dimensions').get('hipHeight')
             if not studio_hip_height:
                 studio_hip_height = 1
 
-            tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
+            y = pos_data["y"]
+            # y_live_data_hips_offset_modifier = y / actor.hips_height
+            # y_adjusted = self.t_pose_hips_height * y_live_data_hips_offset_modifier
 
-            location_new = pos_hips_studio_to_blender(
-                actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height,
-                actor_bone_data['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
-                actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height)
+            y_adjusted = y - studio_hip_height
 
-            bone.location = location_new
+            position = Vector((pos_data["x"] * 100, y_adjusted, pos_data["z"] * 100))
+            # position = Vector((pos_data["x"] * 100, pos_data["y"] * 100, pos_data["z"] * 100))
+            # bone.location = pos_hips_studio_to_blender2(position)
+            bone.location = pos_hips_studio_to_blender2(position)
+
+
+
+
+
+
+            # # Get correct space of hips location
+            # axis = 0
+            # multiplier = 1
+            # if round(mat_obj[2][0], 0) == round(mat_obj[2][2], 0) == 0:
+            #     axis = 1
+            #     multiplier = mat_obj[2][1]
+            # if round(mat_obj[2][0], 0) == round(mat_obj[2][1], 0) == 0:
+            #     axis = 2
+            #     multiplier = mat_obj[2][2]
+            #
+            # # Get scale of studio model
+            # studio_hip_height = actor.get('hipHeight') if live_data.version <= 2 else actor.get('dimensions').get('hipHeight')
+            # if not studio_hip_height:
+            #     studio_hip_height = 1
+            #
+            # tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
+            #
+            # location_new = pos_hips_studio_to_blender(
+            #     actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height * 10,
+            #     actor_bone_data['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
+            #     actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height * 10)
+            #
+            # bone.location = location_new
+            # print("Set location to:", location_new)
 
         # Record the data
         if bpy.context.scene.rsl_recording:
@@ -222,6 +248,14 @@ def animate_glove(obj):
 
 def pos_hips_studio_to_blender(x, y, z):
     return -x, y, z
+
+
+def pos_hips_studio_to_blender2(vec):
+    return Vector((
+        -vec.x,
+        vec.y,
+        vec.z
+    ))
 
 
 def pos_studio_to_blender(x, y, z):

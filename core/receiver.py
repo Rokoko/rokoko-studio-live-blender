@@ -3,7 +3,7 @@ import bpy
 import time
 import socket
 import traceback
-from . import animations, utils
+from . import animations, utils, animation_handler, live_data_manager
 
 error_temp = ''
 show_error = []
@@ -21,6 +21,10 @@ class Receiver:
     # Error counters
     error_temp = []
     error_count = 0
+
+    def __init__(self):
+        self.animator = animation_handler.Animator()
+        self.live_data_packet = None
 
     def run(self):
         data_raw = None
@@ -67,6 +71,7 @@ class Receiver:
         """
         try:
             animations.live_data.init(data_raw)
+            # self.live_data_packet = live_data_manager.LiveDataPacket(data_raw)
         except ValueError as e:
             print('Packet contained no data')
             print(e)
@@ -91,6 +96,9 @@ class Receiver:
             return ['Unsupported Blender version', 'or operating system! Use', 'older Blender or JSON v2/v3.'], True
 
         animations.animate()
+
+        # TODO: COMPLETE THIS:
+        # self.animator.animate(self.live_data_packet)
 
         return None, False
 
@@ -152,6 +160,8 @@ class Receiver:
         self.error_temp = []
         self.error_count = 0
 
+        # self.animator.setup() # TODO
+
         global show_error
         show_error = False
 
@@ -159,4 +169,5 @@ class Receiver:
 
     def stop(self):
         self.sock.close()
+        # self.animator.destroy()
         print("Rokoko Studio Live stopped listening")

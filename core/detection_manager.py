@@ -201,7 +201,7 @@ def standardize_bone_name(name):
         name = name_split[1]
 
     # Another specific condition
-    if ':' in name:
+    if ':' in name and "mixamorig" not in name.lower():
         for i, split in enumerate(name.split(':')):
             if i == 0:
                 name = ''
@@ -254,6 +254,10 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
     found_bone_name = ''
     is_custom = False
 
+    if bone_name_key == "leftUpperArm":
+        print("DEBUG1", bone_name_key, obj.name)
+        print("SEARCHING IN BONE LIST:", bone_detection_list[bone_name_key])
+
     if not bone_name_source:
         bone_name_source = bone_name_key
 
@@ -261,6 +265,9 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
         if is_custom:  # If a custom bone name was found, stop searching. it has priority
             break
 
+        if bone_name_key == "leftUpperArm":
+            print("DEBUG2 COMPARING WITH BONE", bone.name)
+        # Search custom bone list
         if bone_detection_list_custom.get(bone_name_key):
             for bone_name_detected in bone_detection_list_custom[bone_name_key]:
                 if bone_name_detected == bone.name.lower():
@@ -271,14 +278,25 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
         if found_bone_name and bone_name_key != 'chest':  # If a bone_name was found, only continue looking for custom bone names, they have priority
             continue
 
+        if bone_name_key == "leftUpperArm":
+            print("DEBUG2 NOT IN CUSTOM LIST")
+
         for bone_name_detected in bone_detection_list[bone_name_key]:
+            if bone_name_key == "leftUpperArm" and bone.name == "mixamorig:LeftShoulder":
+                print("DEBUG2.5 COMPARING LIST", bone_name_detected, standardize_bone_name(bone.name), bone_name_detected == standardize_bone_name(bone.name))
             if bone_name_detected == standardize_bone_name(bone.name):
                 found_bone_name = bone.name
                 break
 
+        if bone_name_key == "leftUpperArm":
+            print("DEBUG3 FOUND IN LIST?", found_bone_name)
+
         # If nothing was found, check if the bone names match exactly
         if not found_bone_name and bone_name_source.lower() == bone.name.lower():
             found_bone_name = bone.name
+
+        if bone_name_key == "leftUpperArm":
+            print("DEBUG4 FOUND AS EXACT MATCH?", found_bone_name)
 
     return found_bone_name
 
