@@ -135,6 +135,8 @@ class ShowPatchnotesPanel(bpy.types.Operator):
 
             col.separator()
             for line in version.patch_notes.replace('**', '').split('\r\n'):
+                if line.startswith("["):
+                    continue
                 row = col.row(align=True)
                 row.scale_y = 0.75
                 row.label(text=line)

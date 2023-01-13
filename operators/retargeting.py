@@ -448,7 +448,7 @@ class RetargetAnimation(bpy.types.Operator):
                 continue
 
             # Bake animation part
-            bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=True, use_current_action=False, bake_types={'POSE'})
+            bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=False, use_current_action=False, bake_types={'POSE'})
 
             # Rename animation part
             armature_target.animation_data.action.name = 'RSL_RETARGETING_' + str(frame)

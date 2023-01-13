@@ -217,7 +217,7 @@ class LoginSilent:
             print("\nERROR:", error_msg, "\n")
             if "NotAuthorizedException" in error_msg:
                 user.logout()
-                user.error("Logged out: Invalid user")
+                user.error("Logged out: Session expired")
         finally:
             del sys.tracebacklimit
 
@@ -248,20 +248,40 @@ class User:
         self.logged_in = False
         self.email = None
         self.username = None  # This is a unique id
-        self.access_token = None
-        self.refresh_token = None
+        self.access_token = None  # Only gets used for the MixPanel API
+        self.refresh_token = None  # Gets used to log in silently
 
         self.display_email = False
         self.display_error = None
 
         self.login_time = None
+        self.version_str = "1.0.0"
+
+    def auto_login(self, classes, classes_login, bl_info):
+        self.classes = classes
+        self.classes_login = classes_login
+        self.version_str = ".".join(map(str, bl_info.get("version")))
+
+        # Check the login cache
+        data = self.login_cache.get_login_cache()
+        if not data:
+            return False
+
+        self.login(data, register_classes=False)
+
+        if self.logged_in:
+            LoginSilent()
+
+        return self.logged_in
 
     def login(self, data, register_classes=True):
+        # Collect data
         self.email = data.get("email")
         self.username = data.get("username")
         self.access_token = data.get("access_token")
         self.refresh_token = data.get("refresh_token")
 
+        # Check data validity
         self.logging_in = False
         self.logged_in = self.email and self.username and self.refresh_token and self.access_token
         if not self.logged_in:
@@ -291,22 +311,6 @@ class User:
 
     def quit(self):
         MixPanel.send_logout_event()
-
-    def auto_login(self, classes, classes_login):
-        self.classes = classes
-        self.classes_login = classes_login
-
-        # Check the login cache
-        data = self.login_cache.get_login_cache()
-        if not data:
-            return False
-
-        self.login(data, register_classes=False)
-
-        if self.logged_in:
-            LoginSilent()
-
-        return self.logged_in
 
     def error(self, *msg):
         # Update the UI if the user is still logging in or of the error message changes
@@ -365,6 +369,7 @@ class LoginCache:
         with open(self.cache_file, 'rb') as file:
             encrypted_data = file.read()
 
+        # Decrypt cache data and load it as json
         encoded_data = self.f.decrypt(encrypted_data)
         data_str = encoded_data.decode()
         data = json.loads(data_str)
@@ -400,73 +405,91 @@ class LoginCache:
 
 
 class MixPanel:
-    url = "https://rmp-team-gql.rokoko.com/graphql"
+    # url = "https://rmp-team-gql.rokoko.com/graphql"
+
+    url = "https://rmp-gql-public.rokoko.com/graphql"
+    api_key = "da2-pa7tlmpnvbcpdhe7l46q3eodvu"
 
     @staticmethod
-    def _send_mixpanel_event(event_name, event_properties, send_async=True):
-        if send_async:
-            thread = Thread(target=MixPanel._send_event, args=[event_name, event_properties])
-            thread.start()
+    def send_login_event():
+        if not user.username:
             return
 
-        MixPanel._send_event(event_name, event_properties)
+        headers = {"x-api-key": MixPanel.api_key}
 
-    @staticmethod
-    def _send_event(event_name, event_properties):
-        # Convert dict to json and quotes to escaped quotes, because the API requires it
+        event_properties = {
+            "action": "login",
+            "blender_version": ".".join(map(str, bpy.app.version)),
+            "plugin_version": user.version_str,
+        }
         event_properties = json.dumps(event_properties).replace("\"", "\\\"")
 
-        headers = {"Authorization": user.access_token}
         query = f"""
             mutation {{
-              addMixPanelEventTracking(
-                input: {{
-                  event_name: "{event_name}",
-                  event_properties: "{event_properties}",
-                  client_id: BLENDER
+              trackInMixpanel(input: {{
+                event_name: "session_start"
+                event_properties: "{event_properties}"
+                distinct_id: "{user.username}"
+                client_id: BLENDER
                 }}
               )
             }}
         """
-        # print("SEND MIXPANEL:", query)
+
         try:
             request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
         except Exception as e:
-            # print("ERROR:", e)
-            return
+            user.logging_in = False
+            raise Exception("No connection to the server.")
 
         if request.status_code != 200:
-            # print(f"Team API query failed to reach the server by returning code of {request.status_code}.")
-            return
+            user.logging_in = False
+            raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
 
         # data = request.json()
-        # print("Team API response:", event_name, data)
-
-    @staticmethod
-    def send_login_event():
-        event_name = "session_start"
-        event_properties = {
-            "action": "login",
-            "blender_version": ".".join(map(str, bpy.app.version)),
-            "plugin_version": updater.current_version_str,
-        }
-        MixPanel._send_mixpanel_event(event_name, event_properties)
+        # print("MIXPANEL LOGIN RECEIVED DATA:", data)
 
     @staticmethod
     def send_logout_event():
+        if not user.username:
+            return
+
+        headers = {"x-api-key": MixPanel.api_key}
+
         session_duration = 0
         if user.login_time:
             session_duration = datetime.datetime.utcnow().timestamp() - user.login_time
             session_duration = round(session_duration, 2)
 
-        event_name = "session_end"
         event_properties = {
             "action": "logout",
             "blender_version": ".".join(map(str, bpy.app.version)),
-            "plugin_version": updater.current_version_str,
-            "session_duration": session_duration
+            "plugin_version": user.version_str,
+            "session_duration": session_duration,
         }
-        MixPanel._send_mixpanel_event(event_name, event_properties)
+        event_properties = json.dumps(event_properties).replace("\"", "\\\"")
+
+        query = f"""
+            mutation {{
+              trackInMixpanel(input: {{
+                event_name: "session_end"
+                event_properties: "{event_properties}"
+                distinct_id: "{user.username}"
+                client_id: BLENDER
+                }}
+              )
+            }}
+        """
+
+        try:
+            request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
+        except Exception as e:
+            user.logging_in = False
+            raise Exception("No connection to the server.")
+
+        if request.status_code != 200:
+            user.logging_in = False
+            raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
 
 
 user: User = User()
