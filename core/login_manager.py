@@ -412,6 +412,9 @@ class MixPanel:
 
     @staticmethod
     def send_login_event():
+        if not user.username:
+            return
+
         headers = {"x-api-key": MixPanel.api_key}
 
         event_properties = {
@@ -448,6 +451,9 @@ class MixPanel:
 
     @staticmethod
     def send_logout_event():
+        if not user.username:
+            return
+
         headers = {"x-api-key": MixPanel.api_key}
 
         session_duration = 0
