@@ -217,7 +217,7 @@ class LoginSilent:
             print("\nERROR:", error_msg, "\n")
             if "NotAuthorizedException" in error_msg:
                 user.logout()
-                user.error("Logged out: Invalid user")
+                user.error("Logged out: Session expired")
         finally:
             del sys.tracebacklimit
 

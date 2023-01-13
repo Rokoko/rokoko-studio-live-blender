@@ -6,12 +6,12 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 4, 0),
+    'version': (1, 4, 1),
     'blender': (2, 80, 0),
-    'wiki_url': 'https://rokoko.freshdesk.com/support/solutions/folders/47000761699',
+    'wiki_url': 'https://github.com/Rokoko/rokoko-studio-live-blender#readme',
 }
 
-beta_branch = True
+beta_branch = False
 
 import os
 import sys

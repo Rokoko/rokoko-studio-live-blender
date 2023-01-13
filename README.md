@@ -112,6 +112,10 @@ In order to retarget an animation in Blender you will need to do the following:
  
 ## Changelog
 
+#### 1.4.1
+- Added support for Blender 3.4
+- Fixed multiple smaller issues
+
 #### 1.4.0
 - Added support for Blender 3.0/3.1 and Rokoko Studio 2
 - Fully reworked login
