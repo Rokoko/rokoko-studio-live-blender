@@ -11,7 +11,7 @@ bl_info = {
     'wiki_url': 'https://github.com/Rokoko/rokoko-studio-live-blender#readme',
 }
 
-beta_branch = False
+beta_branch = True
 
 import os
 import sys
