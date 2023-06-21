@@ -51,7 +51,8 @@ class InstallLibsButton(bpy.types.Operator):
             return {'CANCELLED'}
         except Exception as e:
             trace = traceback.format_exc()
-            error_str = f"Unable to install the libraries." \
+            error_str = f"Unable to install the libraries!" \
+                        f"\nTry running Blender as an admin and install the libraries again." \
                         f"\n\nFull Error: \n\n{trace}"
             self.report({'ERROR'}, error_str)
             return {'CANCELLED'}
@@ -81,5 +82,6 @@ class InstallLibsButton(bpy.types.Operator):
         if missing:
             raise ImportError("The following libraries could not be installed: "
                               "\n- " + " \n- ".join(missing) +
-                              "  \n\nPlease see console for more information.")
+                              "  \n\nTry running Blender as an admin and install the libraries again."
+                              "  \nSee console for more information.")
         library_manager.lib_manager.install_libraries(["lz4"])
