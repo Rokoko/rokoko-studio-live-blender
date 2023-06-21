@@ -75,4 +75,4 @@ class InstallLibsButton(bpy.types.Operator):
             raise ImportError("The following libraries could not be installed: "
                               "\n- " + " \n- ".join(missing) +
                               "  \n\nPlease see console for more information.")
-        library_manager.lib_manager.install_libraries(["lz46"])
+        library_manager.lib_manager.install_libraries(["lz4"])
