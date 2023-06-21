@@ -145,8 +145,7 @@ class LibraryManager:
         self.pip_is_updated = True
 
 
-# Setup library path and start library manager
-main_dir = pathlib.Path(os.path.dirname(__file__)).parent
-resources_dir = main_dir / "resources"
-libs_dir = resources_dir / "libraries"
+# Setup library path in the Blender addons directory and start library manager
+main_dir = pathlib.Path(os.path.dirname(__file__)).parent.parent
+libs_dir = main_dir / "Rokoko Libraries"
 lib_manager = LibraryManager(libs_dir)
