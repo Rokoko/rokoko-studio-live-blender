@@ -117,11 +117,13 @@ class Login:
             request = requests.post(self.url, json={'query': query}, headers=headers)
         except Exception as e:
             user.logging_in = False
-            raise Exception("No connection to the server.")
+            print("No connection to the server.")
+            return
 
         if request.status_code != 200:
             user.logging_in = False
-            raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
+            print(f"Query failed to reach the server by returning code of {request.status_code}.")
+            return
 
         data = request.json()
         self.request_id = data.get("data").get("createRequestToken").get("request_id")
@@ -455,11 +457,13 @@ class MixPanel:
             request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
         except Exception as e:
             user.logging_in = False
-            raise Exception("No connection to the server.")
+            print("No connection to the server.")
+            return
 
         if request.status_code != 200:
             user.logging_in = False
-            raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
+            print(f"Query failed to reach the server by returning code of {request.status_code}.")
+            return
 
         # data = request.json()
         # print("MIXPANEL LOGIN RECEIVED DATA:", data)
@@ -500,11 +504,13 @@ class MixPanel:
             request = requests.post(MixPanel.url, json={'query': query}, headers=headers)
         except Exception as e:
             user.logging_in = False
-            raise Exception("No connection to the server.")
+            print("No connection to the server.")
+            return
 
         if request.status_code != 200:
             user.logging_in = False
-            raise Exception(f"Query failed to reach the server by returning code of {request.status_code}.")
+            print(f"Query failed to reach the server by returning code of {request.status_code}.")
+            return
 
 
 user: User = User()
