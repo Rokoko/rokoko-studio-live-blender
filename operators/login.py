@@ -1,3 +1,4 @@
+import traceback
 
 import bpy
 import importlib
@@ -47,6 +48,12 @@ class InstallLibsButton(bpy.types.Operator):
             self.install_libs()
         except ImportError as e:
             self.report({'ERROR'}, str(e))
+            return {'CANCELLED'}
+        except Exception as e:
+            trace = traceback.format_exc()
+            error_str = f"Unable to install the libraries." \
+                        f"\n\nFull Error: \n\n{trace}"
+            self.report({'ERROR'}, error_str)
             return {'CANCELLED'}
 
         # Save login manager data

@@ -44,21 +44,6 @@ else:
     importlib.reload(properties)
 
 
-def show_error(message="", title="Unable to load Rokoko plugin!"):
-    def draw(self, context):
-        layout = self.layout
-        msg_list = message.split("\n")
-
-        for i, msg in enumerate(msg_list):
-            row = layout.row(align=True)
-            row.scale_y = 0.85
-            row.label(text=msg)
-
-    # Only show popup if the preferences window is open
-    if len(bpy.context.window_manager.windows) > 1:
-        bpy.context.window_manager.popup_menu(draw, title=title, icon="ERROR")
-
-
 def check_unsupported_blender_versions():
     # Don't allow Blender versions older than 2.80
     if bpy.app.version < (2, 80):

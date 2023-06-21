@@ -125,7 +125,11 @@ class LibraryManager:
             return
 
         print("Ensuring pip")
-        ensurepip.bootstrap()
+        try:
+            ensurepip.bootstrap()
+        except subprocess.CalledProcessError as e:
+            print("PIP Error:", e)
+            print("Ensuring pip failed.")
 
         print("Updating pip")
         try:
