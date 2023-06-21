@@ -4,7 +4,6 @@ import bpy
 import ssl
 import sys
 import json
-import boto3
 import pathlib
 import asyncio
 import logging
@@ -16,19 +15,28 @@ import webbrowser
 from .. import updater
 from .utils import ui_refresh_all, cancel_gen
 
-from gql import Client, gql
 from threading import Thread, Timer
 from contextlib import suppress
 from typing import AsyncGenerator
 from urllib.parse import urlparse
-from cryptography.fernet import Fernet
-from gql.transport.appsync_websockets import AppSyncWebsocketsTransport
-from gql.transport.appsync_auth import AppSyncApiKeyAuthentication
-from gql.transport.websockets import log as websockets_logger
 
-# Set logging levels
-websockets_logger.setLevel(logging.CRITICAL)
-logging.getLogger('boto').setLevel(logging.CRITICAL)
+# Import extra libraries
+loaded_all_libs = False
+try:
+    import boto3
+    from gql import Client, gql
+    from cryptography.fernet import Fernet
+    from gql.transport.appsync_websockets import AppSyncWebsocketsTransport
+    from gql.transport.appsync_auth import AppSyncApiKeyAuthentication
+    from gql.transport.websockets import log as websockets_logger
+
+    # Set logging levels
+    websockets_logger.setLevel(logging.CRITICAL)
+    logging.getLogger('boto').setLevel(logging.CRITICAL)
+    loaded_all_libs = True
+except ImportError as e:
+    print(e)
+
 
 # Disable SSL
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -238,8 +246,8 @@ class LoginSilent:
 
 
 class User:
-    classes = []
-    classes_login = []
+    classes_logged_in = []
+    classes_logged_out = []
 
     def __init__(self):
         self.logging_in = False
@@ -256,18 +264,21 @@ class User:
 
         self.login_time = None
         self.version_str = "1.0.0"
+        self.classes_logged_in = []
+        self.classes_logged_out = []
 
-    def auto_login(self, classes, classes_login, bl_info):
-        self.classes = classes
-        self.classes_login = classes_login
+    def set_info(self, classes_logged_in, classes_logged_out, bl_info):
+        self.classes_logged_in = classes_logged_in
+        self.classes_logged_out = classes_logged_out
         self.version_str = ".".join(map(str, bl_info.get("version")))
 
+    def auto_login(self):
         # Check the login cache
         data = self.login_cache.get_login_cache()
         if not data:
             return False
 
-        self.login(data, register_classes=False)
+        self.login(data, register_classes=True)
 
         if self.logged_in:
             LoginSilent()
@@ -323,21 +334,21 @@ class User:
             ui_refresh_all()
 
     def register_classes(self):
-        # Unregister login classes
-        for cls in reversed(self.classes_login):
+        # Unregister logged out classes
+        for cls in reversed(self.classes_logged_out):
             bpy.utils.unregister_class(cls)
 
-        # Register normal classes
-        for cls in self.classes:
+        # Register logged in classes
+        for cls in self.classes_logged_in:
             bpy.utils.register_class(cls)
 
     def unregister_classes(self):
-        # Unregister normal classes
-        for cls in reversed(self.classes):
+        # Unregister classes_logged_in
+        for cls in reversed(self.classes_logged_in):
             bpy.utils.unregister_class(cls)
 
-        # Register login classes
-        for cls in self.classes_login:
+        # Register classes_logged_out
+        for cls in self.classes_logged_out:
             bpy.utils.register_class(cls)
 
 
@@ -349,9 +360,11 @@ class LoginCache:
     key = 'p03Ab7CuvhUuwcbOU4nBAl_QkoaU8XxciKvHGb5Wfd0='
 
     def __init__(self):
-        self.f = Fernet(self.key)
+        self.f = None
 
     def create_login_cache(self, data):
+        if not self.f:
+            self.f = Fernet(self.key)
         if not os.path.isdir(self.cache_dir):
             os.mkdir(self.cache_dir)
 
@@ -363,6 +376,8 @@ class LoginCache:
             file.write(encrypted_data)
 
     def get_login_cache(self):
+        if not self.f:
+            self.f = Fernet(self.key)
         if not os.path.isfile(self.cache_file):
             return None
 
@@ -493,3 +508,7 @@ class MixPanel:
 
 
 user: User = User()
+
+
+
+
