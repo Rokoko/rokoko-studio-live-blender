@@ -44,21 +44,17 @@ else:
     importlib.reload(properties)
 
 
+absolute_min_ver = (2, 80, 75)
+soft_min_ver = (4, 4, 0)
+
+
 def check_unsupported_blender_versions():
     # Don't allow Blender versions older than 2.80
-    if bpy.app.version < (2, 80):
+    if bpy.app.version < absolute_min_ver:
         unregister()
         sys.tracebacklimit = 0
         raise ImportError('\n\nBlender versions older than 2.80 are not supported by Rokoko Studio Live. '
                           '\nPlease use Blender 2.80 or later.'
-                          '\n')
-
-    # Versions 2.80.0 to 2.80.74 are beta versions, stable is 2.80.75
-    if (2, 80, 0) <= bpy.app.version < (2, 80, 75):
-        unregister()
-        sys.tracebacklimit = 0
-        raise ImportError('\n\nYou are still on the beta version of Blender 2.80!'
-                          '\nPlease update to the release version of Blender 2.80.'
                           '\n')
 
 
