@@ -1,0 +1,10 @@
+{
+  "1.0.0": {
+    "minimum_blender": "2.80.75",
+    "maximum_blender": "3.0.99"
+  },
+  "1.4.0": {
+    "minimum_blender": "2.80.75",
+    "maximum_blender": null
+  }
+}

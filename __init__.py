@@ -134,6 +134,8 @@ def register_classes(classes, unregister_classes=[]):
 
 def register():
     print("\n### Loading Rokoko Studio Live for Blender...")
+    # Register the updater, but only if the plugin was unregistered and then registered again
+    updater_ops.register()
 
     # Check for unsupported Blender versions
     check_unsupported_blender_versions()

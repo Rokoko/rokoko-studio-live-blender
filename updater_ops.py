@@ -22,7 +22,7 @@ class CheckForUpdateButton(bpy.types.Operator):
 class UpdateToLatestButton(bpy.types.Operator):
     bl_idname = 'rsl_updater.update_latest'
     bl_label = 'Update Now'
-    bl_description = 'Updates Rokoko Studio Live to the latest version'
+    bl_description = 'Updates Rokoko Studio Live to the latest compatible version'
     bl_options = {'INTERNAL'}
 
     @classmethod
@@ -196,10 +196,17 @@ class ConfirmUpdatePanel(bpy.types.Operator):
             row.label(text='Warning:')
             row = col.row(align=True)
             row.scale_y = 0.75
-            row.label(text=' The beta version might be unstable and some features')
+            row.label(text=' The beta version might be unstable, some features')
             row = col.row(align=True)
             row.scale_y = 0.75
-            row.label(text=' might not work correctly.')
+            row.label(text=' might not work correctly, or it might only be')
+            row = col.row(align=True)
+            row.scale_y = 0.75
+            row.label(text=' compatible with the latest Blender version.')
+            col.separator()
+            row = col.row(align=True)
+            row.scale_y = 0.75
+            row.label(text=' Check the Rokoko Github repo for more details.')
 
         else:
             row.operator(ShowPatchnotesPanel.bl_idname, text='Show Patchnotes')
@@ -410,7 +417,7 @@ def draw_updater_panel(context, layout, user_preferences=False):
     col.separator()
     col.separator()
     split = col.row(align=True)
-    row = split.split(factor=0.4, align=True)
+    row = split.split(factor=0.3, align=True)
     row.scale_y = scale_small
     row.active = True if not updater.is_checking_for_update and updater.version_list else False
     row.label(text='Version:')
@@ -422,7 +429,8 @@ def draw_updater_panel(context, layout, user_preferences=False):
     row = col.row(align=True)
     row.scale_y = scale_small
     row.active = True if not updater.is_checking_for_update and updater.version_list else False
-    row.operator(UpdateToSelectedButton.bl_idname, text='Install Selected Version')
+    selected_version_compatible = updater.is_version_compatible(context.scene.rsl_updater_version_list)
+    row.operator(UpdateToSelectedButton.bl_idname, text='Install Selected Version' if selected_version_compatible else 'Force Install Selected Version')
 
     row = col.row(align=True)
     row.scale_y = scale_small
@@ -435,7 +443,25 @@ def draw_updater_panel(context, layout, user_preferences=False):
     col.separator()
     row = col.row(align=True)
     row.scale_y = 0.65
-    row.label(text='Current version: ' + updater.current_version_str)
+    row.label(text='Add-on version: ' + updater.current_version_str)
+
+    # Show compatibility info
+    blender_version = ".".join(str(x) for x in bpy.app.version)
+    row = col.row(align=True)
+    row.scale_y = 0.65
+    row.label(text='Blender version: ' + blender_version)
+
+    # Check if there are any compatible versions available
+    if updater.version_list:
+        compatible_versions = [v for v in updater.version_list if updater.is_version_compatible(v.version_string)]
+        if not compatible_versions:
+            col.separator()
+            row = col.row(align=True)
+            row.scale_y = 0.75
+            row.label(text='No compatible versions found', icon='ERROR')
+            row = col.row(align=True)
+            row.scale_y = 0.65
+            row.label(text='for this Blender version', icon='BLANK1')
 
 
 # demo bare-bones preferences
@@ -462,7 +488,14 @@ to_register = [
 ]
 
 
+registered = False
+
+
 def register():
+    global registered
+    if registered:
+        return
+
     # Set initial version
     current_version = []
     for i in (1, 0, 0):
@@ -505,6 +538,7 @@ def register():
     updater.delete_and_rename_files_on_startup()
 
     print("LOADED UPDATER!")
+    registered = True
 
 
 def update_info(bl_info, beta_branch):
@@ -528,12 +562,15 @@ def update_info(bl_info, beta_branch):
 
 
 def unregister():
+    global registered
+    registered = False
+
     # Unregister all Updater classes
     for cls in reversed(to_register):
         try:
             bpy.utils.unregister_class(cls)
-        except RuntimeError:
-            pass
+        except RuntimeError as e:
+            print(f"Error unregistering {cls.__name__}: {e}")
 
     if hasattr(bpy.types.Scene, 'rsl_updater_version_list'):
         del bpy.types.Scene.rsl_updater_version_list
