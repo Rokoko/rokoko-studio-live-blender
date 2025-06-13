@@ -14,9 +14,9 @@ from bpy.app.handlers import persistent
 
 beta_branch = "beta"
 
-GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
-GITHUB_URL_BETA = f'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip'
-GITHUB_COMPATIBILITY_URL = 'https://raw.githubusercontent.com/Rokoko/rokoko-studio-live-blender/beta/version_compatibility.json'
+GITHUB_URL = "https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases"
+GITHUB_URL_BETA = f"https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip"
+GITHUB_COMPATIBILITY_URL = "https://raw.githubusercontent.com/Rokoko/rokoko-studio-live-blender/master/version_compatibility.json"
 
 downloads_dir_name = "updater_downloads"
 
