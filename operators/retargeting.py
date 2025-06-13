@@ -530,3 +530,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         print('Retargeting Time:', round(time.time() - start_time, 2), 'seconds')
         wm.progress_end()
+
+        # Set the action slot sub action
+        if hasattr(armature_target.animation_data, "action_slot"):
+            armature_target.animation_data.action_slot = armature_target.animation_data.action_suitable_slots[0]
