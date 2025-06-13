@@ -17,6 +17,6 @@
   },
   "1.4.2": {
     "minimum_blender": "2.80.75",
-    "maximum_blender": "4.5.99"
+    "maximum_blender": null
   }
 }
