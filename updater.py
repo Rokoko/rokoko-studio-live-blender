@@ -7,6 +7,7 @@ import urllib
 import shutil
 import pathlib
 import zipfile
+import traceback
 import addon_utils
 from threading import Thread
 from bpy.app.handlers import persistent
@@ -15,6 +16,7 @@ beta_branch = "beta"
 
 GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
 GITHUB_URL_BETA = f'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip'
+GITHUB_COMPATIBILITY_URL = 'https://raw.githubusercontent.com/Rokoko/rokoko-studio-live-blender/beta/version_compatibility.json'
 
 downloads_dir_name = "updater_downloads"
 
@@ -119,26 +121,40 @@ def get_latest_version() -> Version:
 
 
 def load_compatibility_data():
-    """Load the version compatibility JSON file."""
+    """Load the version compatibility JSON from GitHub."""
     global compatibility_data, compatibility_loaded
 
     if compatibility_loaded:
         return True
 
     try:
-        if os.path.isfile(compatibility_file):
-            with open(compatibility_file, 'r', encoding='utf-8') as f:
-                compatibility_data = json.load(f)
-            compatibility_loaded = True
-            print("Loaded version compatibility data")
-            return True
-        else:
-            print("Version compatibility file not found, all versions will be considered compatible")
-            compatibility_data = {}
-            compatibility_loaded = True
-            return False
+        print("Fetching version compatibility data from GitHub...")
+        ssl._create_default_https_context = ssl._create_unverified_context
+        with urllib.request.urlopen(GITHUB_COMPATIBILITY_URL) as url:
+            data = url.read().decode('utf-8')
+            compatibility_data = json.loads(data)
+        compatibility_loaded = True
+        print("Loaded version compatibility data from GitHub")
+        return True
+    except urllib.error.URLError as e:
+        print(f"Failed to fetch compatibility data from GitHub: {e}")
+        # Try to load from local file as fallback
+        try:
+            if os.path.isfile(compatibility_file):
+                with open(compatibility_file, 'r', encoding='utf-8') as f:
+                    compatibility_data = json.load(f)
+                compatibility_loaded = True
+                print("Loaded version compatibility data from local file as fallback")
+                return True
+        except Exception as local_e:
+            print(f"Failed to load local compatibility file: \n{traceback.format_exc()}")
+
+        print("No compatibility data available, all versions will be considered compatible")
+        compatibility_data = {}
+        compatibility_loaded = True
+        return False
     except Exception as e:
-        print(f"Error loading compatibility data: {e}")
+        print(f"Error loading compatibility data: \n{traceback.format_exc()}")
         compatibility_data = {}
         compatibility_loaded = True
         return False
@@ -176,6 +192,13 @@ def get_compatibility_for_version(addon_version_string):
         return compatibility_data[best_match]
 
     return None
+
+
+def refresh_compatibility_data():
+    """Force refresh of compatibility data from GitHub."""
+    global compatibility_loaded
+    compatibility_loaded = False
+    return load_compatibility_data()
 
 
 def is_version_compatible(addon_version_string):
@@ -241,6 +264,11 @@ def check_for_update_background(check_on_startup=False):
 
 def check_for_update():
     print('Checking for Rokoko Studio Live update...')
+
+    # Refresh compatibility data from GitHub
+    global compatibility_loaded
+    compatibility_loaded = False  # Force reload
+    load_compatibility_data()
 
     # Get all releases from Github
     if not get_github_releases():
