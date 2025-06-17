@@ -358,9 +358,8 @@ def check_for_update_available() -> bool:
     global latest_version, latest_version_str
     latest_compatible_version = get_latest_version()
 
+    # No compatible versions found
     if not latest_compatible_version:
-        # No compatible versions found
-        print("No compatible versions found for current Blender version")
         return False
 
     latest_version = latest_compatible_version.version_number

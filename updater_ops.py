@@ -451,18 +451,6 @@ def draw_updater_panel(context, layout, user_preferences=False):
     row.scale_y = 0.65
     row.label(text='Blender version: ' + blender_version)
 
-    # Check if there are any compatible versions available
-    if updater.version_list:
-        compatible_versions = [v for v in updater.version_list if updater.is_version_compatible(v.version_string)]
-        if not compatible_versions:
-            col.separator()
-            row = col.row(align=True)
-            row.scale_y = 0.75
-            row.label(text='No compatible versions found', icon='ERROR')
-            row = col.row(align=True)
-            row.scale_y = 0.65
-            row.label(text='for this Blender version', icon='BLANK1')
-
 
 # demo bare-bones preferences
 class DemoPreferences(bpy.types.AddonPreferences):
