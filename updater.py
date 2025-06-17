@@ -7,14 +7,16 @@ import urllib
 import shutil
 import pathlib
 import zipfile
+import traceback
 import addon_utils
 from threading import Thread
 from bpy.app.handlers import persistent
 
 beta_branch = "beta"
 
-GITHUB_URL = 'https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases'
-GITHUB_URL_BETA = f'https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip'
+GITHUB_URL = "https://api.github.com/repos/RokokoElectronics/rokoko-studio-live-blender/releases"
+GITHUB_URL_BETA = f"https://github.com/RokokoElectronics/rokoko-studio-live-blender/archive/{beta_branch}.zip"
+GITHUB_COMPATIBILITY_URL = "https://raw.githubusercontent.com/Rokoko/rokoko-studio-live-blender/master/version_compatibility.json"
 
 downloads_dir_name = "updater_downloads"
 
@@ -56,6 +58,11 @@ resources_dir = os.path.join(main_dir, "resources")
 ignore_ver_file = os.path.join(resources_dir, "ignore_version.txt")
 no_auto_ver_check_file = os.path.join(resources_dir, "no_auto_ver_check.txt")
 delete_files_on_startup_file = os.path.join(main_dir, "delete_files_on_startup.txt")
+compatibility_file = os.path.join(main_dir, "version_compatibility.json")
+
+# Compatibility checking variables
+compatibility_data = {}
+compatibility_loaded = False
 
 # Get package name, important for panel in user preferences
 package_name = ''
@@ -109,8 +116,129 @@ def get_version_by_string(version_string) -> Version:
 
 
 def get_latest_version() -> Version:
-    version_list_releases = [version for version in version_list if not version.is_prerelease]
-    return version_list_releases[0]
+    version_list_releases = [version for version in version_list if not version.is_prerelease and is_version_compatible(version.version_string)]
+    return version_list_releases[0] if version_list_releases else None
+
+
+def load_compatibility_data():
+    """Load the version compatibility JSON from GitHub."""
+    global compatibility_data, compatibility_loaded
+
+    if compatibility_loaded:
+        return True
+
+    try:
+        print("Fetching version compatibility data from GitHub...")
+        ssl._create_default_https_context = ssl._create_unverified_context
+        with urllib.request.urlopen(GITHUB_COMPATIBILITY_URL) as url:
+            data = url.read().decode('utf-8')
+            compatibility_data = json.loads(data)
+        compatibility_loaded = True
+        print("Loaded version compatibility data from GitHub")
+        return True
+    except urllib.error.URLError as e:
+        print(f"Failed to fetch compatibility data from GitHub: {e}")
+        # Try to load from local file as fallback
+        try:
+            if os.path.isfile(compatibility_file):
+                with open(compatibility_file, 'r', encoding='utf-8') as f:
+                    compatibility_data = json.load(f)
+                compatibility_loaded = True
+                print("Loaded version compatibility data from local file as fallback")
+                return True
+        except Exception as local_e:
+            print(f"Failed to load local compatibility file: \n{traceback.format_exc()}")
+
+        print("No compatibility data available, all versions will be considered compatible")
+        compatibility_data = {}
+        compatibility_loaded = True
+        return False
+    except Exception as e:
+        print(f"Error loading compatibility data: \n{traceback.format_exc()}")
+        compatibility_data = {}
+        compatibility_loaded = True
+        return False
+
+
+def get_compatibility_for_version(addon_version_string):
+    """Get compatibility info for a specific addon version.
+
+    Since the JSON only contains versions where compatibility changed,
+    we need to find the highest version <= the requested version.
+    """
+    if not compatibility_data:
+        return None
+
+    # Convert version string to tuple for comparison
+    def version_to_tuple(version_str):
+        try:
+            return tuple(int(x) for x in version_str.split('.'))
+        except:
+            return (0, 0, 0)
+
+    addon_version_tuple = version_to_tuple(addon_version_string)
+
+    # Find the highest version in compatibility data that is <= addon_version
+    best_match = None
+    best_match_tuple = (0, 0, 0)
+
+    for compat_version in compatibility_data.keys():
+        compat_tuple = version_to_tuple(compat_version)
+        if compat_tuple <= addon_version_tuple and compat_tuple > best_match_tuple:
+            best_match = compat_version
+            best_match_tuple = compat_tuple
+
+    if best_match:
+        return compatibility_data[best_match]
+
+    return None
+
+
+def refresh_compatibility_data():
+    """Force refresh of compatibility data from GitHub."""
+    global compatibility_loaded
+    compatibility_loaded = False
+    return load_compatibility_data()
+
+
+def is_version_compatible(addon_version_string):
+    """Check if an addon version is compatible with the current Blender version."""
+    # Load compatibility data if not already loaded
+    if not load_compatibility_data():
+        # If no compatibility file, assume all versions are compatible
+        return True
+
+    # Get current Blender version as string
+    blender_version = ".".join(str(x) for x in bpy.app.version)
+    blender_version_tuple = bpy.app.version
+
+    # Get compatibility info for this addon version
+    compat_info = get_compatibility_for_version(addon_version_string)
+    if not compat_info:
+        # No compatibility info found, assume compatible
+        return True
+
+    # Check minimum version
+    min_blender = compat_info.get('minimum_blender')
+    if min_blender:
+        try:
+            min_tuple = tuple(int(x) for x in min_blender.split('.'))
+            if blender_version_tuple < min_tuple:
+                return False
+        except:
+            pass
+
+    # Check maximum version
+    max_blender = compat_info.get('maximum_blender')
+    if max_blender:
+        try:
+            max_tuple = tuple(int(x) for x in max_blender.split('.'))
+            if blender_version_tuple > max_tuple:
+                return False
+        except:
+            pass
+
+    return True
 
 
 def check_for_update_background(check_on_startup=False):
@@ -136,6 +264,11 @@ def check_for_update_background(check_on_startup=False):
 
 def check_for_update():
     print('Checking for Rokoko Studio Live update...')
+
+    # Refresh compatibility data from GitHub
+    global compatibility_loaded
+    compatibility_loaded = False  # Force reload
+    load_compatibility_data()
 
     # Get all releases from Github
     if not get_github_releases():
@@ -218,16 +351,23 @@ def get_github_releases():
     return True
 
 
-def check_for_update_available():
+def check_for_update_available() -> bool:
     if not version_list:
         return False
 
     global latest_version, latest_version_str
-    latest_version = get_latest_version().version_number
-    latest_version_str = get_latest_version().version_string
+    latest_compatible_version = get_latest_version()
+
+    # No compatible versions found
+    if not latest_compatible_version:
+        return False
+
+    latest_version = latest_compatible_version.version_number
+    latest_version_str = latest_compatible_version.version_string
 
     if latest_version > current_version:
         return True
+    return False
 
 
 def finish_update_checking(error=''):
@@ -588,10 +728,17 @@ def check_ignored_version():
 def get_version_list(self, context):
     choices = []
     for version in version_list:
-        # 1. Will be returned by context.scene
-        # 2. Will be shown in lists
-        # 3. will be shown in the hover description (below description)
-        choices.append((version.version_string, version.version_display_string, version.version_display_string))
+        # Only include compatible versions
+        if is_version_compatible(version.version_string):
+            # 1. Will be returned by context.scene
+            # 2. Will be shown in lists
+            # 3. will be shown in the hover description (below description)
+            choices.append((version.version_string, version.version_display_string, version.version_display_string))
+        else:
+            # Add incompatible versions with a warning
+            display_string = version.version_display_string + " (incompatible)"
+            description = f"Version {version.version_string} is not compatible with Blender {'.'.join(str(x) for x in bpy.app.version)}"
+            choices.append((version.version_string, display_string, description))
 
     bpy.types.Object.Enum = choices
     return bpy.types.Object.Enum

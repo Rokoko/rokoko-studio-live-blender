@@ -4,8 +4,8 @@ from .main import ToolPanel, separator
 from .. import updater
 from ..operators import info
 from ..core.icon_manager import Icons
-from ..core.login_manager import user
 from ..operators.login import LogoutButton
+from ..core import login_manager as lm
 
 
 class InfoPanel(ToolPanel, bpy.types.Panel):
@@ -43,7 +43,7 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         # row.operator(info.ForumButton.bl_idname)  # TODO: Add forums back with correct link
 
         # If there is no email, the user is not logged in yet
-        if not user.email:
+        if not lm.user.email:
             return
 
         separator(layout, 0.1)
@@ -55,10 +55,10 @@ class InfoPanel(ToolPanel, bpy.types.Panel):
         row = subrow.row(align=True)
         row.scale_y = 0.7
         row.alignment = 'RIGHT'
-        row.operator(info.ToggleRokokoIDButton.bl_idname, text='', icon='HIDE_OFF' if user.display_email else 'HIDE_ON')
+        row.operator(info.ToggleRokokoIDButton.bl_idname, text='', icon='HIDE_OFF' if lm.user.display_email else 'HIDE_ON')
 
         row = layout.row(align=True)
         row.scale_y = 0.3
-        row.label(text=user.email if user.display_email else "***********")
+        row.label(text=lm.user.email if lm.user.display_email else "***********")
         row = layout.row(align=True)
         row.operator(LogoutButton.bl_idname)

@@ -174,6 +174,7 @@ def standardize_bone_name(name):
         ('G_', ''),
         ('Joint_', ''),
         ('DEF_', ''),
+        ('CC_Base_', ''),
     ]
 
     # Standardize names

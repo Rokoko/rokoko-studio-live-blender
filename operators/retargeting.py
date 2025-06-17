@@ -439,6 +439,7 @@ class RetargetAnimation(bpy.types.Operator):
         start_time = time.time()
 
         # Bake the animation in parts because multiple short parts are processed much faster than one long animation
+        bpy.ops.object.mode_set(mode='POSE')
         for frame in range(frame_start, frame_end + 2, frame_split):
             start = frame
             end = frame + frame_split - 1
@@ -448,7 +449,7 @@ class RetargetAnimation(bpy.types.Operator):
                 continue
 
             # Bake animation part
-            bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=False, use_current_action=False, bake_types={'POSE'})
+            bpy.ops.nla.bake(frame_start=start, frame_end=end, visual_keying=True, only_selected=True, use_current_action=False, bake_types={'POSE'})
 
             # Rename animation part
             armature_target.animation_data.action.name = 'RSL_RETARGETING_' + str(frame)
@@ -458,6 +459,7 @@ class RetargetAnimation(bpy.types.Operator):
             current_step += 1
             if steps != current_step:
                 wm.progress_update(current_step)
+        bpy.ops.object.mode_set(mode='OBJECT')
 
         if not actions_all:
             return
@@ -528,3 +530,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         print('Retargeting Time:', round(time.time() - start_time, 2), 'seconds')
         wm.progress_end()
+
+        # Set the action slot sub action
+        if hasattr(armature_target.animation_data, "action_slot"):
+            armature_target.animation_data.action_slot = armature_target.animation_data.action_suitable_slots[0]

@@ -1,6 +1,10 @@
+import traceback
+
 import bpy
-import webbrowser
+import importlib
 from ..core import login_manager
+from ..core import library_manager
+from ..core import live_data_manager
 
 
 class LoginButton(bpy.types.Operator):
@@ -32,13 +36,52 @@ class LogoutButton(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class RegisterButton(bpy.types.Operator):
-    bl_idname = 'rsl.login_register'
-    bl_label = 'Sign up in Browser'
-    bl_description = 'Opens the Rokoko ID website in your browser'
+class InstallLibsButton(bpy.types.Operator):
+    bl_idname = 'rsl.login_install_libs'
+    bl_label = 'Install Required Libraries'
+    bl_description = 'Installs the required libraries for this plugin to work'
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        webbrowser.open('https://www.rokoko.com/en/rmp/account/sign-up')
-        self.report({'INFO'}, 'Opened Rokoko ID website.')
+        # Install the libraries
+        try:
+            self.install_libs()
+        except ImportError as e:
+            self.report({'ERROR'}, str(e))
+            return {'CANCELLED'}
+        except Exception as e:
+            trace = traceback.format_exc()
+            error_str = f"Unable to install the libraries!" \
+                        f"\nTry running Blender as an admin and install the libraries again." \
+                        f"\n\nFull Error: \n\n{trace}"
+            self.report({'ERROR'}, error_str)
+            return {'CANCELLED'}
+
+        # Save login manager data
+        classes_logged_in = login_manager.user.classes_logged_in
+        classes_logged_out = login_manager.user.classes_logged_out
+        version_str = login_manager.user.version_str
+
+        # Reload files to load the libraries
+        importlib.reload(login_manager)
+        importlib.reload(live_data_manager)
+
+        # Load the login manager data
+        login_manager.user.classes_logged_in = classes_logged_in
+        login_manager.user.classes_logged_out = classes_logged_out
+        login_manager.user.version_str = version_str
+
+        # Attempt to auto login the user
+        login_manager.user.auto_login()
+
+        self.report({'INFO'}, 'Installed libraries successfully!')
         return {'FINISHED'}
+
+    def install_libs(self):
+        missing = library_manager.lib_manager.install_libraries(["websockets", "gql", "cryptography", "boto3"])
+        if missing:
+            raise ImportError("The following libraries could not be installed: "
+                              "\n- " + " \n- ".join(missing) +
+                              "  \n\nTry running Blender as an admin and install the libraries again."
+                              "  \nSee console for more information.")
+        library_manager.lib_manager.install_libraries(["lz4"])

@@ -80,15 +80,14 @@ class Receiver:
             print('KeyError:', e)
             return ['Incompatible JSON version!', 'Use the latest Studio', 'and plugin versions.'], True
         except ImportError as e:
-            # This error is specifically when the operating system isn't supported
+            # This error occurs specifically when LZ4 isn't supported by the operating system
             if "os" in e.msg:
-                print('Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.')
-                return ['Unsupported operating system!', 'Use JSON v2 or v3 in the', 'Custom panel in Rokoko Studio.'], True
+                print('LZ4 unsupported by OS!', 'Use "Json" in the', 'Custom panel in Studio.')
+                return ['LZ4 unsupported by OS!', 'Use "Json" in the', 'Custom panel in Studio.'], True
 
             # This error occurs, when the LZ4 package could not be loaded while it was needed
-            print('Unsupported Blender version or operating system! Use older Blender or JSON v2/v3.')
-            print(e)
-            return ['Unsupported Blender version', 'or operating system! Use', 'older Blender or JSON v2/v3.'], True
+            print('LZ4 unsupported by OS or', 'Blender! Use "Json" in the', 'Custom panel in Studio.')
+            return ['LZ4 unsupported by OS or', 'Blender! Use "Json" in the', 'Custom panel in Studio.'], True
 
         animations.animate()
 

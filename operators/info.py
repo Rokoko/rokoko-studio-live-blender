@@ -1,7 +1,7 @@
 import bpy
 import webbrowser
 
-from ..core.login_manager import user
+from ..core import login_manager as lm
 
 
 class LicenseButton(bpy.types.Operator):
@@ -59,5 +59,5 @@ class ToggleRokokoIDButton(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        user.display_email = not user.display_email
+        lm.user.display_email = not lm.user.display_email
         return {'FINISHED'}

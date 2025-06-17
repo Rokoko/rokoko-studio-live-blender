@@ -57,9 +57,10 @@ class LiveData:
 
         try:
             self.data = json.loads(self.data)
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e:
             if loaded_lz4:
                 raise UnicodeDecodeError
+            # Raise an import error if the LZ4 module couldn't be loaded
             raise ImportError("os" if unsupported_os else "")
 
         if not self.data:
