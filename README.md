@@ -9,7 +9,7 @@
 **Stream motion capture data from Rokoko Studio directly into Blender in real-time**
 
 [📥 Download Latest](https://github.com/Rokoko/rokoko-studio-live-blender/archive/refs/heads/master.zip) • 
-[📖 Documentation](https://docs.rokoko.com/) • 
+[📖 Documentation](https://support.rokoko.com/hc/en-us/categories/4410420388113-Rokoko-Plugins) • 
 [💬 Support](https://support.rokoko.com/)
 
 </div>
@@ -31,7 +31,6 @@
 - [🎯 Overview](#-overview)
 - [✨ Features](#-features)
 - [📋 Requirements](#-requirements)
-- [🚀 Quick Start](#-quick-start)
 - [📦 Installation](#-installation)
 - [🎬 Getting Started for Streaming](#-getting-started-for-streaming)
   - [1. Prepare Your Model](#1-prepare-your-model)
@@ -113,15 +112,16 @@ For optimal finger animation retargeting, ensure your character's hands match th
 
 ### 2. Enable Rokoko Studio Live
 
-1. Open **Rokoko Studio**
-2. Go to **Settings** → **Studio Live**
-3. Enable the **Blender data stream**
-4. Customize streaming address and port using the wrench icon (optional)
+1. Open **Rokoko Studio** and open a project
+2. On the right side, go to **Streaming**
+3. In the Blender row, press the **wrench icon** to open settings
+4. Enable **Include Connection**
+   - (optional) Customize Forward IP and Port
+5. **Activate** the data stream to Blender
 
 <div align="center">
 <p float="left">
-  <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47009137268/original/iUPhbfdu2-FVfsBHs_RlWeqyhekQX9_Lbw.png" height="400" alt="Studio Live settings"/>
-  <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/47011953744/original/CxBalqeKrhgesFhgEf69gr4fVNxx3p0ZcQ.gif" height="400" alt="Enable data stream"/>
+  <img src="https://i.imgur.com/mkVr39B.gif" height="400" alt="Studio Live settings"/>
 </p>
 </div>
 
@@ -291,18 +291,14 @@ We welcome contributions to improve the Rokoko Studio Live Plugin! Here's how yo
 ## 📞 Support
 
 ### Official Support Channels
-- **📖 Documentation**: [docs.rokoko.com](https://docs.rokoko.com/)
+- **📖 Documentation**: [docs.rokoko.com](https://support.rokoko.com/hc/en-us/categories/4410420388113-Rokoko-Plugins)
 - **💬 Support Portal**: [support.rokoko.com](https://support.rokoko.com/)
 - **🐛 Bug Reports**: [GitHub Issues](https://github.com/Rokoko/rokoko-studio-live-blender/issues)
 
 ### Community
-- **Discord**: Join our [Discord community](https://discord.gg/rokoko)
-- **YouTube**: [Rokoko YouTube Channel](https://www.youtube.com/c/Rokoko) for tutorials
-- **Social Media**: Follow [@rokoko](https://twitter.com/rokoko) for updates
-
-### Contact Information
-- **Website**: [rokoko.com](https://www.rokoko.com/)
-- **Email**: support@rokoko.com
+- **Discord**: Join our [Discord community](https://discord.com/invite/AfCJBBQqRm)
+- **YouTube**: [Rokoko YouTube Channel](https://www.youtube.com/@RokokoMotion) for tutorials
+- **Social Media**: Follow [@rokoko](https://x.com/hellorokoko) for updates
 
 ---
 
