@@ -283,9 +283,10 @@ class RetargetAnimation(bpy.types.Operator):
 
     def clean_animation(self, armature_source):
         deletable_fcurves = ['location', 'rotation_euler', 'rotation_quaternion', 'scale']
-        for fcurve in armature_source.animation_data.action.fcurves:
+        fcurves = utils.get_fcurves_from_action(armature_source.animation_data.action)
+        for fcurve in fcurves:
             if fcurve.data_path in deletable_fcurves:
-                armature_source.animation_data.action.fcurves.remove(fcurve)
+                fcurves.remove(fcurve)
 
     def get_and_reset_pose_rotations(self, armature):
         bpy.ops.object.select_all(action='DESELECT')
@@ -364,7 +365,8 @@ class RetargetAnimation(bpy.types.Operator):
     def read_anim_start_end(self, armature):
         frame_start = None
         frame_end = None
-        for fcurve in armature.animation_data.action.fcurves:
+        fcurves = utils.get_fcurves_from_action(armature.animation_data.action)
+        for fcurve in fcurves:
             for key in fcurve.keyframe_points:
                 keyframe = key.co.x
                 if frame_start is None:
@@ -467,7 +469,8 @@ class RetargetAnimation(bpy.types.Operator):
         # Count all keys for all data_paths
         key_counts = {}
         for action in actions_all:
-            for fcurve in action.fcurves:
+            fcurves = utils.get_fcurves_from_action(action)
+            for fcurve in fcurves:
                 key = fcurve.data_path + str(fcurve.array_index)
                 if not key_counts.get(key):
                     key_counts[key] = 0
@@ -480,7 +483,8 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Put all baked animations parts back together into one
         print_i = 0
-        for fcurve in actions_all[0].fcurves:
+        fcurves = utils.get_fcurves_from_action(actions_all[0])
+        for fcurve in fcurves:
             if fcurve.data_path.endswith('scale'):
                 continue
             if fcurve.data_path.endswith('location'):
@@ -490,13 +494,14 @@ class RetargetAnimation(bpy.types.Operator):
                 if bone_name[1] not in root_bones:
                     continue
 
-            curve_final = action_final.fcurves.new(data_path=fcurve.data_path, index=fcurve.array_index, action_group=fcurve.group.name)
+            curve_final = utils.create_fcurve_in_action(action_final, data_path=fcurve.data_path, array_index=fcurve.array_index, action_group=fcurve.group.name)
             keyframe_points = curve_final.keyframe_points
             keyframe_points.add(key_counts[fcurve.data_path + str(fcurve.array_index)])
 
             index = 0
             for action in actions_all:
-                fcruve_to_add = action.fcurves.find(data_path=fcurve.data_path, index=fcurve.array_index)
+                fcurves_tmp = utils.get_fcurves_from_action(action)
+                fcruve_to_add = fcurves_tmp.find(data_path=fcurve.data_path, index=fcurve.array_index)  # TODO: Find can cause issues
 
                 for kp in fcruve_to_add.keyframe_points:
                     keyframe_points[index].co.x = kp.co.x
@@ -507,7 +512,8 @@ class RetargetAnimation(bpy.types.Operator):
             print_i += 1
 
         # Clean up animation. Delete all keyframes the use the same value as the previous and next one
-        for fcurve in action_final.fcurves:
+        fcurves = utils.get_fcurves_from_action(action_final)
+        for fcurve in fcurves:
             if len(fcurve.keyframe_points) <= 2:
                 continue
 
