@@ -213,7 +213,10 @@ class RetargetAnimation(bpy.types.Operator):
                 constraint.subtarget = item.bone_name_source
 
             # Select the bone for animation
-            armature_target.data.bones.get(item.bone_name_target).select = True
+            try:
+                armature_target.data.bones.get(item.bone_name_target).select = True  # Pre 5.0.0
+            except Exception as e:
+                armature_target.pose.bones.get(item.bone_name_target).select = True  # Post 5.0.0
 
         # Bake the animation to the target armature
         self.bake_animation(armature_source, armature_target, root_bones)

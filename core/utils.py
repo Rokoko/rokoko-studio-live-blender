@@ -113,14 +113,30 @@ def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_inde
     :param action_group: The action group to assign the F-curve to. Only needed for Blender 5.0.0 and newer.
     :return: The created F-curve
     """
+    # Blender 4.5 and older (Legacy)
     if hasattr(action, 'fcurves'):
+        # Note: In 5.0, action.fcurves is removed. hasattr check ensures backward compatibility.
         fcurves = action.fcurves
         fcurve = fcurves.new(data_path=data_path, index=array_index, action_group=action_group)
-    else:  # Blender 5.0.0 and newer
-        action_slot = action.slots[slot_identifier]  # TODO: Add UI selection for action slot. Currently only uses the first slot.
-        channelbag: bpy.types.ActionChannelbag = anim_utils.action_get_channelbag_for_slot(action, action_slot)
-        if channelbag is None:
-            channelbag = action.channels.new(name=f"Channelbag_{slot_identifier}")
+
+    # Blender 5.0+ (Slotted Actions)
+    else:
+        # 1. Ensure a slot exists
+        if not action.slots:
+            action.slots.new(name="Slot_0", id_type="OBJECT")
+
+        # 2. Get the Slot Object
+        try:
+            action_slot = action.slots[slot_identifier]
+        except IndexError:
+            # Fallback if the requested identifier doesn't exist
+            action_slot = action.slots.new(name=f"Slot_{slot_identifier}", id_type="OBJECT")
+
+        # 3. Ensure the Channelbag exists
+        channelbag = anim_utils.action_ensure_channelbag_for_slot(action, action_slot)
+
+        # 4. Ensure/Create the F-Curve
+        # Note: 'group_name' is the 5.0 parameter for 'action_group'
         fcurve = channelbag.fcurves.ensure(data_path, index=array_index, group_name=action_group)
 
     return fcurve
