@@ -1,13 +1,20 @@
-import asyncio
-from typing import Any
 
+import asyncio
 import bpy
 import math
+import pathlib
 import sys
 
 from bpy_extras import anim_utils
 from contextlib import suppress
 from mathutils import Vector, Matrix
+from typing import Any
+
+
+MAIN_DIR = pathlib.Path(__file__).parent.parent
+RECOURSES_DIR = MAIN_DIR / "resources"
+MODELS_DIR = RECOURSES_DIR / "models"
+NEWTON_BLEND_FILE = MODELS_DIR / "Newton Static.blend"
 
 
 def ui_refresh_properties():
@@ -140,3 +147,77 @@ def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_inde
         fcurve = channelbag.fcurves.ensure(data_path, index=array_index, group_name=action_group)
 
     return fcurve
+
+
+def import_blend_file(path: pathlib.Path, link: bool, name: str = None, import_types: list = None, link_scene: str = None):
+    if import_types is None:
+        import_types = ["collections"]
+
+    # Create new collection and link it to the specified scene
+    collection_blend = bpy.data.collections.new(name if name else path.stem)
+    main_collection = bpy.context.scene.collection
+    if link_scene:
+        main_collection = find_layer_collection(name=link_scene).collection
+    main_collection.children.link(collection_blend)
+
+    # Create a list of all objects before the import
+    objs_before_import = [obj for obj in bpy.data.objects]
+
+    # Load and append the collections from the blend file
+    # link=True means that the objects remain in the other blend file and
+    # are only linked to this one. This is much faster than copying the data.
+    with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
+        for type_name in import_types:
+            for data in getattr(data_from, type_name):
+                getattr(data_to, type_name).append(data)
+
+    # Link the collections to their blend collection
+    for collection in bpy.data.collections:
+        if collection.users < 1:
+            collection_blend.children.link(collection)
+
+    # Get all objects that were imported compared to the objects that existed beforehand
+    imported_objs = [obj for obj in bpy.data.objects if obj not in objs_before_import]
+    root_objs = [obj for obj in imported_objs if not obj.parent]
+
+    if len(root_objs) == 1:
+        parent = root_objs[0]
+    else:
+        # Create a parent for all imported objects
+        parent = bpy.data.objects.new(path.stem, None)
+        collection_blend.objects.link(parent)
+
+        # Set the parent and link it to the blend collection
+        for obj in imported_objs:
+            if not obj.parent:
+                obj.parent = parent
+
+    # Set the parent object as active
+    set_active(parent)
+
+    # Set the main collection as active
+    bpy.context.view_layer.active_layer_collection = find_layer_collection(collection_blend.name)
+
+    # Delete all collection in the parent collection
+    for collection in collection_blend.children_recursive:
+        for obj in collection.objects:
+            collection_blend.objects.link(obj)
+            collection.objects.unlink(obj)
+        bpy.data.collections.remove(collection, do_unlink=True)
+
+    return imported_objs
+
+
+def find_layer_collection(name: str, parent_layer_collection=None) -> bpy.types.LayerCollection | None:
+    """ Recursively traverse layer_collection for a particular name """
+    if parent_layer_collection is None:
+        parent_layer_collection = bpy.context.view_layer.layer_collection
+
+    if parent_layer_collection.name == name:
+        return parent_layer_collection
+
+    for layer in parent_layer_collection.children:
+        found = find_layer_collection(name, layer)
+        if found:
+            return found
+    return None

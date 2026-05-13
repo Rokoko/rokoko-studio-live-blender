@@ -2,6 +2,7 @@ import bpy
 import copy
 
 from . import receiver
+from ..core import utils
 
 
 class InitTPose(bpy.types.Operator):
@@ -131,4 +132,17 @@ class PrintCurrentPose(bpy.types.Operator):
             # Load rotation mode
             bone.rotation_mode = rotation_mode
 
+        return {'FINISHED'}
+
+
+class AddExampleActor(bpy.types.Operator):
+    bl_idname = "rsl.add_example_actor"
+    bl_label = "Add Example Actor"
+    bl_description = "Adds a fully configured and working example actor to instantly start livestreaming from Rokoko Studio"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        utils.import_blend_file(utils.NEWTON_BLEND_FILE, False, "Rokoko Streaming Example")
+
+        self.report({'INFO'}, 'Added example actor')
         return {'FINISHED'}
