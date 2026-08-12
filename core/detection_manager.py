@@ -295,7 +295,17 @@ def detect_retarget_bones() -> {str: (str, str)}:
     armature_target = retargeting.get_target_armature()
 
     # Get all source bones from the animation and add them to bone_list_animated
-    for fc in armature_source.animation_data.action.fcurves:
+    action = armature_source.animation_data.action
+    fcurves = []
+    if hasattr(action, "fcurves"):
+        fcurves = action.fcurves
+    elif hasattr(action, "layers"):
+        for layer in action.layers:
+            for strip in layer.strips:
+                for bag in strip.channelbags:
+                    fcurves.extend(bag.fcurves)
+
+    for fc in fcurves:
         bone_name = fc.data_path.split('"')
         if len(bone_name) == 3 and bone_name[1] not in bone_list_animated:
             bone_list_animated.append(bone_name[1])
