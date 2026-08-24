@@ -212,8 +212,12 @@ class RetargetAnimation(bpy.types.Operator):
                 constraint.target = armature_source
                 constraint.subtarget = item.bone_name_source
 
-            # Select the bone for animation
-            armature_target.data.bones.get(item.bone_name_target).select = True
+            target_pbone = armature_target.pose.bones.get(item.bone_name_target)
+            if target_pbone:
+                if hasattr(target_pbone, "select"):
+                    target_pbone.select = True
+                elif hasattr(target_pbone, "bone") and hasattr(target_pbone.bone, "select"):
+                    target_pbone.bone.select = True
 
         # Bake the animation to the target armature
         self.bake_animation(armature_source, armature_target, root_bones)
@@ -283,9 +287,23 @@ class RetargetAnimation(bpy.types.Operator):
 
     def clean_animation(self, armature_source):
         deletable_fcurves = ['location', 'rotation_euler', 'rotation_quaternion', 'scale']
-        for fcurve in armature_source.animation_data.action.fcurves:
-            if fcurve.data_path in deletable_fcurves:
-                armature_source.animation_data.action.fcurves.remove(fcurve)
+        action = armature_source.animation_data.action if armature_source.animation_data else None
+        if not action:
+            return
+
+        if hasattr(action, "fcurves"):
+            # Legacy Blender (< 4.3)
+            for fcurve in list(action.fcurves):
+                if fcurve.data_path in deletable_fcurves:
+                    action.fcurves.remove(fcurve)
+        elif hasattr(action, "layers"):
+            # Blender 5.1 Slotted Actions
+            for layer in action.layers:
+                for strip in layer.strips:
+                    for bag in strip.channelbags:
+                        for fcurve in list(bag.fcurves):
+                            if fcurve.data_path in deletable_fcurves:
+                                bag.fcurves.remove(fcurve)
 
     def get_and_reset_pose_rotations(self, armature):
         bpy.ops.object.select_all(action='DESELECT')
@@ -364,7 +382,20 @@ class RetargetAnimation(bpy.types.Operator):
     def read_anim_start_end(self, armature):
         frame_start = None
         frame_end = None
-        for fcurve in armature.animation_data.action.fcurves:
+        action = armature.animation_data.action if (armature and armature.animation_data) else None
+        if not action:
+            return frame_start, frame_end
+
+        fcurves = []
+        if hasattr(action, "fcurves"):
+            fcurves = action.fcurves
+        elif hasattr(action, "layers"):
+            for layer in action.layers:
+                for strip in layer.strips:
+                    for bag in strip.channelbags:
+                        fcurves.extend(bag.fcurves)
+
+        for fcurve in fcurves:
             for key in fcurve.keyframe_points:
                 keyframe = key.co.x
                 if frame_start is None:
@@ -379,6 +410,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         return frame_start, frame_end
 
+    
     def copy_rest_pose(self, context, armature_source):
         # make sure auto keyframe is disabled, leads to issues
         context.scene.tool_settings.use_keyframe_insert_auto = False
@@ -420,6 +452,46 @@ class RetargetAnimation(bpy.types.Operator):
         bpy.ops.object.mode_set(mode='OBJECT')
 
         return source_armature_copy
+
+    def _get_fcurves(self, action):
+        """Version-agnostic retriever for F-Curves from an Action."""
+        if not action:
+            return []
+        if hasattr(action, "fcurves"):
+            return list(action.fcurves)
+        fcurves = []
+        if hasattr(action, "layers"):
+            for layer in action.layers:
+                for strip in layer.strips:
+                    for bag in strip.channelbags:
+                        fcurves.extend(bag.fcurves)
+        return fcurves
+
+    def _find_fcurve(self, action, data_path, index):
+        """Finds a specific F-Curve within an Action."""
+        for fc in self._get_fcurves(action):
+            if fc.data_path == data_path and fc.array_index == index:
+                return fc
+        return None
+
+    def _add_fcurve_to_action(self, action, datablock, data_path, index, group_name=""):
+        """Creates a new F-Curve in an Action across all Blender versions."""
+        if hasattr(action, "fcurves"):
+            # Legacy Blender (< 4.4)
+            kwargs = {"data_path": data_path, "index": index}
+            if group_name and hasattr(action, "groups"):
+                kwargs["action_group"] = group_name
+            return action.fcurves.new(**kwargs)
+        else:
+            # Blender 4.4 / 5.0 / 5.1 Slotted Actions
+            if hasattr(action, "fcurve_ensure_for_datablock") and datablock:
+                return action.fcurve_ensure_for_datablock(datablock, data_path, index=index, group_name=group_name)
+            else:
+                slot = datablock.animation_data.action_slot if (datablock and hasattr(datablock.animation_data, "action_slot") and datablock.animation_data.action_slot) else (action.slots[0] if len(action.slots) > 0 else action.slots.new(id_type='OBJECT', name="Retarget"))
+                layer = action.layers[0] if len(action.layers) > 0 else action.layers.new("Layer")
+                strip = layer.strips[0] if len(layer.strips) > 0 else layer.strips.new(type='KEYFRAME')
+                bag = strip.channelbag(slot, ensure=True)
+                return bag.fcurves.new(data_path=data_path, index=index, group_name=group_name)
 
     def bake_animation(self, armature_source, armature_target, root_bones):
         frame_split = 25
@@ -467,7 +539,7 @@ class RetargetAnimation(bpy.types.Operator):
         # Count all keys for all data_paths
         key_counts = {}
         for action in actions_all:
-            for fcurve in action.fcurves:
+            for fcurve in self._get_fcurves(action):
                 key = fcurve.data_path + str(fcurve.array_index)
                 if not key_counts.get(key):
                     key_counts[key] = 0
@@ -480,7 +552,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Put all baked animations parts back together into one
         print_i = 0
-        for fcurve in actions_all[0].fcurves:
+        for fcurve in self._get_fcurves(actions_all[0]):
             if fcurve.data_path.endswith('scale'):
                 continue
             if fcurve.data_path.endswith('location'):
@@ -490,13 +562,16 @@ class RetargetAnimation(bpy.types.Operator):
                 if bone_name[1] not in root_bones:
                     continue
 
-            curve_final = action_final.fcurves.new(data_path=fcurve.data_path, index=fcurve.array_index, action_group=fcurve.group.name)
+            group_name = fcurve.group.name if (hasattr(fcurve, 'group') and fcurve.group) else ""
+            curve_final = self._add_fcurve_to_action(action_final, armature_target, fcurve.data_path, fcurve.array_index, group_name)
             keyframe_points = curve_final.keyframe_points
             keyframe_points.add(key_counts[fcurve.data_path + str(fcurve.array_index)])
 
             index = 0
             for action in actions_all:
-                fcruve_to_add = action.fcurves.find(data_path=fcurve.data_path, index=fcurve.array_index)
+                fcruve_to_add = self._find_fcurve(action, fcurve.data_path, fcurve.array_index)
+                if not fcruve_to_add:
+                    continue
 
                 for kp in fcruve_to_add.keyframe_points:
                     keyframe_points[index].co.x = kp.co.x
@@ -506,8 +581,8 @@ class RetargetAnimation(bpy.types.Operator):
 
             print_i += 1
 
-        # Clean up animation. Delete all keyframes the use the same value as the previous and next one
-        for fcurve in action_final.fcurves:
+        # Clean up animation. Delete all keyframes that use the same value as the previous and next one
+        for fcurve in self._get_fcurves(action_final):
             if len(fcurve.keyframe_points) <= 2:
                 continue
 
@@ -533,4 +608,7 @@ class RetargetAnimation(bpy.types.Operator):
 
         # Set the action slot sub action
         if hasattr(armature_target.animation_data, "action_slot"):
-            armature_target.animation_data.action_slot = armature_target.animation_data.action_suitable_slots[0]
+            if hasattr(armature_target.animation_data, "action_suitable_slots") and armature_target.animation_data.action_suitable_slots:
+                armature_target.animation_data.action_slot = armature_target.animation_data.action_suitable_slots[0]
+            elif hasattr(action_final, "slots") and len(action_final.slots) > 0:
+                armature_target.animation_data.action_slot = action_final.slots[0]
