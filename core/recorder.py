@@ -3,6 +3,7 @@ import copy
 from math import radians, degrees
 
 from collections import OrderedDict
+from . import utils
 
 recorded_data = {}
 recorded_timestamps = OrderedDict()
@@ -132,7 +133,7 @@ def process_actor_recording(obj_name, data):
         index_len = len(values[0])
 
         for axis_i in range(index_len):
-            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            curve = utils.create_fcurve_in_action(action, data_path, axis_i)
             keyframe_points = curve.keyframe_points
             keyframe_points.add(frame_count)
 
@@ -179,7 +180,7 @@ def process_object_recording(obj_name, data):
         index_len = 3 if data_path.endswith('location') else 4
 
         for axis_i in range(index_len):
-            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            curve = utils.create_fcurve_in_action(action, data_path, axis_i)
             keyframe_points = curve.keyframe_points
             keyframe_points.add(frame_count)
 
@@ -216,7 +217,7 @@ def process_face_recording(obj_name, data):
         # print(data_path)
         frame_count = len(values)
 
-        curve = action.fcurves.new(data_path=data_path, index=0)
+        curve = utils.create_fcurve_in_action(action, data_path, 0)
         keyframe_points = curve.keyframe_points
         keyframe_points.add(frame_count)
 

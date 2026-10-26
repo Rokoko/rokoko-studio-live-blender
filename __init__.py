@@ -10,7 +10,7 @@ bl_info = {
     'wiki_url': 'https://github.com/Rokoko/rokoko-studio-live-blender#readme',
 }
 
-beta_branch = False
+beta_branch = True
 
 first_startup = "bpy" not in locals()
 import bpy
@@ -92,6 +92,7 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
     operators.actor.PrintCurrentPose,
+    operators.actor.AddExampleActor,
     operators.command_api.CommandTest,
     operators.command_api.StartCalibration,
     operators.command_api.Restart,

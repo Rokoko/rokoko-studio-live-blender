@@ -131,7 +131,7 @@ def post_request(additions, json=None):
 
 def is_error(self, data):
     print(data)
-    if not data.get('response_code'):
+    if not data or not data.get('response_code'):
         self.report({'ERROR'}, 'No response from Studio!')
         return True
 
