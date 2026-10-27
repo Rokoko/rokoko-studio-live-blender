@@ -91,6 +91,7 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.detector.ClearCustomShapes,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
+    operators.actor.StraightenArms,
     operators.actor.PrintCurrentPose,
     operators.actor.AddExampleActor,
     operators.command_api.CommandTest,
