@@ -11,7 +11,7 @@ class LicenseButton(bpy.types.Operator):
     bl_options = {'INTERNAL'}
 
     def execute(self, context):
-        webbrowser.open('https://github.com/RokokoElectronics/rokoko-studio-live-blender/blob/master/LICENSE.md')
+        webbrowser.open('https://github.com/Rokoko/rokoko-studio-live-blender/blob/master/LICENSE.md')
         self.report({'INFO'}, 'Opened license.')
         return {'FINISHED'}
 
