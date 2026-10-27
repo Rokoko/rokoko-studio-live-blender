@@ -156,7 +156,7 @@ def animate_actor(obj):
                 -rot.z,
             )) @ Quaternion((0, 0, 0, 1))
 
-        mat_obj = obj.matrix_local.decompose()[1].to_matrix().to_4x4()
+        mat_obj = obj.matrix_world.decompose()[1].to_matrix().to_4x4()
         mat_default = Matrix((
             (1, 0, 0, 0),
             (0, 0, -1, 0),
