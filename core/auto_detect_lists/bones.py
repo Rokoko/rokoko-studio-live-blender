@@ -331,6 +331,7 @@ bone_list['leftShoulder'] = [
     'J_Sako_\L',
     '\L_ShoulderPad',
     'Collarbone_\L',
+    '\LClavicle',
 ]
 bone_list['leftUpperArm'] = [
     '\L_Arm',

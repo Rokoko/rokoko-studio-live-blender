@@ -34,9 +34,20 @@ class DetectActorBones(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
+        assigned_bones = set()
+        spine_bone = ''
 
         for bone_name_key in animation_lists.get_bones().keys():
-            setattr(obj, 'rsl_actor_' + bone_name_key, detection_manager.detect_bone(obj, bone_name_key))
+            exclude = assigned_bones
+            if bone_name_key == 'chest':  # Spine and chest share a name list on purpose, so chest may get the spine bone
+                exclude = assigned_bones - {spine_bone}
+
+            bone_name = detection_manager.detect_bone(obj, bone_name_key, exclude=exclude)
+            if bone_name_key == 'spine':
+                spine_bone = bone_name
+            if bone_name:
+                assigned_bones.add(bone_name)
+            setattr(obj, 'rsl_actor_' + bone_name_key, bone_name)
 
         return {'FINISHED'}
 

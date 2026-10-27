@@ -250,7 +250,7 @@ def detect_shape(obj, shape_name_key):
     return found_shape_name
 
 
-def detect_bone(obj, bone_name_key, bone_name_source=None):
+def detect_bone(obj, bone_name_key, bone_name_source=None, exclude=()):
     # Go through the target armature and search for bones that fit the main source bone
     found_bone_name = ''
     is_custom = False
@@ -261,6 +261,9 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
     for bone in obj.pose.bones:
         if is_custom:  # If a custom bone name was found, stop searching. it has priority
             break
+
+        if bone.name in exclude:  # Skip bones that are already assigned to another key
+            continue
 
         if bone_detection_list_custom.get(bone_name_key):
             for bone_name_detected in bone_detection_list_custom[bone_name_key]:
