@@ -210,7 +210,7 @@ def animate_actor(obj):
 
             location_new = pos_hips_studio_to_blender(
                 actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height,
-                actor_bone_data['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
+                actor_bone_data['position']['y'] * tpose_hip_location_y / studio_hip_height - tpose_hip_location_y,
                 actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height)
 
             # Same space conversion as the rotations, then into the hip bone's own rest axes
