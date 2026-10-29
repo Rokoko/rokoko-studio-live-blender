@@ -265,6 +265,7 @@ bone_list['neck'] = [
     'Helmet_Lower',
     'Neck_Dev',
     'Neck00',
+    'Neck_01',
     'Kubi',
     'J_Kubi',
     'NeckA_01',
@@ -331,6 +332,7 @@ bone_list['leftShoulder'] = [
     'J_Sako_\L',
     '\L_ShoulderPad',
     'Collarbone_\L',
+    '\LClavicle',
 ]
 bone_list['leftUpperArm'] = [
     '\L_Arm',
@@ -588,6 +590,7 @@ bone_list['leftToe'] = [
     'Bip_\L_Toe0',
     'B_\L_Toe',
     'Toe_\L',
+    'Ball_\L',
     'Toe\L',
     '\L_Toe1',
     '\L_Toe2',
@@ -739,6 +742,7 @@ bone_list['leftIndexProximal'] = [
     'IndeA_\L',
     'Index1_\L',
     '\Lf_Index1',
+    'Index_01_\L',
     '\L_Finger_B1',
     'Index01_\L',
     'Arm_\L_Finger_2_1',

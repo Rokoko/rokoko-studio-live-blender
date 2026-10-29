@@ -6,7 +6,7 @@ from ..core import animations
 from ..core import recorder as recorder_manager
 from ..core import receiver as receiver_cls
 from ..core.icon_manager import Icons
-from ..operators import receiver, recorder
+from ..operators import receiver, recorder, actor
 
 row_scale = 0.75
 paired_inputs = {}
@@ -64,6 +64,9 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.prop(context.scene, 'rsl_hide_mesh_during_play')
+
+        row = layout.row(align=True)
+        row.operator(actor.AddExampleActor.bl_idname, icon='ARMATURE_DATA')
 
         row = layout.row(align=True)
         row.scale_y = 1.3

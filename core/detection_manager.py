@@ -3,7 +3,7 @@ import bpy
 import json
 import pathlib
 
-from . import retargeting
+from . import retargeting, utils
 from .auto_detect_lists.bones import bone_list, ignore_rokoko_retargeting_bones
 from .auto_detect_lists.shapes import shape_list
 from .custom_schemes_manager import load_custom_lists_from_file
@@ -250,7 +250,7 @@ def detect_shape(obj, shape_name_key):
     return found_shape_name
 
 
-def detect_bone(obj, bone_name_key, bone_name_source=None):
+def detect_bone(obj, bone_name_key, bone_name_source=None, exclude=()):
     # Go through the target armature and search for bones that fit the main source bone
     found_bone_name = ''
     is_custom = False
@@ -261,6 +261,9 @@ def detect_bone(obj, bone_name_key, bone_name_source=None):
     for bone in obj.pose.bones:
         if is_custom:  # If a custom bone name was found, stop searching. it has priority
             break
+
+        if bone.name in exclude:  # Skip bones that are already assigned to another key
+            continue
 
         if bone_detection_list_custom.get(bone_name_key):
             for bone_name_detected in bone_detection_list_custom[bone_name_key]:
@@ -294,8 +297,12 @@ def detect_retarget_bones() -> {str: (str, str)}:
     armature_source = retargeting.get_source_armature()
     armature_target = retargeting.get_target_armature()
 
+    # Get all F-Curves from the source armature animation
+    action = armature_source.animation_data.action
+    fcurves = utils.get_fcurves_from_action(action)
+
     # Get all source bones from the animation and add them to bone_list_animated
-    for fc in armature_source.animation_data.action.fcurves:
+    for fc in fcurves:
         bone_name = fc.data_path.split('"')
         if len(bone_name) == 3 and bone_name[1] not in bone_list_animated:
             bone_list_animated.append(bone_name[1])
@@ -384,3 +391,4 @@ def detect_retarget_bones() -> {str: (str, str)}:
                     break
 
     return retargeting_dict
+

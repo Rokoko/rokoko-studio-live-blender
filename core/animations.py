@@ -1,5 +1,5 @@
 import bpy
-from mathutils import Quaternion, Matrix
+from mathutils import Quaternion, Matrix, Vector
 
 from . import animation_lists, recorder
 from .live_data_manager import LiveData
@@ -156,7 +156,7 @@ def animate_actor(obj):
                 -rot.z,
             )) @ Quaternion((0, 0, 0, 1))
 
-        mat_obj = obj.matrix_local.decompose()[1].to_matrix().to_4x4()
+        mat_obj = obj.matrix_world.decompose()[1].to_matrix().to_4x4()
         mat_default = Matrix((
             (1, 0, 0, 0),
             (0, 0, -1, 0),
@@ -210,8 +210,11 @@ def animate_actor(obj):
 
             location_new = pos_hips_studio_to_blender(
                 actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height,
-                actor_bone_data['position']['y'] * tpose_hip_location_y - tpose_hip_location_y * studio_hip_height,
+                actor_bone_data['position']['y'] * tpose_hip_location_y / studio_hip_height - tpose_hip_location_y,
                 actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height)
+
+            # Same space conversion as the rotations, then into the hip bone's own rest axes
+            location_new = bone_data.matrix_local.to_quaternion().inverted() @ (rot_transform.inverted() @ Vector(location_new))
 
             bone.location = location_new
 
