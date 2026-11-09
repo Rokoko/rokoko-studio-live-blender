@@ -145,6 +145,8 @@ def process_actor_recording(obj_name, data):
                     transform)
                 keyframe_points[frame_i].interpolation = 'LINEAR'
 
+    utils.assign_action_slot(armature)
+
 
 def process_object_recording(obj_name, data):
     obj = bpy.data.objects.get(obj_name)
@@ -192,6 +194,8 @@ def process_object_recording(obj_name, data):
                     transform[axis_i])
                 keyframe_points[frame_i].interpolation = 'LINEAR'
 
+    utils.assign_action_slot(obj)
+
 
 def process_face_recording(obj_name, data):
     mesh = bpy.data.objects.get(obj_name)
@@ -228,6 +232,8 @@ def process_face_recording(obj_name, data):
                 recorded_timestamps[timestamp],
                 shapekey_value)
             keyframe_points[frame_i].interpolation = 'LINEAR'
+
+    utils.assign_action_slot(mesh)
 
 
 def normalize_rotation(axis, axis_prev):

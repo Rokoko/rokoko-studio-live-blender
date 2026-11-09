@@ -299,7 +299,7 @@ def detect_retarget_bones() -> {str: (str, str)}:
 
     # Get all F-Curves from the source armature animation
     action = armature_source.animation_data.action
-    fcurves = utils.get_fcurves_from_action(action)
+    fcurves = utils.get_fcurves_from_action(action, armature_source)
 
     # Get all source bones from the animation and add them to bone_list_animated
     for fc in fcurves:

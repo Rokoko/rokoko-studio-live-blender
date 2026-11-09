@@ -96,19 +96,41 @@ async def cancel_gen(agen):
     await agen.aclose()
 
 
-def get_fcurves_from_action(action: bpy.types.Action, slot_identifier: int = 0) -> list[Any]:
-    """Returns all F-curves in the action that match the slot identifier.
+class NoFCurves(list):
+    """Stands in for the F-curves of an action that has none for the object. Callers can loop over it and call find()."""
+    def find(self, data_path, index=0):
+        return None
+
+
+def get_fcurves_from_action(action: bpy.types.Action, obj: bpy.types.Object = None) -> Any:
+    """Returns the F-curves in the action that animate the given object.
     :param action: The action to search in
-    :param slot_identifier: The slot identifier to search for. Only needed for Blender 5.0.0 and newer.
-    :return: A list of F-curves that match the slot identifier
+    :param obj: The object the action is assigned to. Only needed for Blender 5.0.0 and newer, where an action can
+                hold the curves of several objects in separate slots. The slot assigned to the object is used.
+                Without an object, or if the object has no slot assigned, the action's only slot is used.
+    :return: The F-curve collection, or an empty NoFCurves if the action has no curves for the object
     """
     if hasattr(action, 'fcurves'):
-        fcurves = action.fcurves
-    else:  # Blender 5.0.0 and newer
-        action_slot = action.slots[slot_identifier]  # TODO: Add UI selection for action slot. Currently only uses the first slot.
-        channelbag: bpy.types.ActionChannelbag = anim_utils.action_get_channelbag_for_slot(action, action_slot)
-        fcurves = channelbag.fcurves if channelbag else []
-    return fcurves
+        return action.fcurves
+
+    # Blender 5.0.0 and newer
+    action_slot = None
+    if obj and obj.animation_data and obj.animation_data.action == action:
+        action_slot = obj.animation_data.action_slot
+    if not action_slot and len(action.slots) == 1:
+        action_slot = action.slots[0]
+
+    channelbag = anim_utils.action_get_channelbag_for_slot(action, action_slot) if action_slot else None
+    return channelbag.fcurves if channelbag else NoFCurves()
+
+
+def assign_action_slot(obj: bpy.types.Object):
+    """From Blender 4.4 on, an object only plays its action if a slot of that action is assigned to it.
+    Assigns the first fitting slot if the object has none assigned yet. Call this after the action's F-curves are created.
+    """
+    anim_data = obj.animation_data
+    if hasattr(anim_data, 'action_slot') and not anim_data.action_slot and anim_data.action_suitable_slots:
+        anim_data.action_slot = anim_data.action_suitable_slots[0]
 
 
 def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_index: int = -1, slot_identifier: int = 0, action_group: str = "") -> bpy.types.FCurve:

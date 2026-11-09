@@ -286,7 +286,7 @@ class RetargetAnimation(bpy.types.Operator):
 
     def clean_animation(self, armature_source):
         deletable_fcurves = ['location', 'rotation_euler', 'rotation_quaternion', 'scale']
-        fcurves = utils.get_fcurves_from_action(armature_source.animation_data.action)
+        fcurves = utils.get_fcurves_from_action(armature_source.animation_data.action, armature_source)
         for fcurve in fcurves:
             if fcurve.data_path in deletable_fcurves:
                 fcurves.remove(fcurve)
@@ -368,7 +368,7 @@ class RetargetAnimation(bpy.types.Operator):
     def read_anim_start_end(self, armature):
         frame_start = None
         frame_end = None
-        fcurves = utils.get_fcurves_from_action(armature.animation_data.action)
+        fcurves = utils.get_fcurves_from_action(armature.animation_data.action, armature)
         for fcurve in fcurves:
             for key in fcurve.keyframe_points:
                 keyframe = key.co.x
