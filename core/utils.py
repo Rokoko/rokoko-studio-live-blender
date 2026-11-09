@@ -171,9 +171,10 @@ def import_blend_file(path: pathlib.Path, link: bool, name: str = None, import_t
             for data in getattr(data_from, type_name):
                 getattr(data_to, type_name).append(data)
 
-    # Link the collections to their blend collection
-    for collection in bpy.data.collections:
-        if collection.users < 1:
+    # Link the loaded top-level collections to their blend collection
+    # Only use what was loaded from the file, so existing collections without users are left alone
+    for collection in data_to.collections:
+        if collection is not None and collection.users < 1:
             collection_blend.children.link(collection)
 
     # Get all objects that were imported compared to the objects that existed beforehand
