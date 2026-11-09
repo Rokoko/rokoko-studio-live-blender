@@ -163,7 +163,10 @@ def animate_actor(obj):
             (0, 1, 0, 0),
             (0, 0, 0, 1)
         ))
-        rot_transform = (mat_default.inverted() @ mat_obj).to_quaternion()
+        # Leave out the object's turn around the world Z axis, so the streamed motion turns with the character
+        obj_rot = obj.matrix_world.decompose()[1]
+        obj_turn = Quaternion((obj_rot.w, 0, 0, obj_rot.z)).normalized()
+        rot_transform = (mat_default.inverted() @ (obj_turn.inverted() @ obj_rot).to_matrix().to_4x4()).to_quaternion()
 
         def transform(rot):
             return rot_transform @ rot
