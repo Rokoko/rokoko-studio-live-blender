@@ -105,22 +105,25 @@ class NoFCurves(list):
 def get_fcurves_from_action(action: bpy.types.Action, obj: bpy.types.Object = None) -> Any:
     """Returns the F-curves in the action that animate the given object.
     :param action: The action to search in
-    :param obj: The object the action is assigned to. Only needed for Blender 5.0.0 and newer, where an action can
+    :param obj: The object the action is assigned to. Only needed for Blender 4.4.0 and newer, where an action can
                 hold the curves of several objects in separate slots. The slot assigned to the object is used.
                 Without an object, or if the object has no slot assigned, the action's only slot is used.
     :return: The F-curve collection, or an empty NoFCurves if the action has no curves for the object
     """
-    if hasattr(action, 'fcurves'):
+    if not hasattr(action, 'slots'):  # Blender 4.3 and older
         return action.fcurves
 
-    # Blender 5.0.0 and newer
+    # Blender 4.4.0 and newer. Not action.fcurves, which only exists until 4.5 and only reads the first slot
     action_slot = None
     if obj and obj.animation_data and obj.animation_data.action == action:
         action_slot = obj.animation_data.action_slot
     if not action_slot and len(action.slots) == 1:
         action_slot = action.slots[0]
 
-    channelbag = anim_utils.action_get_channelbag_for_slot(action, action_slot) if action_slot else None
+    # Read the channelbag through the layer and strip, since anim_utils.action_get_channelbag_for_slot only exists from 5.0 on
+    channelbag = None
+    if action_slot and action.layers and action.layers[0].strips:
+        channelbag = action.layers[0].strips[0].channelbag(action_slot)
     return channelbag.fcurves if channelbag else NoFCurves()
 
 
