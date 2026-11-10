@@ -138,7 +138,11 @@ def load_custom_lists_from_file(file_path=custom_bone_list_file):
     custom_bone_list.pop('rokoko_custom_names')
     custom_bone_list.pop('version')
 
-    return custom_bone_list.get('bones'), custom_bone_list.get('shapes')
+    # Detection compares custom names with lowercased bone and shapekey names, and a hand-edited file can contain capitals
+    custom_bones = {key: [name.lower() for name in names] for key, names in custom_bone_list.get('bones').items()}
+    custom_shapes = {key: [name.lower() for name in names] for key, names in custom_bone_list.get('shapes').items()}
+
+    return custom_bones, custom_shapes
 
 
 def clean_custom_list():

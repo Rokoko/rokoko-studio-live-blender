@@ -68,7 +68,7 @@ check("saves no custom names right after Auto Detect", not saved_custom_names(),
 
 actor.rsl_actor_leftHand = 'LeftFinger1Metacarpal'
 bpy.ops.rsl.save_custom_bones()
-saved = saved_custom_names()  # Names are only lowercased when the file is loaded again, which this test skips
+saved = saved_custom_names()  # Names are only lowercased when the file is saved and loaded, which this test skips
 check("saves only the changed bone", saved == {'leftHand': ['LeftFinger1Metacarpal']}, str(saved))
 detection_manager.bone_detection_list_custom = {}
 detection_manager.bone_detection_list = detection_manager.combine_lists(detection_manager.bone_detection_list_unmodified, {})

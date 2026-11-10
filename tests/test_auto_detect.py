@@ -2,15 +2,19 @@
 # - Without custom names, Newton gets the mapping saved in Newton Static.blend and MPFB's game engine rig
 #   gets the mapping below, both made with the detection before custom names were matched first.
 # - Custom names win over default matches: with the custom name spine -> Hips, spine gets Hips,
-#   even though hip comes earlier and matches Hips by default.
+#   even though hip comes earlier and matches Hips by default. Also when the custom names file writes it HIPS.
+# - A capitalised custom shapekey name in the custom names file wins over a default match too.
 # Uses its own custom name lists, so the user's saved custom names don't affect it. Exits with code 1 on failure.
 #
 # Run from the repo root in background Blender:
 #   blender -b --factory-startup --python-exit-code 1 --python tests/test_auto_detect.py -- .
 import bpy
 import importlib.util
+import json
+import os
 import pathlib
 import sys
+import tempfile
 
 addon_dir = pathlib.Path(sys.argv[sys.argv.index("--") + 1]).resolve()
 
@@ -127,6 +131,27 @@ others = [key for key, bone in got.items() if bone == 'Hips' and key not in ('sp
 check("no other key gets Hips", not others, str(others))
 changed = {key for key in diff(got, newton_saved)} - {'hip', 'spine', 'chest'}
 check("keys other than hip, spine and chest keep their default bones", not changed, str({k: (got[k], newton_saved[k]) for k in changed}))
+
+# --- Capitals in a hand-edited custom names file: still matched first ---
+print("With the custom names spine -> HIPS and eyeBlinkLeft -> MYBLINK in the custom names file:")
+with tempfile.TemporaryDirectory() as tmp_dir:
+    file_path = os.path.join(tmp_dir, 'custom_bone_list.json')
+    with open(file_path, 'w', encoding='utf8') as file:
+        json.dump({'rokoko_custom_names': True, 'version': 1, 'bones': {'spine': ['HIPS']}, 'shapes': {'eyeBlinkLeft': ['MYBLINK']}}, file)
+    custom_bones, custom_shapes = rsl.core.custom_schemes_manager.load_custom_lists_from_file(file_path=file_path)
+set_custom_names(custom_bones)
+got = auto_detect(newton)
+check("spine gets Hips", got['spine'] == 'Hips', f"spine: '{got['spine']}'")
+
+# A mesh whose default match eyeBlinkLeft comes before the custom MyBlink, so MyBlink only wins as a custom name
+detection_manager.shape_detection_list_custom = custom_shapes
+detection_manager.shape_detection_list = detection_manager.combine_lists(detection_manager.shape_detection_list_unmodified, custom_shapes)
+face = bpy.data.objects.new("Face", bpy.data.meshes.new("Face"))
+bpy.context.scene.collection.objects.link(face)
+for shape_name in ('Basis', 'eyeBlinkLeft', 'MyBlink'):
+    face.shape_key_add(name=shape_name)
+got_shape = detection_manager.detect_shape(face, 'eyeBlinkLeft')
+check("eyeBlinkLeft gets MyBlink", got_shape == 'MyBlink', f"eyeBlinkLeft: '{got_shape}'")
 
 failures = results.count(False)
 print(f"\nRESULT: {'FAILED' if failures else 'PASSED'} ({failures} of {len(results)} checks failed)")
