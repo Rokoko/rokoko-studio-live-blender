@@ -1,5 +1,5 @@
 # Reproduction test for Add Example Actor deleting user collections.
-# Checks that collections without users (and with only a fake user) are left untouched,
+# Checks that the operator refuses to run while the receiver is running, that collections without users (and with only a fake user) are left untouched,
 # and that the example actor is still added correctly. Exits with code 1 on failure.
 #
 # Run from the repo root in background Blender:
@@ -26,6 +26,24 @@ def check(cond, msg):
     print(("PASS  " if cond else "FAIL  ") + msg)
     if not cond:
         failures.append(msg)
+
+
+# 0. While the receiver is running, the operator must refuse and import nothing
+receiver = rsl.operators.receiver
+receiver.receiver_enabled = True
+objects_before_guard = len(bpy.data.objects)
+try:
+    guard_result = bpy.ops.rsl.add_example_actor()
+    guard_error = ''
+except RuntimeError as e:  # An operator that reports an error raises when called from Python
+    guard_result = {'CANCELLED'}
+    guard_error = str(e)
+receiver.receiver_enabled = False
+print(f"\nWith receiver running: {guard_result} {guard_error.strip()}")
+check(guard_result == {'CANCELLED'} and 'Stop the receiver first' in guard_error,
+      "Add Example Actor is refused with 'Stop the receiver first' while the receiver runs")
+check(len(bpy.data.objects) == objects_before_guard and not bpy.data.collections.get("Rokoko Streaming Example"),
+      "Nothing was imported while the receiver runs")
 
 
 def make_collection(name):

@@ -231,6 +231,11 @@ class AddExampleActor(bpy.types.Operator):
         return bpy.app.version >= (4, 2, 0)
 
     def execute(self, context):
+        # Importing while the stream sets bone matrices can crash Blender
+        if receiver.receiver_enabled:
+            self.report({'ERROR'}, 'Stop the receiver first. Adding the example actor while it runs can crash Blender.')
+            return {'CANCELLED'}
+
         utils.import_blend_file(utils.NEWTON_BLEND_FILE, False, "Rokoko Streaming Example")
 
         self.report({'INFO'}, 'Added example actor')
