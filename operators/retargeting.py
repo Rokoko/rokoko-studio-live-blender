@@ -504,7 +504,9 @@ class RetargetAnimation(bpy.types.Operator):
             index = 0
             for action in actions_all:
                 fcurves_tmp = utils.get_fcurves_from_action(action)
-                fcruve_to_add = fcurves_tmp.find(data_path=fcurve.data_path, index=fcurve.array_index)  # TODO: Find can cause issues
+                fcruve_to_add = fcurves_tmp.find(data_path=fcurve.data_path, index=fcurve.array_index)
+                if fcruve_to_add is None:  # This part has no curve for it. key_counts only counted the existing ones
+                    continue
 
                 for kp in fcruve_to_add.keyframe_points:
                     keyframe_points[index].co.x = kp.co.x
@@ -541,5 +543,4 @@ class RetargetAnimation(bpy.types.Operator):
         wm.progress_end()
 
         # Set the action slot sub action
-        if hasattr(armature_target.animation_data, "action_slot"):
-            armature_target.animation_data.action_slot = armature_target.animation_data.action_suitable_slots[0]
+        utils.assign_action_slot(armature_target)
