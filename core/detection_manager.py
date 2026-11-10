@@ -296,6 +296,40 @@ def detect_bone(obj, bone_name_key, bone_name_source=None, exclude=()):
     return found_bone_name
 
 
+def detect_bones(obj, bone_name_keys, bone_name_sources=None) -> {str: str}:
+    """
+    Auto Detect: finds a bone of the armature for each key. The user's custom names are matched first, then the default names.
+    A bone is never assigned to two keys, except that spine and chest may share one, since they share a name list on purpose.
+    :param obj: The armature to search in
+    :param bone_name_keys: The keys to find bones for, in the order they get detected
+    :param bone_name_sources: Optional {key: source bone name} for retargeting, passed on to detect_bone
+    :return: A dictionary with the key as key and the found bone name as value, only for keys where a bone was found
+    """
+    if bone_name_sources is None:
+        bone_name_sources = {}
+    found = {}
+
+    def exclude(bone_name_key):
+        # Skip bones that are already assigned to another key
+        other_key = {'spine': 'chest', 'chest': 'spine'}.get(bone_name_key)
+        return set(found.values()) - {found.get(other_key)}
+
+    # Custom names first, so a default match for an earlier key can't take a bone that the user mapped to a later key
+    for bone_name_key in bone_name_keys:
+        bone_name = detect_custom_bone(obj, bone_name_key, exclude=exclude(bone_name_key))
+        if bone_name:
+            found[bone_name_key] = bone_name
+
+    # Then default detection for the remaining keys
+    for bone_name_key in bone_name_keys:
+        if bone_name_key not in found:
+            bone_name = detect_bone(obj, bone_name_key, bone_name_source=bone_name_sources.get(bone_name_key), exclude=exclude(bone_name_key))
+            if bone_name:
+                found[bone_name_key] = bone_name
+
+    return found
+
+
 def detect_retarget_bones() -> {str: (str, str)}:
     """
     Detects all matching bones in the target and source armatures
@@ -324,6 +358,7 @@ def detect_retarget_bones() -> {str: (str, str)}:
     spines_source = []
     spines_target = []
     found_main_bones = []
+    bone_name_sources = {}  # The main bone names to detect in the target armature, with their source bone
 
     # Then add all the bones to the retargeting dictionary
     for bone_name in bone_list_animated:
@@ -365,11 +400,13 @@ def detect_retarget_bones() -> {str: (str, str)}:
         if custom_main_bone and standardize_bone_name(main_bone_name.replace('custom_bone_', '')) in bone_detection_list['spine']:
             spines_source.append(bone_name)
 
-        # Go through the target armature and search for bones that fit the main source bone
-        bone_item_target = detect_bone(armature_target, main_bone_name, bone_name_source=bone_item_source)
+        # Remember the main bone, its target bone gets detected below
+        bone_name_sources[main_bone_name] = bone_item_source
 
-        # Add the bone to the retargeting list again
-        retargeting_dict[bone_item_source] = (bone_item_target, main_bone_name)
+    # Search the target armature for bones that fit the main source bones, without using a target bone twice
+    found_targets = detect_bones(armature_target, list(bone_name_sources.keys()), bone_name_sources=bone_name_sources)
+    for main_bone_name, bone_item_source in bone_name_sources.items():
+        retargeting_dict[bone_item_source] = (found_targets.get(main_bone_name, ''), main_bone_name)
 
     # Add target spines to list for later fixing
     for bone in armature_target.pose.bones:
@@ -391,8 +428,10 @@ def detect_retarget_bones() -> {str: (str, str)}:
 
         spine_dict[spines_source[0]] = spines_target[0]
 
-        # Fill in fixed spines into unfilled matches
+        # Fill in fixed spines into unfilled matches, unless the target bone is already used
         for spine_source, spine_target in spine_dict.items():
+            if spine_target in found_targets.values():
+                continue
             for bone_source, bone_values in retargeting_dict.items():
                 bone_target, bone_key = bone_values
                 if bone_source == spine_source and not bone_target:

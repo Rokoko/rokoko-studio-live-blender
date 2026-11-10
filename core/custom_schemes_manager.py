@@ -5,6 +5,7 @@ import pathlib
 
 from . import retargeting
 from . import detection_manager
+from . import animation_lists
 
 main_dir = str(pathlib.Path(os.path.dirname(__file__)).parent.resolve())
 resources_dir = os.path.join(main_dir, "resources")
@@ -74,7 +75,8 @@ def save_live_data_bone_to_list(bone_key, bone_name, bone_name_previous):
         # Update the bone detection list in order to correctly figure out if the new selected bone needs to be saved
         detection_manager.bone_detection_list = detection_manager.combine_lists(detection_manager.bone_detection_list_unmodified, detection_manager.bone_detection_list_custom)
 
-        bone_name_detected_new = detection_manager.detect_bone(bpy.context.active_object, bone_key)
+        bones_detected = detection_manager.detect_bones(bpy.context.active_object, animation_lists.get_bones().keys())
+        bone_name_detected_new = bones_detected.get(bone_key, '')
         if bone_name_detected_new == bone_name:
             # print('No need to add new bone to save')
             return

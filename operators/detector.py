@@ -35,22 +35,7 @@ class DetectActorBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         bone_name_keys = animation_lists.get_bones().keys()
-        found = {}
-
-        def exclude(bone_name_key):
-            # Skip bones that are already assigned to another key.
-            # Spine and chest share a name list on purpose, so they may get the same bone
-            other_key = {'spine': 'chest', 'chest': 'spine'}.get(bone_name_key)
-            return set(found.values()) - {found.get(other_key)}
-
-        # Custom names first, so a default match for an earlier key can't take a bone that the user mapped to a later key.
-        # Then default detection for the remaining keys
-        for detect in (detection_manager.detect_custom_bone, detection_manager.detect_bone):
-            for bone_name_key in bone_name_keys:
-                if bone_name_key not in found:
-                    bone_name = detect(obj, bone_name_key, exclude=exclude(bone_name_key))
-                    if bone_name:
-                        found[bone_name_key] = bone_name
+        found = detection_manager.detect_bones(obj, bone_name_keys)
 
         for bone_name_key in bone_name_keys:
             setattr(obj, 'rsl_actor_' + bone_name_key, found.get(bone_name_key, ''))
@@ -95,13 +80,17 @@ class SaveCustomBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
 
+        # Compare against what Auto Detect gives, before anything gets saved
+        bone_name_keys = animation_lists.get_bones().keys()
+        bones_detected = detection_manager.detect_bones(obj, bone_name_keys)
+
         # Go over all actor bones and see if the user changed the detected bone. If yes, save that new bone
-        for bone_name_key in animation_lists.get_bones().keys():
+        for bone_name_key in bone_name_keys:
             bone_name_selected = getattr(obj, 'rsl_actor_' + bone_name_key)
             if not bone_name_selected:
                 continue  # TODO idea: maybe save these unselected choices as well
 
-            bone_name_detected = detection_manager.detect_bone(obj, bone_name_key)
+            bone_name_detected = bones_detected.get(bone_name_key, '')
 
             if bone_name_detected == bone_name_selected:  # This means that the user changed nothing, so don't save this
                 continue
