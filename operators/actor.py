@@ -7,9 +7,10 @@ from ..core import utils
 
 
 def is_pose_streamed(obj):
-    # The stream only animates armatures with T-Pose data, so only then does it overwrite the pose
+    # The stream only animates armatures that are attached to an actor and have T-Pose data, so only then does it overwrite the pose
+    attached = obj.rsl_animations_actors not in ('', 'None')
     custom_data = obj.get('CUSTOM')
-    return receiver.receiver_enabled and bool(custom_data and custom_data.get('rsl_tpose_bones'))
+    return receiver.receiver_enabled and attached and bool(custom_data and custom_data.get('rsl_tpose_bones'))
 
 
 class InitTPose(bpy.types.Operator):
