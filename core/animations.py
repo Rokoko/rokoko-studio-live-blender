@@ -156,7 +156,8 @@ def animate_actor(obj):
                 -rot.z,
             )) @ Quaternion((0, 0, 0, 1))
 
-        mat_obj = obj.matrix_world.decompose()[1].to_matrix().to_4x4()
+        obj_rot = obj.matrix_world.decompose()[1]
+        mat_obj = obj_rot.to_matrix().to_4x4()
         mat_default = Matrix((
             (1, 0, 0, 0),
             (0, 0, -1, 0),
@@ -164,7 +165,6 @@ def animate_actor(obj):
             (0, 0, 0, 1)
         ))
         # Leave out the object's turn around the world Z axis, so the streamed motion turns with the character
-        obj_rot = obj.matrix_world.decompose()[1]
         obj_turn = Quaternion((obj_rot.w, 0, 0, obj_rot.z)).normalized()
         rot_transform = (mat_default.inverted() @ (obj_turn.inverted() @ obj_rot).to_matrix().to_4x4()).to_quaternion()
 
@@ -211,10 +211,11 @@ def animate_actor(obj):
 
             tpose_hip_location_y = bone_tpose_data['location_object'][axis] * multiplier
 
+            scale = tpose_hip_location_y / studio_hip_height
             location_new = pos_hips_studio_to_blender(
-                actor_bone_data['position']['x'] * tpose_hip_location_y / studio_hip_height,
-                actor_bone_data['position']['y'] * tpose_hip_location_y / studio_hip_height - tpose_hip_location_y,
-                actor_bone_data['position']['z'] * tpose_hip_location_y / studio_hip_height)
+                actor_bone_data['position']['x'] * scale,
+                actor_bone_data['position']['y'] * scale - tpose_hip_location_y,
+                actor_bone_data['position']['z'] * scale)
 
             # Same space conversion as the rotations, then into the hip bone's own rest axes
             location_new = bone_data.matrix_local.to_quaternion().inverted() @ (rot_transform.inverted() @ Vector(location_new))

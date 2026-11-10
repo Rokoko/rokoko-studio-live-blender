@@ -15,7 +15,6 @@ from mathutils import Quaternion
 
 args = sys.argv[sys.argv.index("--") + 1:]
 addon_dir = pathlib.Path(args[0]).resolve()
-newton_blend = addon_dir / "resources" / "models" / "Newton Static.blend"
 
 # Import the add-on as a package (its folder name has dashes) and register only what the test needs
 spec = importlib.util.spec_from_file_location("rsl_under_test", addon_dir / "__init__.py",
@@ -23,6 +22,7 @@ spec = importlib.util.spec_from_file_location("rsl_under_test", addon_dir / "__i
 rsl = importlib.util.module_from_spec(spec)
 sys.modules["rsl_under_test"] = rsl
 spec.loader.exec_module(rsl)
+newton_blend = rsl.core.utils.NEWTON_BLEND_FILE
 bpy.utils.register_class(rsl.panels.retargeting.BoneListItem)  # Needed by a scene property
 rsl.properties.register()
 rsl.core.detection_manager.load_detection_lists()

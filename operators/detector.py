@@ -43,18 +43,14 @@ class DetectActorBones(bpy.types.Operator):
             other_key = {'spine': 'chest', 'chest': 'spine'}.get(bone_name_key)
             return set(found.values()) - {found.get(other_key)}
 
-        # Custom names first, so a default match for an earlier key can't take a bone that the user mapped to a later key
-        for bone_name_key in bone_name_keys:
-            bone_name = detection_manager.detect_custom_bone(obj, bone_name_key, exclude=exclude(bone_name_key))
-            if bone_name:
-                found[bone_name_key] = bone_name
-
+        # Custom names first, so a default match for an earlier key can't take a bone that the user mapped to a later key.
         # Then default detection for the remaining keys
-        for bone_name_key in bone_name_keys:
-            if bone_name_key not in found:
-                bone_name = detection_manager.detect_bone(obj, bone_name_key, exclude=exclude(bone_name_key))
-                if bone_name:
-                    found[bone_name_key] = bone_name
+        for detect in (detection_manager.detect_custom_bone, detection_manager.detect_bone):
+            for bone_name_key in bone_name_keys:
+                if bone_name_key not in found:
+                    bone_name = detect(obj, bone_name_key, exclude=exclude(bone_name_key))
+                    if bone_name:
+                        found[bone_name_key] = bone_name
 
         for bone_name_key in bone_name_keys:
             setattr(obj, 'rsl_actor_' + bone_name_key, found.get(bone_name_key, ''))

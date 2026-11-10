@@ -1,4 +1,3 @@
-
 import asyncio
 import bpy
 import math
@@ -8,13 +7,9 @@ import sys
 from bpy_extras import anim_utils
 from contextlib import suppress
 from mathutils import Vector, Matrix
-from typing import Any
 
 
-MAIN_DIR = pathlib.Path(__file__).parent.parent
-RECOURSES_DIR = MAIN_DIR / "resources"
-MODELS_DIR = RECOURSES_DIR / "models"
-NEWTON_BLEND_FILE = MODELS_DIR / "Newton Static.blend"
+NEWTON_BLEND_FILE = pathlib.Path(__file__).parent.parent / "resources" / "models" / "Newton Static.blend"
 
 
 def ui_refresh_properties():
@@ -102,7 +97,7 @@ class NoFCurves(list):
         return None
 
 
-def get_fcurves_from_action(action: bpy.types.Action, obj: bpy.types.Object = None) -> Any:
+def get_fcurves_from_action(action: bpy.types.Action, obj: bpy.types.Object = None):
     """Returns the F-curves in the action that animate the given object.
     :param action: The action to search in
     :param obj: The object the action is assigned to. Only needed for Blender 4.4.0 and newer, where an action can
@@ -136,65 +131,36 @@ def assign_action_slot(obj: bpy.types.Object):
         anim_data.action_slot = anim_data.action_suitable_slots[0]
 
 
-def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_index: int = -1, slot_identifier: int = 0, action_group: str = "") -> bpy.types.FCurve:
+def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_index: int = -1, action_group: str = "") -> bpy.types.FCurve:
     """Creates a new F-curve in the action with the given data path and array index.
+    On Blender 5.0 and newer it goes into the action's first slot, which is created if the action has none.
     :param action: The action to create the F-curve in
     :param data_path: The data path of the F-curve
     :param array_index: The array index of the F-curve
-    :param slot_identifier: The slot identifier to create the F-curve in. Only needed for Blender 5.0.0 and newer.
-    :param action_group: The action group to assign the F-curve to. Only needed for Blender 5.0.0 and newer.
+    :param action_group: The action group to assign the F-curve to
     :return: The created F-curve
     """
-    # Blender 4.5 and older (Legacy)
-    if hasattr(action, 'fcurves'):
-        # Note: In 5.0, action.fcurves is removed. hasattr check ensures backward compatibility.
-        fcurves = action.fcurves
-        fcurve = fcurves.new(data_path=data_path, index=array_index, action_group=action_group)
+    if hasattr(action, 'fcurves'):  # Blender 4.5 and older
+        return action.fcurves.new(data_path=data_path, index=array_index, action_group=action_group)
 
-    # Blender 5.0+ (Slotted Actions)
-    else:
-        # 1. Ensure a slot exists
-        if not action.slots:
-            action.slots.new(name="Slot_0", id_type="OBJECT")
-
-        # 2. Get the Slot Object
-        try:
-            action_slot = action.slots[slot_identifier]
-        except IndexError:
-            # Fallback if the requested identifier doesn't exist
-            action_slot = action.slots.new(name=f"Slot_{slot_identifier}", id_type="OBJECT")
-
-        # 3. Ensure the Channelbag exists
-        channelbag = anim_utils.action_ensure_channelbag_for_slot(action, action_slot)
-
-        # 4. Ensure/Create the F-Curve
-        # Note: 'group_name' is the 5.0 parameter for 'action_group'
-        fcurve = channelbag.fcurves.ensure(data_path, index=array_index, group_name=action_group)
-
-    return fcurve
+    # Blender 5.0 and newer: action.fcurves is gone, the curves are in a slot's channelbag
+    action_slot = action.slots[0] if action.slots else action.slots.new(name="Slot_0", id_type="OBJECT")
+    channelbag = anim_utils.action_ensure_channelbag_for_slot(action, action_slot)
+    return channelbag.fcurves.ensure(data_path, index=array_index, group_name=action_group)
 
 
-def import_blend_file(path: pathlib.Path, link: bool, name: str = None, import_types: list = None, link_scene: str = None):
-    if import_types is None:
-        import_types = ["collections"]
+def import_blend_file(path: pathlib.Path, name: str):
+    """Appends all collections of the blend file into a new collection with the given name in the current scene."""
+    # Create new collection and link it to the scene
+    collection_blend = bpy.data.collections.new(name)
+    bpy.context.scene.collection.children.link(collection_blend)
 
-    # Create new collection and link it to the specified scene
-    collection_blend = bpy.data.collections.new(name if name else path.stem)
-    main_collection = bpy.context.scene.collection
-    if link_scene:
-        main_collection = find_layer_collection(name=link_scene).collection
-    main_collection.children.link(collection_blend)
-
-    # Create a list of all objects before the import
-    objs_before_import = [obj for obj in bpy.data.objects]
+    # Remember all objects before the import
+    objs_before_import = set(bpy.data.objects)
 
     # Load and append the collections from the blend file
-    # link=True means that the objects remain in the other blend file and
-    # are only linked to this one. This is much faster than copying the data.
-    with bpy.data.libraries.load(str(path), link=link) as (data_from, data_to):
-        for type_name in import_types:
-            for data in getattr(data_from, type_name):
-                getattr(data_to, type_name).append(data)
+    with bpy.data.libraries.load(str(path)) as (data_from, data_to):
+        data_to.collections = list(data_from.collections)
 
     # Link the loaded top-level collections to their blend collection
     # Only use what was loaded from the file, so existing collections without users are left alone
@@ -213,10 +179,8 @@ def import_blend_file(path: pathlib.Path, link: bool, name: str = None, import_t
         parent = bpy.data.objects.new(path.stem, None)
         collection_blend.objects.link(parent)
 
-        # Set the parent and link it to the blend collection
-        for obj in imported_objs:
-            if not obj.parent:
-                obj.parent = parent
+        for obj in root_objs:
+            obj.parent = parent
 
     # Set the parent object as active
     set_active(parent)
@@ -224,14 +188,11 @@ def import_blend_file(path: pathlib.Path, link: bool, name: str = None, import_t
     # Set the main collection as active
     bpy.context.view_layer.active_layer_collection = find_layer_collection(collection_blend.name)
 
-    # Delete all collection in the parent collection
+    # Move all objects into the blend collection and delete the loaded collections
     for collection in collection_blend.children_recursive:
         for obj in collection.objects:
             collection_blend.objects.link(obj)
-            collection.objects.unlink(obj)
         bpy.data.collections.remove(collection, do_unlink=True)
-
-    return imported_objs
 
 
 def find_layer_collection(name: str, parent_layer_collection=None) -> bpy.types.LayerCollection | None:

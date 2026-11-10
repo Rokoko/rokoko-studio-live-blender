@@ -237,7 +237,7 @@ class AddExampleActor(bpy.types.Operator):
             self.report({'ERROR'}, 'Stop the receiver first. Adding the example actor while it runs can crash Blender.')
             return {'CANCELLED'}
 
-        utils.import_blend_file(utils.NEWTON_BLEND_FILE, False, "Rokoko Streaming Example")
+        utils.import_blend_file(utils.NEWTON_BLEND_FILE, "Rokoko Streaming Example")
 
         self.report({'INFO'}, 'Added example actor')
         return {'FINISHED'}

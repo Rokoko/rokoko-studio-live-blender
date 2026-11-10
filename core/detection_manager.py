@@ -400,4 +400,3 @@ def detect_retarget_bones() -> {str: (str, str)}:
                     break
 
     return retargeting_dict
-
