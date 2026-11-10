@@ -250,6 +250,15 @@ def detect_shape(obj, shape_name_key):
     return found_shape_name
 
 
+def detect_custom_bone(obj, bone_name_key, exclude=()):
+    # Only look for the user's custom bone names, no default detection
+    custom_names = bone_detection_list_custom.get(bone_name_key, [])
+    for bone in obj.pose.bones:
+        if bone.name not in exclude and bone.name.lower() in custom_names:
+            return bone.name
+    return ''
+
+
 def detect_bone(obj, bone_name_key, bone_name_source=None, exclude=()):
     # Go through the target armature and search for bones that fit the main source bone
     found_bone_name = ''

@@ -34,20 +34,30 @@ class DetectActorBones(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
-        assigned_bones = set()
-        spine_bone = ''
+        bone_name_keys = animation_lists.get_bones().keys()
+        found = {}
 
-        for bone_name_key in animation_lists.get_bones().keys():
-            exclude = assigned_bones
-            if bone_name_key == 'chest':  # Spine and chest share a name list on purpose, so chest may get the spine bone
-                exclude = assigned_bones - {spine_bone}
+        def exclude(bone_name_key):
+            # Skip bones that are already assigned to another key.
+            # Spine and chest share a name list on purpose, so they may get the same bone
+            other_key = {'spine': 'chest', 'chest': 'spine'}.get(bone_name_key)
+            return set(found.values()) - {found.get(other_key)}
 
-            bone_name = detection_manager.detect_bone(obj, bone_name_key, exclude=exclude)
-            if bone_name_key == 'spine':
-                spine_bone = bone_name
+        # Custom names first, so a default match for an earlier key can't take a bone that the user mapped to a later key
+        for bone_name_key in bone_name_keys:
+            bone_name = detection_manager.detect_custom_bone(obj, bone_name_key, exclude=exclude(bone_name_key))
             if bone_name:
-                assigned_bones.add(bone_name)
-            setattr(obj, 'rsl_actor_' + bone_name_key, bone_name)
+                found[bone_name_key] = bone_name
+
+        # Then default detection for the remaining keys
+        for bone_name_key in bone_name_keys:
+            if bone_name_key not in found:
+                bone_name = detection_manager.detect_bone(obj, bone_name_key, exclude=exclude(bone_name_key))
+                if bone_name:
+                    found[bone_name_key] = bone_name
+
+        for bone_name_key in bone_name_keys:
+            setattr(obj, 'rsl_actor_' + bone_name_key, found.get(bone_name_key, ''))
 
         return {'FINISHED'}
 
