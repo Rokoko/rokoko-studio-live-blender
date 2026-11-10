@@ -1,5 +1,6 @@
 import bpy
 import copy
+import traceback
 from mathutils import Matrix, Vector
 
 from . import receiver
@@ -237,7 +238,17 @@ class AddExampleActor(bpy.types.Operator):
             self.report({'ERROR'}, 'Stop the receiver first. Adding the example actor while it runs can crash Blender.')
             return {'CANCELLED'}
 
-        utils.import_blend_file(utils.NEWTON_BLEND_FILE, "Rokoko Streaming Example")
+        collections_before = set(bpy.data.collections)
+        try:
+            utils.import_blend_file(utils.NEWTON_BLEND_FILE, "Rokoko Streaming Example")
+        except Exception as e:  # For example a missing or broken example file
+            traceback.print_exc()  # Keep the full error in the system console, so a real bug isn't hidden
+            # Remove the empty collection the import created before it failed
+            for collection in set(bpy.data.collections) - collections_before:
+                if not collection.objects and not collection.children:
+                    bpy.data.collections.remove(collection)
+            self.report({'ERROR'}, f'Could not load the example actor: {e}')
+            return {'CANCELLED'}
 
         self.report({'INFO'}, 'Added example actor')
         return {'FINISHED'}

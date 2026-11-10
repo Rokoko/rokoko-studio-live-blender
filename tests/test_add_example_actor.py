@@ -1,6 +1,7 @@
 # Reproduction test for Add Example Actor deleting user collections.
-# Checks that the operator refuses to run while the receiver is running, that collections without users (and with only a fake user) are left untouched,
-# and that the example actor is still added correctly. Exits with code 1 on failure.
+# Checks that the operator refuses to run while the receiver is running, that a failing load reports an error and leaves no empty collection,
+# that collections without users (and with only a fake user) are left untouched, and that the example actor is still added correctly.
+# Exits with code 1 on failure.
 #
 # Run from the repo root in background Blender:
 #   blender -b --factory-startup --python-exit-code 1 --python tests/test_add_example_actor.py -- .
@@ -44,6 +45,23 @@ check(guard_result == {'CANCELLED'} and 'Stop the receiver first' in guard_error
       "Add Example Actor is refused with 'Stop the receiver first' while the receiver runs")
 check(len(bpy.data.objects) == objects_before_guard and not bpy.data.collections.get("Rokoko Streaming Example"),
       "Nothing was imported while the receiver runs")
+
+# 0b. If the example file can't be loaded, the operator reports an error and leaves no empty collection behind
+example_file = rsl.core.utils.NEWTON_BLEND_FILE
+rsl.core.utils.NEWTON_BLEND_FILE = example_file.with_name("missing example file.blend")
+collections_before_fail = set(bpy.data.collections)
+try:
+    fail_result = bpy.ops.rsl.add_example_actor()
+    fail_error = ''
+except RuntimeError as e:
+    fail_result = {'CANCELLED'}
+    fail_error = str(e)
+rsl.core.utils.NEWTON_BLEND_FILE = example_file
+print(f"\nWith a missing example file: {fail_result} {fail_error.strip()}")
+check(fail_result == {'CANCELLED'} and 'Could not load the example actor' in fail_error,
+      "A failing load is reported with 'Could not load the example actor'")
+new_after_fail = set(bpy.data.collections) - collections_before_fail
+check(not new_after_fail, f"No collection is left behind after a failing load (new: {sorted(c.name for c in new_after_fail)})")
 
 
 def make_collection(name):
