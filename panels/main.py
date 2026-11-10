@@ -67,6 +67,8 @@ class ReceiverPanel(ToolPanel, bpy.types.Panel):
 
         row = layout.row(align=True)
         row.operator(actor.AddExampleActor.bl_idname, icon='ARMATURE_DATA')
+        if not actor.AddExampleActor.poll(context):
+            layout.label(text='Example Actor needs Blender 4.2+', icon='INFO')
 
         row = layout.row(align=True)
         row.scale_y = 1.3

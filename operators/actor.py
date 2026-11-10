@@ -225,6 +225,11 @@ class AddExampleActor(bpy.types.Operator):
     bl_description = "Adds a fully configured and working example actor to instantly start livestreaming from Rokoko Studio"
     bl_options = {'REGISTER', 'UNDO'}
 
+    @classmethod
+    def poll(cls, context):
+        # The example file is saved in Blender 4.2, older versions can't open it reliably
+        return bpy.app.version >= (4, 2, 0)
+
     def execute(self, context):
         utils.import_blend_file(utils.NEWTON_BLEND_FILE, False, "Rokoko Streaming Example")
 

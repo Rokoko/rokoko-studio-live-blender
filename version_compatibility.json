@@ -20,7 +20,7 @@
     "maximum_blender": "4.5.99"
   },
   "1.4.4": {
-    "minimum_blender": "2.80.75",
+    "minimum_blender": "3.3.0",
     "maximum_blender": "5.2.99"
   }
 }
