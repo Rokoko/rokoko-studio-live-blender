@@ -10,6 +10,11 @@ import importlib.util
 import pathlib
 import sys
 
+# The example file only opens from Blender 4.2 on
+if bpy.app.version < (4, 2, 0):
+    print(f"Blender {bpy.app.version_string}: skipped: needs Blender 4.2+")
+    sys.exit(0)
+
 addon_dir = pathlib.Path(sys.argv[sys.argv.index("--") + 1])
 
 # Import the add-on as a package (its folder name has dashes) and register only the operator under test

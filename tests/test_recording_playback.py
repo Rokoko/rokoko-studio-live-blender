@@ -13,6 +13,11 @@ import pathlib
 import sys
 from mathutils import Quaternion
 
+# The example file only opens from Blender 4.2 on
+if bpy.app.version < (4, 2, 0):
+    print(f"Blender {bpy.app.version_string}: skipped: needs Blender 4.2+")
+    sys.exit(0)
+
 args = sys.argv[sys.argv.index("--") + 1:]
 addon_dir = pathlib.Path(args[0]).resolve()
 
