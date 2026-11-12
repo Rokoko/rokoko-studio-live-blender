@@ -1,9 +1,15 @@
 import asyncio
-import sys
 import bpy
 import math
-from mathutils import Vector, Matrix
+import pathlib
+import sys
+
+from bpy_extras import anim_utils
 from contextlib import suppress
+from mathutils import Vector, Matrix
+
+
+NEWTON_BLEND_FILE = pathlib.Path(__file__).parent.parent / "resources" / "models" / "Newton Static.blend"
 
 
 def ui_refresh_properties():
@@ -83,3 +89,122 @@ async def cancel_gen(agen):
     with suppress(Exception):
         await task
     await agen.aclose()
+
+
+class NoFCurves(list):
+    """Stands in for the F-curves of an action that has none for the object. Callers can loop over it and call find()."""
+    def find(self, data_path, index=0):
+        return None
+
+
+def get_fcurves_from_action(action: bpy.types.Action, obj: bpy.types.Object = None):
+    """Returns the F-curves in the action that animate the given object.
+    :param action: The action to search in
+    :param obj: The object the action is assigned to. Only needed for Blender 4.4.0 and newer, where an action can
+                hold the curves of several objects in separate slots. The slot assigned to the object is used.
+                Without an object, or if the object has no slot assigned, the action's only slot is used.
+    :return: The F-curve collection, or an empty NoFCurves if the action has no curves for the object
+    """
+    if not hasattr(action, 'slots'):  # Blender 4.3 and older
+        return action.fcurves
+
+    # Blender 4.4.0 and newer. Not action.fcurves, which only exists until 4.5 and only reads the first slot
+    action_slot = None
+    if obj and obj.animation_data and obj.animation_data.action == action:
+        action_slot = obj.animation_data.action_slot
+    if not action_slot and len(action.slots) == 1:
+        action_slot = action.slots[0]
+
+    # Read the channelbag through the layer and strip, since anim_utils.action_get_channelbag_for_slot only exists from 5.0 on
+    channelbag = None
+    if action_slot and action.layers and action.layers[0].strips:
+        channelbag = action.layers[0].strips[0].channelbag(action_slot)
+    return channelbag.fcurves if channelbag else NoFCurves()
+
+
+def assign_action_slot(obj: bpy.types.Object):
+    """From Blender 4.4 on, an object only plays its action if a slot of that action is assigned to it.
+    Assigns the first fitting slot if the object has none assigned yet. Call this after the action's F-curves are created.
+    """
+    anim_data = obj.animation_data
+    if hasattr(anim_data, 'action_slot') and not anim_data.action_slot and anim_data.action_suitable_slots:
+        anim_data.action_slot = anim_data.action_suitable_slots[0]
+
+
+def create_fcurve_in_action(action: bpy.types.Action, data_path: str, array_index: int = -1, action_group: str = "") -> bpy.types.FCurve:
+    """Creates a new F-curve in the action with the given data path and array index.
+    On Blender 5.0 and newer it goes into the action's first slot, which is created if the action has none.
+    :param action: The action to create the F-curve in
+    :param data_path: The data path of the F-curve
+    :param array_index: The array index of the F-curve
+    :param action_group: The action group to assign the F-curve to
+    :return: The created F-curve
+    """
+    if hasattr(action, 'fcurves'):  # Blender 4.5 and older
+        return action.fcurves.new(data_path=data_path, index=array_index, action_group=action_group)
+
+    # Blender 5.0 and newer: action.fcurves is gone, the curves are in a slot's channelbag
+    action_slot = action.slots[0] if action.slots else action.slots.new(name="Slot_0", id_type="OBJECT")
+    channelbag = anim_utils.action_ensure_channelbag_for_slot(action, action_slot)
+    return channelbag.fcurves.ensure(data_path, index=array_index, group_name=action_group)
+
+
+def import_blend_file(path: pathlib.Path, name: str):
+    """Appends all collections of the blend file into a new collection with the given name in the current scene."""
+    # Create new collection and link it to the scene
+    collection_blend = bpy.data.collections.new(name)
+    bpy.context.scene.collection.children.link(collection_blend)
+
+    # Remember all objects before the import
+    objs_before_import = set(bpy.data.objects)
+
+    # Load and append the collections from the blend file
+    with bpy.data.libraries.load(str(path)) as (data_from, data_to):
+        data_to.collections = list(data_from.collections)
+
+    # Link the loaded top-level collections to their blend collection
+    # Only use what was loaded from the file, so existing collections without users are left alone
+    for collection in data_to.collections:
+        if collection is not None and collection.users < 1:
+            collection_blend.children.link(collection)
+
+    # Get all objects that were imported compared to the objects that existed beforehand
+    imported_objs = [obj for obj in bpy.data.objects if obj not in objs_before_import]
+    root_objs = [obj for obj in imported_objs if not obj.parent]
+
+    if len(root_objs) == 1:
+        parent = root_objs[0]
+    else:
+        # Create a parent for all imported objects
+        parent = bpy.data.objects.new(path.stem, None)
+        collection_blend.objects.link(parent)
+
+        for obj in root_objs:
+            obj.parent = parent
+
+    # Set the parent object as active
+    set_active(parent)
+
+    # Set the main collection as active
+    bpy.context.view_layer.active_layer_collection = find_layer_collection(collection_blend.name)
+
+    # Move all objects into the blend collection and delete the loaded collections
+    for collection in collection_blend.children_recursive:
+        for obj in collection.objects:
+            collection_blend.objects.link(obj)
+        bpy.data.collections.remove(collection, do_unlink=True)
+
+
+def find_layer_collection(name: str, parent_layer_collection=None) -> bpy.types.LayerCollection | None:
+    """ Recursively traverse layer_collection for a particular name """
+    if parent_layer_collection is None:
+        parent_layer_collection = bpy.context.view_layer.layer_collection
+
+    if parent_layer_collection.name == name:
+        return parent_layer_collection
+
+    for layer in parent_layer_collection.children:
+        found = find_layer_collection(name, layer)
+        if found:
+            return found
+    return None

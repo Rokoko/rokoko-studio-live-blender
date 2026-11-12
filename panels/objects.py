@@ -1,7 +1,7 @@
 import bpy
 
 from ..core import animations, animation_lists
-from ..operators.actor import InitTPose, ResetTPose
+from ..operators.actor import InitTPose, ResetTPose, StraightenArms
 from ..operators import detector
 
 
@@ -107,6 +107,12 @@ class ObjectsPanel(bpy.types.Panel):
             row = split.split(factor=0.16, align=True)
             row.label(text='Bones:')
             row.operator(detector.DetectActorBones.bl_idname)
+            row.operator(StraightenArms.bl_idname)
+
+            # Second row, with an empty label so the buttons line up with the ones above
+            split = layout.row(align=True)
+            row = split.split(factor=0.16, align=True)
+            row.label(text='')
             row.operator(InitTPose.bl_idname)
             row.operator(ResetTPose.bl_idname)
 

@@ -1,8 +1,8 @@
 import bpy
 import copy
-from math import radians, degrees
 
 from collections import OrderedDict
+from . import utils
 
 recorded_data = {}
 recorded_timestamps = OrderedDict()
@@ -72,7 +72,6 @@ def process_actor_recording(obj_name, data):
     # Handle recorded data
     data_paths = OrderedDict()
     prev_rotations = {}
-    rotation_modifiers = {}
     for item in data:
         bone_name = item["bone_name"]
 
@@ -88,30 +87,11 @@ def process_actor_recording(obj_name, data):
             if not data_paths.get(data_path):
                 data_paths[data_path] = []
 
-            # Load previous rotation from dict
+            # Of the Euler sets that give this rotation (two, plus 360 degree turns of each axis),
+            # use the one closest to the previous key, so the curves never spin between two keys
             prev_rot = prev_rotations.get(bone_name)
-            if not prev_rot:
-                prev_rot = rotation
-
-            # Fix each rotation axis separately
-            for i in [0, 1, 2]:
-                # Load rotation modifier of the bone rotation axis
-                # The rotation modifier is used to cut down on processing time. It gets set when a axis had been normalized
-                # and then is used to apply the same fix to subsequent rotations. This prevents having to normalize subsequent rotations
-                rotation_mod = rotation_modifiers.get((bone_name, i))
-                if not rotation_mod:
-                    rotation_mod = 0
-
-                # Get axis rotation in degrees, since they are stored as radians. Also add the rotation modifier to the rotation
-                axis = degrees(rotation[i]) + rotation_mod
-                axis_prev = degrees(prev_rot[i])
-
-                # Normalize the rotation
-                axis_normalized, rotation_mod_new = normalize_rotation(axis, axis_prev)
-
-                # Save the normalized axis to the rotation and save the rotation modifier
-                rotation[i] = radians(axis_normalized)
-                rotation_modifiers[bone_name, i] = rotation_mod + rotation_mod_new
+            if prev_rot is not None:
+                rotation = rotation.to_matrix().to_euler(rotation.order, prev_rot)
 
             # Save the rotation to the data paths and save the current rotation as the previous rotation
             data_paths[data_path].append((item['timestamp'], rotation))
@@ -132,7 +112,7 @@ def process_actor_recording(obj_name, data):
         index_len = len(values[0])
 
         for axis_i in range(index_len):
-            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            curve = utils.create_fcurve_in_action(action, data_path, axis_i)
             keyframe_points = curve.keyframe_points
             keyframe_points.add(frame_count)
 
@@ -143,6 +123,8 @@ def process_actor_recording(obj_name, data):
                     recorded_timestamps[timestamp],
                     transform)
                 keyframe_points[frame_i].interpolation = 'LINEAR'
+
+    utils.assign_action_slot(armature)
 
 
 def process_object_recording(obj_name, data):
@@ -179,7 +161,7 @@ def process_object_recording(obj_name, data):
         index_len = 3 if data_path.endswith('location') else 4
 
         for axis_i in range(index_len):
-            curve = action.fcurves.new(data_path=data_path, index=axis_i)
+            curve = utils.create_fcurve_in_action(action, data_path, axis_i)
             keyframe_points = curve.keyframe_points
             keyframe_points.add(frame_count)
 
@@ -190,6 +172,8 @@ def process_object_recording(obj_name, data):
                     recorded_timestamps[timestamp],
                     transform[axis_i])
                 keyframe_points[frame_i].interpolation = 'LINEAR'
+
+    utils.assign_action_slot(obj)
 
 
 def process_face_recording(obj_name, data):
@@ -216,7 +200,7 @@ def process_face_recording(obj_name, data):
         # print(data_path)
         frame_count = len(values)
 
-        curve = action.fcurves.new(data_path=data_path, index=0)
+        curve = utils.create_fcurve_in_action(action, data_path, 0)
         keyframe_points = curve.keyframe_points
         keyframe_points.add(frame_count)
 
@@ -228,24 +212,7 @@ def process_face_recording(obj_name, data):
                 shapekey_value)
             keyframe_points[frame_i].interpolation = 'LINEAR'
 
-
-def normalize_rotation(axis, axis_prev):
-    rotation_mod = 0
-    if abs(axis - axis_prev) > 180:
-        desired_axis = axis
-        if axis_prev > axis:
-            while abs(desired_axis - axis_prev) > 180 and axis_prev > axis:
-                print(axis_prev, axis, desired_axis)
-                desired_axis += 360
-                rotation_mod += 360
-            axis = desired_axis
-        else:
-            while abs(desired_axis - axis_prev) > 180 and axis_prev < axis:
-                print(axis_prev, axis, desired_axis)
-                desired_axis -= 360
-                rotation_mod -= 360
-            axis = desired_axis
-    return axis, rotation_mod
+    utils.assign_action_slot(mesh)
 
 
 def convert_timestamps_to_keyframes():

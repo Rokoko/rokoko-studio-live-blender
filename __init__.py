@@ -5,8 +5,8 @@ bl_info = {
     'category': 'Animation',
     'location': 'View 3D > Tool Shelf > Rokoko',
     'description': 'Stream your Rokoko Studio animations directly into Blender',
-    'version': (1, 4, 3),
-    'blender': (2, 80, 0),
+    'version': (1, 4, 4),
+    'blender': (3, 3, 0),
     'wiki_url': 'https://github.com/Rokoko/rokoko-studio-live-blender#readme',
 }
 
@@ -44,17 +44,17 @@ else:
     importlib.reload(properties)
 
 
-absolute_min_ver = (2, 80, 75)
+absolute_min_ver = (3, 3, 0)
 soft_min_ver = (4, 4, 0)
 
 
 def check_unsupported_blender_versions():
-    # Don't allow Blender versions older than 2.80
+    # Don't allow Blender versions older than 3.3
     if bpy.app.version < absolute_min_ver:
         unregister()
         sys.tracebacklimit = 0
-        raise ImportError('\n\nBlender versions older than 2.80 are not supported by Rokoko Studio Live. '
-                          '\nPlease use Blender 2.80 or later.'
+        raise ImportError('\n\nBlender versions older than 3.3 are not supported by Rokoko Studio Live. '
+                          '\nPlease use Blender 3.3 or later.'
                           '\n')
 
 
@@ -91,7 +91,9 @@ classes_always_enable = [  # These non-panels will always be loaded, all non-pan
     operators.detector.ClearCustomShapes,
     operators.actor.InitTPose,
     operators.actor.ResetTPose,
+    operators.actor.StraightenArms,
     operators.actor.PrintCurrentPose,
+    operators.actor.AddExampleActor,
     operators.command_api.CommandTest,
     operators.command_api.StartCalibration,
     operators.command_api.Restart,

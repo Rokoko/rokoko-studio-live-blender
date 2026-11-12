@@ -34,9 +34,11 @@ class DetectActorBones(bpy.types.Operator):
 
     def execute(self, context):
         obj = context.object
+        bone_name_keys = animation_lists.get_bones().keys()
+        found = detection_manager.detect_bones(obj, bone_name_keys)
 
-        for bone_name_key in animation_lists.get_bones().keys():
-            setattr(obj, 'rsl_actor_' + bone_name_key, detection_manager.detect_bone(obj, bone_name_key))
+        for bone_name_key in bone_name_keys:
+            setattr(obj, 'rsl_actor_' + bone_name_key, found.get(bone_name_key, ''))
 
         return {'FINISHED'}
 
@@ -78,13 +80,17 @@ class SaveCustomBones(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
 
+        # Compare against what Auto Detect gives, before anything gets saved
+        bone_name_keys = animation_lists.get_bones().keys()
+        bones_detected = detection_manager.detect_bones(obj, bone_name_keys)
+
         # Go over all actor bones and see if the user changed the detected bone. If yes, save that new bone
-        for bone_name_key in animation_lists.get_bones().keys():
+        for bone_name_key in bone_name_keys:
             bone_name_selected = getattr(obj, 'rsl_actor_' + bone_name_key)
             if not bone_name_selected:
                 continue  # TODO idea: maybe save these unselected choices as well
 
-            bone_name_detected = detection_manager.detect_bone(obj, bone_name_key)
+            bone_name_detected = bones_detected.get(bone_name_key, '')
 
             if bone_name_detected == bone_name_selected:  # This means that the user changed nothing, so don't save this
                 continue
